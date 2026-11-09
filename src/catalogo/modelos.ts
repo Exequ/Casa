@@ -63,11 +63,24 @@ function cajaDeRepuesto(item: ItemCatalogo): THREE.Object3D {
   return raiz;
 }
 
+/**
+ * Carga un .glb. Si viene incrustado en la propia página (una URL "data:",
+ * como en la versión de un solo archivo), se decodifica aquí: algunos
+ * visores prohíben pedir URLs "data:" con fetch.
+ */
+async function leerGlb(url: string) {
+  if (!url.startsWith('data:')) return cargador.loadAsync(url);
+  const binario = atob(url.slice(url.indexOf(',') + 1));
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return cargador.parseAsync(bytes.buffer, '');
+}
+
 /** Devuelve una copia nueva del modelo de un objeto del catálogo. */
 export async function crearModelo(item: ItemCatalogo): Promise<THREE.Object3D> {
   let plantilla = plantillas.get(item.id);
   if (!plantilla) {
-    plantilla = cargador.loadAsync(item.urlGlb)
+    plantilla = leerGlb(item.urlGlb)
       .then((gltf) => normalizar(gltf.scene, item))
       .catch((error) => {
         console.error(`No se pudo cargar ${item.urlGlb}`, error);

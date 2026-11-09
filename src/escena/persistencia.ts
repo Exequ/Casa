@@ -117,15 +117,40 @@ export function leerAutoguardado(): EscenaGuardada | null {
 
 // --- Archivos ----------------------------------------------------------------
 
-/** Descarga la escena como archivo .json. */
-export function descargarArchivo(gestor: GestorObjetos, nombreVivienda?: string, nombre = 'escena.json') {
+/** Lo que el visor de claude.ai ofrece a la página para guardar archivos (si existe). */
+interface VisorDescargas {
+  save(p: { filename: string; data: string }): Promise<unknown>;
+}
+
+/**
+ * Descarga la escena como archivo .json. Devuelve un texto para mostrar si
+ * algo no ha ido bien (o null si se ha descargado).
+ *
+ * Dentro del visor de claude.ai las descargas normales están bloqueadas: allí
+ * se usa su capacidad "downloads", que pide confirmación al usuario.
+ */
+export async function descargarArchivo(gestor: GestorObjetos, nombreVivienda?: string, nombre = 'escena.json'): Promise<string | null> {
   const texto = JSON.stringify(serializar(gestor, nombreVivienda), null, 2);
+  const visor = (window as { claude?: { use?: (n: string) => Promise<unknown> } }).claude;
+  if (visor?.use) {
+    try {
+      const descargas = (await visor.use('downloads')) as VisorDescargas | null;
+      if (descargas) {
+        await descargas.save({ filename: nombre, data: texto });
+        return null;
+      }
+    } catch (e) {
+      const codigo = (e as { code?: string }).code;
+      return codigo === 'declined' ? 'Guardado cancelado.' : `No se pudo guardar el archivo aquí (${codigo ?? 'error'}).`;
+    }
+  }
   const url = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
   const enlace = document.createElement('a');
   enlace.href = url;
   enlace.download = nombre;
   enlace.click();
   URL.revokeObjectURL(url);
+  return null;
 }
 
 /** Lee un archivo .json elegido por el usuario. */
