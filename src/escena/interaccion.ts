@@ -1,6 +1,6 @@
 // Interacción con el ratón y el teclado sobre la escena 3D:
 //   - Clic en un objeto: lo selecciona.  Clic en vacío: deselecciona.
-//   - Arrastrar un objeto: lo mueve por el suelo.
+//   - Arrastrar un objeto (ratón o dedo): lo mueve por el suelo.
 //   - Q / E: girar 15° (con Mayúsculas: 1°).   Supr: borrar.   Esc: deseleccionar.
 // El resto de arrastres (en vacío) los gestiona la cámara orbital.
 
@@ -14,7 +14,7 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos) {
   const sueloMatematico = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // plano y = 0
 
   /** Datos del arrastre en curso (si lo hay). */
-  let arrastre: { obj: ObjetoColocado; desfase: THREE.Vector3; movido: boolean } | null = null;
+  let arrastre: { obj: ObjetoColocado; desfase: THREE.Vector3; movido: boolean; puntero: number } | null = null;
   /** Dónde se pulsó el ratón sobre el vacío (para distinguir clic de giro de cámara). */
   let pulsacionEnVacio: { x: number; y: number } | null = null;
 
@@ -44,7 +44,7 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos) {
   // Escuchamos en fase de captura para actuar ANTES que la cámara orbital:
   // si se pulsa sobre un objeto, desactivamos la cámara durante el arrastre.
   lienzo.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return; // solo botón izquierdo
+    if (e.button !== 0 || !e.isPrimary) return; // solo botón izquierdo / primer dedo
     const obj = objetoBajoRaton(e);
     if (!obj) {
       pulsacionEnVacio = { x: e.clientX, y: e.clientY };
@@ -54,13 +54,14 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos) {
     const punto = puntoEnSuelo(e);
     if (!punto) return;
     escena.controles.enabled = false;
-    arrastre = { obj, desfase: obj.raiz.position.clone().sub(punto), movido: false };
+    arrastre = { obj, desfase: obj.raiz.position.clone().sub(punto), movido: false, puntero: e.pointerId };
     lienzo.setPointerCapture(e.pointerId);
     lienzo.style.cursor = 'grabbing';
   }, { capture: true });
 
   lienzo.addEventListener('pointermove', (e) => {
     if (arrastre) {
+      if (e.pointerId !== arrastre.puntero) return;
       const punto = puntoEnSuelo(e);
       if (!punto) return;
       arrastre.movido = true;
@@ -72,22 +73,25 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos) {
     if (e.buttons === 0) lienzo.style.cursor = objetoBajoRaton(e) ? 'grab' : '';
   });
 
-  lienzo.addEventListener('pointerup', (e) => {
+  const soltar = (e: PointerEvent) => {
     if (arrastre) {
-      if (arrastre.movido) gestor.notificar(); // ahora sí: guardar
+      if (e.pointerId !== arrastre.puntero) return;
+      if (arrastre.movido) gestor.asentar(arrastre.obj); // fuera de puertas, y guardar
       arrastre = null;
       escena.controles.enabled = true;
-      lienzo.releasePointerCapture(e.pointerId);
+      if (lienzo.hasPointerCapture(e.pointerId)) lienzo.releasePointerCapture(e.pointerId);
       lienzo.style.cursor = 'grab';
       return;
     }
     // Clic (sin apenas mover el ratón) en el vacío → deseleccionar.
     if (pulsacionEnVacio) {
       const distancia = Math.hypot(e.clientX - pulsacionEnVacio.x, e.clientY - pulsacionEnVacio.y);
-      if (distancia < 5) gestor.seleccionar(null);
+      if (distancia < 5 && e.type === 'pointerup') gestor.seleccionar(null);
       pulsacionEnVacio = null;
     }
-  });
+  };
+  lienzo.addEventListener('pointerup', soltar);
+  lienzo.addEventListener('pointercancel', soltar);
 
   // --- Teclado -------------------------------------------------------------
   window.addEventListener('keydown', (e) => {
