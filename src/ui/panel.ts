@@ -1,45 +1,55 @@
-// Panel lateral: catálogo, objeto seleccionado, guardar/cargar y ayuda.
+// Panel lateral: catálogo, objeto seleccionado, guardar/cargar, comprobación
+// con el plano y ayuda. En el móvil es un cajón que se abre con el botón ☰.
 // Es HTML normal construido a mano; los estilos están en src/ui/estilos.css.
 
 import type { ItemCatalogo } from '../catalogo/catalogo';
-import type { DatosHabitacion } from '../escena/habitacion';
 import type { GestorObjetos } from '../escena/objetos';
+import type { Vivienda } from '../vivienda/modelo';
+import { area } from '../vivienda/geometria';
+import { el, m } from './util';
 
 export interface AccionesPanel {
   agregar(item: ItemCatalogo): void;
   guardar(): void;
   cargar(archivo: File): void;
   vaciar(): void;
+  /** Muestra u oculta el plano superpuesto. */
+  verPlano(visible: boolean): void;
+  opacidadPlano(valor: number): void;
 }
 
-/** Formatea metros al estilo español: 3.5 → "3,5". */
-const m = (n: number) => (Math.round(n * 100) / 100 || 0).toLocaleString('es-ES'); // `|| 0` evita "-0"
-
-/** Crea un elemento HTML con clase y texto opcionales. */
-function el<K extends keyof HTMLElementTagNameMap>(etiqueta: K, clase = '', texto = ''): HTMLElementTagNameMap[K] {
-  const e = document.createElement(etiqueta);
-  if (clase) e.className = clase;
-  if (texto) e.textContent = texto;
-  return e;
+export interface Panel {
+  /** Abre o cierra el cajón (solo tiene efecto visible en pantallas estrechas). */
+  abrir(abierto: boolean): void;
+  /** Sincroniza la casilla del plano si se activa desde otro sitio. */
+  marcarPlano(visible: boolean): void;
 }
 
 export function crearPanel(
   panel: HTMLElement,
   catalogo: ItemCatalogo[],
-  habitacion: DatosHabitacion,
+  vivienda: Vivienda,
   gestor: GestorObjetos,
   acciones: AccionesPanel,
-) {
+): Panel {
   panel.innerHTML = '';
+  const abrir = (abierto: boolean) => document.body.classList.toggle('panel-abierto', abierto);
 
   // --- Cabecera ---------------------------------------------------------------
-  panel.append(el('h1', '', 'Casa 3D'));
-  panel.append(el('p', 'nota',
-    `${habitacion.nombre ?? 'Habitación'}: ${m(habitacion.ancho)} × ${m(habitacion.largo)} m, ${m(habitacion.alto)} m de alto`));
+  const cabecera = el('div', 'cabecera');
+  const btnCerrar = el('button', 'solo-movil cerrar', '✕');
+  btnCerrar.title = 'Cerrar el menú';
+  btnCerrar.addEventListener('click', () => abrir(false));
+  cabecera.append(el('h1', '', 'Casa 3D'), btnCerrar);
+  panel.append(cabecera);
+  const interiores = vivienda.estancias.filter((e) => !e.exterior);
+  const util = interiores.reduce((s, e) => s + area(e.poligono), 0);
+  panel.append(el('p', 'nota', `${vivienda.nombre}: ${interiores.length} estancias, ${m(util)} m² útiles`));
 
   // --- Catálogo (agrupado por categoría) ----------------------------------------
   const secCatalogo = el('section');
   secCatalogo.append(el('h2', '', 'Catálogo'));
+  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en la estancia que estás viendo.'));
   if (catalogo.length === 0) {
     secCatalogo.append(el('p', 'nota', 'No hay objetos. Añade archivos .json + .glb a la carpeta catalogo/.'));
   }
@@ -50,12 +60,15 @@ export function crearPanel(
       secCatalogo.append(el('h3', '', categoriaActual));
     }
     const boton = el('button', 'item-catalogo');
-    boton.title = 'Clic para añadirlo a la habitación';
+    boton.title = 'Añadir a la vivienda';
     boton.append(
       el('span', 'item-nombre', item.nombre),
       el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m`),
     );
-    boton.addEventListener('click', () => acciones.agregar(item));
+    boton.addEventListener('click', () => {
+      acciones.agregar(item);
+      abrir(false); // en el móvil, cerramos el cajón para ver el objeto
+    });
     secCatalogo.append(boton);
   }
   panel.append(secCatalogo);
@@ -63,7 +76,7 @@ export function crearPanel(
   // --- Objeto seleccionado ------------------------------------------------------
   const secSeleccion = el('section', 'seleccion');
   secSeleccion.append(el('h2', '', 'Objeto seleccionado'));
-  const sinSeleccion = el('p', 'nota', 'Haz clic en un objeto de la habitación para seleccionarlo.');
+  const sinSeleccion = el('p', 'nota', 'Haz clic en un objeto para seleccionarlo.');
   const conSeleccion = el('div');
   const nombreSel = el('p', 'sel-nombre');
   const posicionSel = el('p', 'nota');
@@ -130,7 +143,7 @@ export function crearPanel(
   const btnVaciar = el('button', '', 'Vaciar');
   btnGuardar.title = 'Descarga la escena como archivo .json';
   btnCargar.title = 'Abre un archivo .json guardado antes';
-  btnVaciar.title = 'Quita todos los objetos de la habitación';
+  btnVaciar.title = 'Quita todos los objetos';
   const selectorArchivo = el('input');
   selectorArchivo.type = 'file';
   selectorArchivo.accept = '.json,application/json';
@@ -147,18 +160,62 @@ export function crearPanel(
     selectorArchivo.value = ''; // permite volver a cargar el mismo archivo
   });
   btnVaciar.addEventListener('click', () => {
-    if (gestor.objetos.length === 0 || confirm('¿Quitar todos los objetos de la habitación?')) acciones.vaciar();
+    if (gestor.objetos.length === 0 || confirm('¿Quitar todos los objetos de la vivienda?')) acciones.vaciar();
   });
+
+  // --- Comprobación con el plano ----------------------------------------------------
+  const secPlano = el('section');
+  secPlano.append(el('h2', '', 'Comprobar con el plano'));
+  const filaPlano = el('label', 'fila');
+  const casillaPlano = el('input');
+  casillaPlano.type = 'checkbox';
+  filaPlano.append(casillaPlano, el('span', '', 'Superponer el plano original'));
+  const filaOpacidad = el('label', 'fila');
+  const opacidad = el('input');
+  opacidad.type = 'range';
+  opacidad.min = '0.1';
+  opacidad.max = '1';
+  opacidad.step = '0.05';
+  opacidad.value = '0.6';
+  filaOpacidad.append(el('span', '', 'Opacidad'), opacidad);
+  secPlano.append(filaPlano, filaOpacidad,
+    el('p', 'nota', 'Las paredes se quedan a ras de suelo para comparar su huella con el dibujo.'));
+  if (!vivienda.plano) secPlano.hidden = true;
+  panel.append(secPlano);
+  casillaPlano.addEventListener('change', () => acciones.verPlano(casillaPlano.checked));
+  opacidad.addEventListener('input', () => acciones.opacidadPlano(Number(opacidad.value)));
+
+  // --- Suposiciones ------------------------------------------------------------------
+  if (vivienda.suposiciones?.length) {
+    const secSup = el('section');
+    const detalles = el('details');
+    detalles.append(el('summary', '', `Suposiciones al leer el plano (${vivienda.suposiciones.length})`));
+    const lista = el('ul', 'suposiciones');
+    for (const s of vivienda.suposiciones) lista.append(el('li', '', s));
+    detalles.append(lista);
+    secSup.append(detalles);
+    panel.append(secSup);
+  }
 
   // --- Ayuda ------------------------------------------------------------------------
   const ayuda = el('section', 'ayuda');
   ayuda.innerHTML = `
     <h2>Controles</h2>
-    <ul>
+    <ul class="solo-escritorio">
       <li><b>Cámara:</b> arrastrar = girar · rueda = zoom · botón derecho = desplazar</li>
       <li><b>Objeto:</b> clic = seleccionar · arrastrar = mover</li>
       <li><kbd>Q</kbd> / <kbd>E</kbd> girar 15° · con <kbd>Mayús</kbd> 1°</li>
       <li><kbd>Supr</kbd> borrar · <kbd>Esc</kbd> deseleccionar</li>
+    </ul>
+    <ul class="solo-movil">
+      <li><b>Cámara:</b> un dedo = girar · dos dedos = zoom y desplazar</li>
+      <li><b>Objeto:</b> tócalo para seleccionarlo y arrástralo para moverlo</li>
+      <li>Girar y borrar: botones de la barra inferior</li>
     </ul>`;
   panel.append(ayuda);
+
+  return {
+    abrir,
+    marcarPlano: (visible) => { casillaPlano.checked = visible; },
+  };
 }

@@ -1,10 +1,11 @@
-// Gestión de los objetos colocados en la habitación: añadir, mover, rotar,
-// borrar y seleccionar. Aquí también se impide que atraviesen las paredes.
+// Gestión de los objetos colocados en la vivienda: añadir, mover, rotar,
+// borrar y seleccionar. Aquí también se impide que atraviesen paredes,
+// pilares, puertas o ventanas (con la ayuda de EspacioLibre).
 
 import * as THREE from 'three';
 import type { ItemCatalogo } from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
-import type { Habitacion } from './habitacion';
+import type { EspacioLibre, Huella } from '../vivienda/espacio';
 
 /** Un objeto del catálogo colocado en la escena. */
 export interface ObjetoColocado {
@@ -29,11 +30,11 @@ export class GestorObjetos {
   private oyentesCambio: Oyente[] = [];
   private oyentesSeleccion: Oyente[] = [];
   private escena: THREE.Scene;
-  private habitacion: Habitacion;
+  private espacio: EspacioLibre;
 
-  constructor(escena: THREE.Scene, habitacion: Habitacion) {
+  constructor(escena: THREE.Scene, espacio: EspacioLibre) {
     this.escena = escena;
-    this.habitacion = habitacion;
+    this.espacio = espacio;
     this.resaltado.visible = false;
     escena.add(this.resaltado);
   }
@@ -53,15 +54,20 @@ export class GestorObjetos {
 
   // --- Operaciones -----------------------------------------------------------
 
-  /** Coloca un objeto del catálogo en (x, z) con un giro en grados. */
+  /**
+   * Coloca un objeto del catálogo en (x, z) con un giro en grados. Si ahí no
+   * cabe, se busca el sitio libre más cercano.
+   */
   async agregar(item: ItemCatalogo, x = 0, z = 0, rotacion = 0): Promise<ObjetoColocado> {
     const raiz = await crearModelo(item);
     const obj: ObjetoColocado = { uid: this.siguienteUid++, item, raiz, rotacion: 0 };
     raiz.userData.objeto = obj; // para encontrarlo al hacer clic
+    this.aplicarRotacion(obj, rotacion);
+    const sitio = this.espacio.buscarSitio({ ...this.huella(obj), x, z });
+    if (!sitio) console.warn(`No hay sitio libre para "${item.nombre}" cerca de (${x.toFixed(2)}, ${z.toFixed(2)})`);
+    obj.raiz.position.set(sitio?.x ?? x, 0, sitio?.z ?? z);
     this.escena.add(raiz);
     this.objetos.push(obj);
-    this.aplicarRotacion(obj, rotacion);
-    this.aplicarPosicion(obj, x, z);
     return obj;
   }
 
@@ -90,18 +96,46 @@ export class GestorObjetos {
     this.notificar(false);
   }
 
-  /** Mueve un objeto a (x, z) sin dejar que atraviese las paredes. */
+  /**
+   * Arrastra un objeto hacia (x, z) sin dejar que atraviese paredes ni pilares.
+   * Puede pasar por una puerta si cabe; al terminar hay que llamar a asentar().
+   */
   mover(obj: ObjetoColocado, x: number, z: number, guardar = true) {
-    this.aplicarPosicion(obj, x, z);
+    const p = this.espacio.mover(this.huella(obj), x, z);
+    obj.raiz.position.set(p.x, 0, p.z);
+    if (obj === this.seleccionado) this.actualizarResaltado();
     this.notificar(guardar);
   }
 
-  /** Fija el giro del objeto (en grados). */
-  rotar(obj: ObjetoColocado, grados: number) {
-    this.aplicarRotacion(obj, grados);
-    // Al girar puede ocupar más en un eje: lo recolocamos para que no atraviese paredes.
-    this.aplicarPosicion(obj, obj.raiz.position.x, obj.raiz.position.z);
+  /**
+   * Coloca definitivamente el objeto al soltarlo: si se ha quedado en el hueco
+   * de una puerta, lo lleva al sitio libre más cercano.
+   */
+  asentar(obj: ObjetoColocado) {
+    const sitio = this.espacio.asentar(this.huella(obj));
+    if (sitio) obj.raiz.position.set(sitio.x, 0, sitio.z);
+    if (obj === this.seleccionado) this.actualizarResaltado();
     this.notificar();
+  }
+
+  /**
+   * Fija el giro del objeto (en grados). Si girado no cabe donde está, se
+   * aparta lo mínimo; si no cabe en ningún sitio cercano, no se gira.
+   * Devuelve true si se ha podido girar.
+   */
+  rotar(obj: ObjetoColocado, grados: number): boolean {
+    const anterior = obj.rotacion;
+    this.aplicarRotacion(obj, grados);
+    const sitio = this.espacio.buscarSitio(this.huella(obj), 1);
+    if (!sitio) {
+      this.aplicarRotacion(obj, anterior);
+      this.notificar(false);
+      return false;
+    }
+    obj.raiz.position.set(sitio.x, 0, sitio.z);
+    if (obj === this.seleccionado) this.actualizarResaltado();
+    this.notificar();
+    return true;
   }
 
   /**
@@ -110,7 +144,7 @@ export class GestorObjetos {
    * (p. ej. con paso 15: 37° → 45°, o 37° → 30° hacia el otro lado).
    */
   girar(obj: ObjetoColocado, paso: number, ajustar = true) {
-    if (!ajustar) return this.rotar(obj, obj.rotacion + paso);
+    if (!ajustar) { this.rotar(obj, obj.rotacion + paso); return; }
     const p = Math.abs(paso);
     const actual = Math.round(obj.rotacion * 1e6) / 1e6; // evita errores de redondeo
     const grados = paso > 0
@@ -135,22 +169,15 @@ export class GestorObjetos {
     obj.raiz.rotation.y = THREE.MathUtils.degToRad(obj.rotacion);
   }
 
-  private aplicarPosicion(obj: ObjetoColocado, x: number, z: number) {
-    const { medioX, medioZ } = this.medioTamano(obj);
-    const p = this.habitacion.limitar(x, z, medioX, medioZ);
-    obj.raiz.position.set(p.x, 0, p.z);
-    if (obj === this.seleccionado) this.actualizarResaltado();
-  }
-
-  /**
-   * Mitad del espacio que ocupa el objeto en X y en Z una vez girado
-   * (la "caja" alineada con las paredes que envuelve al rectángulo girado).
-   */
-  private medioTamano(obj: ObjetoColocado) {
-    const a = obj.raiz.rotation.y;
-    const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
-    const w = obj.item.dimensiones.ancho / 2, d = obj.item.dimensiones.fondo / 2;
-    return { medioX: w * c + d * s, medioZ: w * s + d * c };
+  /** Rectángulo que ocupa el objeto en planta. */
+  huella(obj: ObjetoColocado): Huella {
+    return {
+      x: obj.raiz.position.x,
+      z: obj.raiz.position.z,
+      ancho: obj.item.dimensiones.ancho,
+      fondo: obj.item.dimensiones.fondo,
+      giro: obj.raiz.rotation.y,
+    };
   }
 
   private actualizarResaltado() {

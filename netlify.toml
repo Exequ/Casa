@@ -1,0 +1,9 @@
+# Alternativa gratuita a GitHub Pages: Netlify.
+# En netlify.com → "Add new site" → "Import from Git" → elegir este repositorio.
+# No hace falta cambiar nada más: Netlify lee este archivo.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
