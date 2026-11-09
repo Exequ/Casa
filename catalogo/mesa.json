@@ -1,0 +1,10 @@
+{
+  "nombre": "Mesa de comedor",
+  "categoria": "Mesas",
+  "dimensiones": {
+    "ancho": 1.2,
+    "fondo": 0.8,
+    "alto": 0.75
+  },
+  "glb": "mesa.glb"
+}

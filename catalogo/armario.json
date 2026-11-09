@@ -1,0 +1,10 @@
+{
+  "nombre": "Armario de 2 puertas",
+  "categoria": "Almacenaje",
+  "dimensiones": {
+    "ancho": 1,
+    "fondo": 0.6,
+    "alto": 2
+  },
+  "glb": "armario.glb"
+}
