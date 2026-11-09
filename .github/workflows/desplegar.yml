@@ -38,12 +38,15 @@ jobs:
         run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      - name: ¿Está GitHub Pages activado?
+      - name: ¿Está GitHub Pages activado? (si no, se intenta activar)
         id: pages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh api "repos/${{ github.repository }}/pages" --silent 2>/dev/null; then
+            echo "activo=true" >> "$GITHUB_OUTPUT"
+          elif gh api -X POST "repos/${{ github.repository }}/pages" -f build_type=workflow --silent 2>/dev/null; then
+            # Se ha podido activar Pages (origen: GitHub Actions) desde aquí.
             echo "activo=true" >> "$GITHUB_OUTPUT"
           else
             echo "activo=false" >> "$GITHUB_OUTPUT"
