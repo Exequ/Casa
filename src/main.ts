@@ -99,7 +99,10 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
     gestor.seleccionar(obj);
     gestor.notificar();
   },
-  guardar: () => descargarArchivo(gestor, vivienda.nombre),
+  async guardar() {
+    const problema = await descargarArchivo(gestor, vivienda.nombre);
+    if (problema) panel.avisar(problema, true);
+  },
   async cargar(archivo) {
     try {
       await aplicar(gestor, await leerArchivo(archivo), catalogo, centroV1);
