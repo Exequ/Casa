@@ -11,6 +11,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Cada hora: si Pages se acaba de activar y la web aún no existe, la publica sin esperar al próximo cambio.
+  schedule:
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -43,7 +46,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh api "repos/${{ github.repository }}/pages" --silent 2>/dev/null; then
+          if [ "${{ github.event_name }}" = "schedule" ] && curl -sf -o /dev/null "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"; then
+            echo "La web ya está publicada; la ejecución programada no hace nada."
+            echo "activo=false" >> "$GITHUB_OUTPUT"
+          elif gh api "repos/${{ github.repository }}/pages" --silent 2>/dev/null; then
             echo "activo=true" >> "$GITHUB_OUTPUT"
           elif gh api -X POST "repos/${{ github.repository }}/pages" -f build_type=workflow --silent 2>/dev/null; then
             # Se ha podido activar Pages (origen: GitHub Actions) desde aquí.

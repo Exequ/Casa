@@ -21,9 +21,11 @@ export interface AccionesPanel {
 export interface Panel {
   /** Abre o cierra el cajón (solo tiene efecto visible en pantallas estrechas). */
   abrir(abierto: boolean): void;
+  /** Sección vacía donde va el selector de suelo. */
+  seccionSuelo: HTMLElement;
   /** Sincroniza la casilla del plano si se activa desde otro sitio. */
   marcarPlano(visible: boolean): void;
-  /** Muestra un mensaje bajo los botones de guardar/cargar (error = en rojo). */
+  /** Muestra un mensaje arriba del panel (error = en rojo). En el móvil abre el cajón. */
   avisar(texto: string, error?: boolean): void;
 }
 
@@ -47,11 +49,16 @@ export function crearPanel(
   const interiores = vivienda.estancias.filter((e) => !e.exterior);
   const util = interiores.reduce((s, e) => s + area(e.poligono), 0);
   panel.append(el('p', 'nota', `${vivienda.nombre}: ${interiores.length} estancias, ${m(util)} m² útiles`));
+  // Mensajes para el usuario (escena cargada, falta de sitio…), arriba del todo para que se vean.
+  const mensaje = el('p', 'nota mensaje');
+  mensaje.hidden = true;
+  mensaje.setAttribute('role', 'status');
+  panel.append(mensaje);
 
   // --- Catálogo (agrupado por categoría) ----------------------------------------
   const secCatalogo = el('section');
   secCatalogo.append(el('h2', '', 'Catálogo'));
-  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en la estancia que estás viendo.'));
+  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en el sitio libre más cercano al centro de la estancia elegida arriba (o del salón).'));
   if (catalogo.length === 0) {
     secCatalogo.append(el('p', 'nota', 'No hay objetos. Añade archivos .json + .glb a la carpeta catalogo/.'));
   }
@@ -74,6 +81,10 @@ export function crearPanel(
     secCatalogo.append(boton);
   }
   panel.append(secCatalogo);
+
+  // --- Suelo (lo rellena src/ui/selectorSuelo.ts) ----------------------------------
+  const seccionSuelo = el('section', 'seccion-suelo');
+  panel.append(seccionSuelo);
 
   // --- Objeto seleccionado ------------------------------------------------------
   const secSeleccion = el('section', 'seleccion');
@@ -151,9 +162,7 @@ export function crearPanel(
   selectorArchivo.accept = '.json,application/json';
   selectorArchivo.hidden = true;
   filaArchivo.append(btnGuardar, btnCargar, btnVaciar, selectorArchivo);
-  const mensajeEscena = el('p', 'nota mensaje');
-  mensajeEscena.hidden = true;
-  secEscena.append(filaArchivo, mensajeEscena, el('p', 'nota', 'Los cambios se guardan solos en este navegador.'));
+  secEscena.append(filaArchivo, el('p', 'nota', 'Los cambios se guardan solos en este navegador.'));
   panel.append(secEscena);
 
   btnGuardar.addEventListener('click', () => acciones.guardar());
@@ -235,11 +244,13 @@ export function crearPanel(
 
   return {
     abrir,
+    seccionSuelo,
     marcarPlano: (visible) => { casillaPlano.checked = visible; },
     avisar(texto, error = false) {
-      mensajeEscena.textContent = texto;
-      mensajeEscena.classList.toggle('error', error);
-      mensajeEscena.hidden = false;
+      mensaje.textContent = texto;
+      mensaje.classList.toggle('error', error);
+      mensaje.hidden = false;
+      mensaje.scrollIntoView({ block: 'nearest' });
       abrir(true); // en el móvil, para que se vea el mensaje
     },
   };

@@ -1,5 +1,10 @@
 # Resumen de la fase 2: estado real
 
+> **Actualización:** varios problemas de este documento ya están resueltos en
+> las fases 2.5 y 3a (choques entre muebles, altura de paredes por estancia,
+> corte de paredes cortas, rendimiento en el móvil, suelos con textura). El
+> estado al día está en [ESTADO.md](ESTADO.md).
+
 Fecha: 9 de noviembre de 2026. Estado de `main` tras los PR #2, #3 y #4.
 
 Objetivo de la fase 2: pasar de una habitación de ejemplo a la vivienda real

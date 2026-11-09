@@ -7,8 +7,37 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 /** Rectángulo en planta (m). */
 export interface Caja2D { minX: number; maxX: number; minZ: number; maxZ: number }
 
+/**
+ * Calidad gráfica. 'ligera' para móviles y tabletas (sombras de 1024 px y
+ * menos píxeles), 'normal' para ordenadores (sombras de 2048 px). 'alta' es
+ * la de la fase 2 (4096 px), solo para comparar.
+ */
+export type Calidad = 'ligera' | 'normal' | 'alta';
+
+/**
+ * Elige la calidad: la de la dirección (?calidad=ligera|normal|alta) si se
+ * indica; si no, 'ligera' en pantallas táctiles o pequeñas y 'normal' en el resto.
+ */
+export function elegirCalidad(): Calidad {
+  const pedida = new URLSearchParams(location.search).get('calidad');
+  if (pedida === 'ligera' || pedida === 'normal' || pedida === 'alta') return pedida;
+  const tactil = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  const pequena = Math.min(window.screen?.width ?? 1e4, window.screen?.height ?? 1e4) < 800;
+  return tactil || pequena ? 'ligera' : 'normal';
+}
+
+const AJUSTES: Record<Calidad, { sombra: number; maxPixelRatio: number; textura: number }> = {
+  ligera: { sombra: 1024, maxPixelRatio: 1.5, textura: 512 },
+  normal: { sombra: 2048, maxPixelRatio: 2, textura: 512 },
+  alta: { sombra: 4096, maxPixelRatio: 2, textura: 512 },
+};
+
 export interface Escena {
   renderer: THREE.WebGLRenderer;
+  /** Calidad elegida y sus ajustes. */
+  calidad: Calidad;
+  /** Resolución de las texturas de suelo según la calidad (px). */
+  tamanoTextura: number;
   escena: THREE.Scene;
   camara: THREE.PerspectiveCamera;
   controles: OrbitControls;
@@ -22,10 +51,11 @@ export interface Escena {
   encuadrar(caja: Caja2D, planta?: boolean, animar?: boolean, reorientar?: boolean): void;
 }
 
-export function crearEscena(contenedor: HTMLElement, total: Caja2D): Escena {
+export function crearEscena(contenedor: HTMLElement, total: Caja2D, calidad: Calidad = elegirCalidad()): Escena {
+  const ajustes = AJUSTES[calidad];
   // --- Renderizador ---------------------------------------------------------
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, ajustes.maxPixelRatio));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap; // sombras filtradas (suaves con shadow.radius)
   renderer.toneMapping = THREE.ACESFilmicToneMapping; // colores más naturales
@@ -60,7 +90,7 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D): Escena {
   sol.position.set(centroX + 3, 12, centroZ + 4);
   sol.target.position.set(centroX, 0, centroZ);
   sol.castShadow = true;
-  sol.shadow.mapSize.set(4096, 4096);
+  sol.shadow.mapSize.set(ajustes.sombra, ajustes.sombra);
   sol.shadow.radius = 4; // difumina el borde de la sombra
   sol.shadow.blurSamples = 12;
   sol.shadow.bias = -0.0005;
@@ -88,7 +118,8 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D): Escena {
       const actual = camara.position.clone().sub(controles.target);
       acimut = Math.atan2(actual.x, actual.z); // mantenemos el giro actual
     }
-    const polar = planta ? 0.0001 : THREE.MathUtils.degToRad(50);
+    // Inclinación: 50° para toda la vivienda; algo más cenital (42°) para una estancia, que se ve mejor el suelo.
+    const polar = planta ? 0.0001 : THREE.MathUtils.degToRad(reorientar ? 50 : 42);
 
     // Tamaño aparente del rectángulo visto con ese acimut e inclinación.
     const dx = Math.sin(acimut), dz = Math.cos(acimut); // de la vivienda hacia la cámara
@@ -102,7 +133,10 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D): Escena {
     // Distancia para que quepa en pantalla (según el campo de visión y la proporción).
     const vfov = THREE.MathUtils.degToRad(camara.fov);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camara.aspect);
-    const dist = Math.max((altoPantalla / 2) / Math.tan(vfov / 2), (anchoPantalla / 2) / Math.tan(hfov / 2)) * 1.12 + (planta ? 0.3 : 1);
+    const dist = Math.max(
+      (altoPantalla / 2) / Math.tan(vfov / 2), (anchoPantalla / 2) / Math.tan(hfov / 2),
+      planta ? 0 : 4.5, // las estancias pequeñas, no demasiado cerca
+    ) * 1.12 + (planta ? 0.3 : 1);
     const direccion = new THREE.Vector3(Math.sin(polar) * dx, Math.cos(polar), Math.sin(polar) * dz);
     const posicion = objetivo.clone().addScaledVector(direccion.normalize(), dist);
     if (!animar) {
@@ -146,5 +180,8 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D): Escena {
     etiquetas.render(escena, camara);
   });
 
-  return { renderer, escena, camara, controles, cadaFotograma: (fn) => tareas.push(fn), encuadrar };
+  return {
+    renderer, calidad, tamanoTextura: ajustes.textura, escena, camara, controles,
+    cadaFotograma: (fn) => tareas.push(fn), encuadrar,
+  };
 }

@@ -5,7 +5,8 @@
 import * as THREE from 'three';
 import type { ItemCatalogo } from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
-import type { EspacioLibre, Huella } from '../vivienda/espacio';
+import type { EspacioLibre, Huella, Obstaculo } from '../vivienda/espacio';
+import { huellaRectangulo } from '../vivienda/geometria';
 
 /** Un objeto del catálogo colocado en la escena. */
 export interface ObjetoColocado {
@@ -55,17 +56,18 @@ export class GestorObjetos {
   // --- Operaciones -----------------------------------------------------------
 
   /**
-   * Coloca un objeto del catálogo en (x, z) con un giro en grados. Si ahí no
-   * cabe, se busca el sitio libre más cercano.
+   * Coloca un objeto del catálogo en el sitio libre (sin paredes ni otros
+   * muebles) más cercano a (x, z), con un giro en grados. Si no cabe en
+   * ningún sitio de la vivienda, no lo añade y devuelve null.
    */
-  async agregar(item: ItemCatalogo, x = 0, z = 0, rotacion = 0): Promise<ObjetoColocado> {
+  async agregar(item: ItemCatalogo, x = 0, z = 0, rotacion = 0): Promise<ObjetoColocado | null> {
     const raiz = await crearModelo(item);
     const obj: ObjetoColocado = { uid: this.siguienteUid++, item, raiz, rotacion: 0 };
     raiz.userData.objeto = obj; // para encontrarlo al hacer clic
     this.aplicarRotacion(obj, rotacion);
-    const sitio = this.espacio.buscarSitio({ ...this.huella(obj), x, z });
-    if (!sitio) console.warn(`No hay sitio libre para "${item.nombre}" cerca de (${x.toFixed(2)}, ${z.toFixed(2)})`);
-    obj.raiz.position.set(sitio?.x ?? x, 0, sitio?.z ?? z);
+    const sitio = this.espacio.buscarSitio({ ...this.huella(obj), x, z }, this.espacio.radioTotal(), this.obstaculos());
+    if (!sitio) return null;
+    obj.raiz.position.set(sitio.x, 0, sitio.z);
     this.escena.add(raiz);
     this.objetos.push(obj);
     return obj;
@@ -97,11 +99,12 @@ export class GestorObjetos {
   }
 
   /**
-   * Arrastra un objeto hacia (x, z) sin dejar que atraviese paredes ni pilares.
+   * Arrastra un objeto hacia (x, z) sin dejar que atraviese paredes, pilares
+   * ni otros muebles.
    * Puede pasar por una puerta si cabe; al terminar hay que llamar a asentar().
    */
   mover(obj: ObjetoColocado, x: number, z: number, guardar = true) {
-    const p = this.espacio.mover(this.huella(obj), x, z);
+    const p = this.espacio.mover(this.huella(obj), x, z, this.obstaculos(obj));
     obj.raiz.position.set(p.x, 0, p.z);
     if (obj === this.seleccionado) this.actualizarResaltado();
     this.notificar(guardar);
@@ -112,21 +115,22 @@ export class GestorObjetos {
    * de una puerta, lo lleva al sitio libre más cercano.
    */
   asentar(obj: ObjetoColocado) {
-    const sitio = this.espacio.asentar(this.huella(obj));
+    const sitio = this.espacio.asentar(this.huella(obj), this.obstaculos(obj));
     if (sitio) obj.raiz.position.set(sitio.x, 0, sitio.z);
     if (obj === this.seleccionado) this.actualizarResaltado();
     this.notificar();
   }
 
   /**
-   * Fija el giro del objeto (en grados). Si girado no cabe donde está, se
-   * aparta lo mínimo; si no cabe en ningún sitio cercano, no se gira.
+   * Fija el giro del objeto (en grados). Si girado no cabe donde está (por
+   * una pared u otro mueble), se aparta lo mínimo; si no cabe en ningún
+   * sitio cercano, no se gira.
    * Devuelve true si se ha podido girar.
    */
   rotar(obj: ObjetoColocado, grados: number): boolean {
     const anterior = obj.rotacion;
     this.aplicarRotacion(obj, grados);
-    const sitio = this.espacio.buscarSitio(this.huella(obj), 1);
+    const sitio = this.espacio.buscarSitio(this.huella(obj), 1, this.obstaculos(obj));
     if (!sitio) {
       this.aplicarRotacion(obj, anterior);
       this.notificar(false);
@@ -167,6 +171,16 @@ export class GestorObjetos {
     obj.rotacion = ((grados % 360) + 360) % 360; // normaliza a [0, 360)
     if (Math.abs(obj.rotacion - 360) < 1e-9) obj.rotacion = 0;
     obj.raiz.rotation.y = THREE.MathUtils.degToRad(obj.rotacion);
+  }
+
+  /** Huellas de todos los muebles menos `excepto` (los obstáculos para él). */
+  obstaculos(excepto?: ObjetoColocado): Obstaculo[] {
+    return this.objetos
+      .filter((o) => o !== excepto)
+      .map((o) => {
+        const h = this.huella(o);
+        return huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro);
+      });
   }
 
   /** Rectángulo que ocupa el objeto en planta. */

@@ -8,11 +8,13 @@ import { crearEscena, type Caja2D } from './escena/escena';
 import { crearEtiquetas } from './escena/etiquetas';
 import { activarInteraccion } from './escena/interaccion';
 import { GestorObjetos } from './escena/objetos';
-import { aplicar, autoguardar, descargarArchivo, leerArchivo, leerAutoguardado } from './escena/persistencia';
+import { aplicar, autoguardar, descargarArchivo, leerArchivo, leerAutoguardado, type EstadoEscena, type ResultadoCarga } from './escena/persistencia';
 import { crearCapaPlano } from './escena/plano';
 import { construirVivienda, resaltarMuros } from './escena/vivienda3d';
 import { crearBarra } from './ui/barra';
 import { crearPanel } from './ui/panel';
+import { crearSelectorSuelo } from './ui/selectorSuelo';
+import { GestorSuelos } from './escena/suelos3d';
 import { EspacioLibre } from './vivienda/espacio';
 import { caja, puntoInterior } from './vivienda/geometria';
 import { validarVivienda, type Vivienda } from './vivienda/modelo';
@@ -45,16 +47,22 @@ if (capaPlano) escena.escena.add(capaPlano);
 const cortador = new CortadorParedes(casa.verticales, (p) => espacio.dentro(p));
 escena.cadaFotograma(() => cortador.actualizar(escena.camara, escena.controles.target));
 
+// Suelos con textura (los de vivienda.json, o los que se elijan en el panel)
+const suelos = new GestorSuelos(vivienda, casa.suelos, escena.tamanoTextura);
+
 // 2. Objetos colocados + interacción con ratón, dedo y teclado
 const gestor = new GestorObjetos(escena.escena, espacio);
 activarInteraccion(escena, gestor);
+const estado: EstadoEscena = { objetos: gestor, suelos, nombreVivienda: vivienda.nombre };
 
-// 3. Autoguardado: cada cambio se guarda en el navegador (agrupando cambios seguidos).
+// 3. Autoguardado: cada cambio (muebles o suelos) se guarda en el navegador, agrupando cambios seguidos.
 let temporizador: number | undefined;
-gestor.alCambiar(() => {
+const programarAutoguardado = () => {
   clearTimeout(temporizador);
-  temporizador = window.setTimeout(() => autoguardar(gestor, vivienda.nombre), 300);
-});
+  temporizador = window.setTimeout(() => autoguardar(estado), 300);
+};
+gestor.alCambiar(programarAutoguardado);
+suelos.alCambiar(programarAutoguardado);
 
 // --- Ayudas para estancias ---------------------------------------------------------
 const estanciaPorId = (id: string | null) => vivienda.estancias.find((e) => e.id === id) ?? null;
@@ -67,16 +75,19 @@ const salon = estanciaPorId('salon') ?? vivienda.estancias[0];
 const [cx1, cz1] = puntoInterior(salon.poligono);
 const centroV1 = { x: cx1, z: cz1 };
 
-/** Dónde poner un objeto nuevo: en la estancia elegida o en la que mira la cámara. */
-function puntoParaNuevo(): { x: number; z: number } {
-  const t = escena.controles.target;
-  const id = barra.estancia() ?? espacio.estanciaEn(t.x, t.z);
-  const e = estanciaPorId(id);
-  if (e) {
-    const [x, z] = puntoInterior(e.poligono);
-    return { x, z };
-  }
-  return centroV1;
+/** Dónde poner un objeto nuevo: lo más cerca posible del centro de la estancia elegida (o del salón). */
+function puntoParaNuevo(): { x: number; z: number; estancia: string } {
+  const e = estanciaPorId(barra.estancia()) ?? salon;
+  const [x, z] = puntoInterior(e.poligono);
+  return { x, z, estancia: e.nombre };
+}
+
+/** Explica lo que no se ha podido poner al cargar una escena. */
+function textoCarga(r: ResultadoCarga): string {
+  const partes = [`${gestor.objetos.length} objetos`];
+  if (r.omitidos.length) partes.push(`no caben o no existen: ${r.omitidos.join(', ')}`);
+  if (r.suelosIgnorados) partes.push(`${r.suelosIgnorados} suelos no válidos ignorados`);
+  return partes.join('; ');
 }
 
 /** Regla de corte de paredes según se mire una estancia o toda la vivienda. */
@@ -96,17 +107,21 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
   async agregar(item: ItemCatalogo) {
     const p = puntoParaNuevo();
     const obj = await gestor.agregar(item, p.x, p.z, 0);
+    if (!obj) {
+      panel.avisar(`No hay sitio libre para "${item.nombre}" en ninguna estancia. Aparta o borra algún mueble.`, true);
+      return;
+    }
     gestor.seleccionar(obj);
     gestor.notificar();
   },
   async guardar() {
-    const problema = await descargarArchivo(gestor, vivienda.nombre);
+    const problema = await descargarArchivo(estado);
     if (problema) panel.avisar(problema, true);
   },
   async cargar(archivo) {
     try {
-      await aplicar(gestor, await leerArchivo(archivo), catalogo, centroV1);
-      panel.avisar(`Escena "${archivo.name}" cargada: ${gestor.objetos.length} objetos.`);
+      const r = await aplicar(estado, await leerArchivo(archivo), catalogo, centroV1);
+      panel.avisar(`Escena "${archivo.name}" cargada: ${textoCarga(r)}.`, r.omitidos.length > 0);
     } catch (e) {
       panel.avisar(`No se pudo cargar "${archivo.name}": ${(e as Error).message}. Comprueba que es un archivo guardado con esta app.`, true);
     }
@@ -118,9 +133,13 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
   },
 });
 
+const selectorSuelo = crearSelectorSuelo(panel.seccionSuelo, vivienda, suelos);
+
 const barra = crearBarra(visor, vivienda, gestor, {
   enfocar: (id, planta) => {
     if (cortador.modo !== 'huella') cortador.modo = id ? 'estancia' : 'casa';
+    cortador.estancia = estanciaPorId(id)?.poligono ?? null;
+    if (id) selectorSuelo.elegirEstancia(id);
     escena.encuadrar(cajaDe(id), planta, true, id === null);
   },
   verPlano,
@@ -135,7 +154,11 @@ escena.encuadrar(total, false, false, true);
 
 // 5. Recuperar la última escena autoguardada (si la hay)
 const guardada = leerAutoguardado();
-if (guardada) aplicar(gestor, guardada, catalogo, centroV1).catch((e) => console.warn('Autoguardado no válido', e));
+if (guardada) {
+  aplicar(estado, guardada, catalogo, centroV1)
+    .then((r) => { if (r.omitidos.length) panel.avisar(`Al recuperar la última escena: ${textoCarga(r)}.`, true); })
+    .catch((e) => console.warn('Autoguardado no válido', e));
+}
 
 // Acceso desde la consola del navegador, útil para depurar y para las pruebas automáticas.
-Object.assign(window, { casa: { escena, vivienda, espacio, gestor, catalogo, cortador, capaPlano, verPlano } });
+Object.assign(window, { casa: { escena, vivienda, espacio, gestor, suelos, catalogo, cortador, capaPlano, verPlano } });

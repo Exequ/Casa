@@ -8,7 +8,7 @@
 
 import * as THREE from 'three';
 import type { Estancia, Pared, Pilar, Punto, Vivienda } from '../vivienda/modelo';
-import { altoPared, largoPared } from '../vivienda/modelo';
+import { altoPared, altoPilar, largoPared } from '../vivienda/modelo';
 import { distanciaASegmento } from '../vivienda/geometria';
 
 /** Un elemento vertical (pared o pilar) que se puede "cortar" para ver el interior. */
@@ -152,7 +152,7 @@ export function crearPared(p: Pared, v: Vivienda): ElementoVertical {
 export function crearPilar(p: Pilar, v: Vivienda): ElementoVertical {
   const minX = Math.min(p.desde[0], p.hasta[0]), maxX = Math.max(p.desde[0], p.hasta[0]);
   const minZ = Math.min(p.desde[1], p.hasta[1]), maxZ = Math.max(p.desde[1], p.hasta[1]);
-  const ancho = maxX - minX, fondo = maxZ - minZ, alto = v.alturaTecho;
+  const ancho = maxX - minX, fondo = maxZ - minZ, alto = altoPilar(p, v);
   // Lo metemos en un grupo con origen en el suelo, para poder "cortarlo" escalando en Y.
   const grupo = new THREE.Group();
   grupo.name = `pilar:${p.id}`;
