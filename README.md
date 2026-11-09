@@ -71,8 +71,9 @@ Abre <http://localhost:5173> en el navegador.
 En la vista de toda la vivienda se quedan en pie solo las del fondo; al elegir
 una estancia, las que hay entre la cámara y esa estancia.
 
-**Guardar / Cargar:** descarga la escena como `escena.json` o abre una
-guardada. Además, cada cambio se **autoguarda** en el navegador
+**Guardar / Cargar / Vaciar:** descarga la escena como `escena.json` o abre una
+guardada (si el archivo no vale, se explica en el panel y la escena no cambia).
+*Vaciar* pide un segundo toque para confirmar. Además, cada cambio se **autoguarda** en el navegador
 (`localStorage`) y se recupera al volver a abrir la app.
 
 ## Estructura del proyecto
@@ -294,8 +295,13 @@ al sitio libre más cercano. Igual con el autoguardado antiguo.
 ## Publicación
 
 Cada cambio en `main` pasa los tests y se publica solo con GitHub Actions
-(`.github/workflows/desplegar.yml`) en GitHub Pages. La ruta base de Vite se
-toma de la variable `BASE_PATH` (en Pages, `/<nombre-del-repositorio>/`).
+(`.github/workflows/desplegar.yml`) en GitHub Pages, en
+`https://<usuario>.github.io/<repositorio>/`. La ruta base de Vite se toma de
+la variable `BASE_PATH` (en Pages, `/<nombre-del-repositorio>/`).
+
+Para que publique hay que activar Pages una vez: *Settings → Pages → Build and
+deployment → Source = GitHub Actions*. Mientras no esté activado, el workflow
+compila y prueba igualmente, y se salta la publicación con un aviso (no falla).
 
 GitHub Pages en un **repositorio privado** necesita un plan de pago de GitHub.
 Alternativa gratuita más sencilla, **Netlify** (ya está preparado en

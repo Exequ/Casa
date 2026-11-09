@@ -23,6 +23,8 @@ export interface Panel {
   abrir(abierto: boolean): void;
   /** Sincroniza la casilla del plano si se activa desde otro sitio. */
   marcarPlano(visible: boolean): void;
+  /** Muestra un mensaje bajo los botones de guardar/cargar (error = en rojo). */
+  avisar(texto: string, error?: boolean): void;
 }
 
 export function crearPanel(
@@ -149,7 +151,9 @@ export function crearPanel(
   selectorArchivo.accept = '.json,application/json';
   selectorArchivo.hidden = true;
   filaArchivo.append(btnGuardar, btnCargar, btnVaciar, selectorArchivo);
-  secEscena.append(filaArchivo, el('p', 'nota', 'Los cambios se guardan solos en este navegador.'));
+  const mensajeEscena = el('p', 'nota mensaje');
+  mensajeEscena.hidden = true;
+  secEscena.append(filaArchivo, mensajeEscena, el('p', 'nota', 'Los cambios se guardan solos en este navegador.'));
   panel.append(secEscena);
 
   btnGuardar.addEventListener('click', () => acciones.guardar());
@@ -159,8 +163,23 @@ export function crearPanel(
     if (archivo) acciones.cargar(archivo);
     selectorArchivo.value = ''; // permite volver a cargar el mismo archivo
   });
+  // Vaciar pide confirmación en el propio botón: un segundo toque en 4 s lo confirma.
+  let confirmarHasta = 0;
   btnVaciar.addEventListener('click', () => {
-    if (gestor.objetos.length === 0 || confirm('¿Quitar todos los objetos de la vivienda?')) acciones.vaciar();
+    if (gestor.objetos.length > 0 && Date.now() > confirmarHasta) {
+      confirmarHasta = Date.now() + 4000;
+      btnVaciar.textContent = '¿Seguro? Toca otra vez';
+      btnVaciar.classList.add('peligro');
+      setTimeout(() => {
+        btnVaciar.textContent = 'Vaciar';
+        btnVaciar.classList.remove('peligro');
+      }, 4000);
+      return;
+    }
+    confirmarHasta = 0;
+    btnVaciar.textContent = 'Vaciar';
+    btnVaciar.classList.remove('peligro');
+    acciones.vaciar();
   });
 
   // --- Comprobación con el plano ----------------------------------------------------
@@ -217,5 +236,11 @@ export function crearPanel(
   return {
     abrir,
     marcarPlano: (visible) => { casillaPlano.checked = visible; },
+    avisar(texto, error = false) {
+      mensajeEscena.textContent = texto;
+      mensajeEscena.classList.toggle('error', error);
+      mensajeEscena.hidden = false;
+      abrir(true); // en el móvil, para que se vea el mensaje
+    },
   };
 }
