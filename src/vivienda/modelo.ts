@@ -6,6 +6,8 @@
 //
 // El formato completo está explicado en el README (sección "Formato de vivienda.json").
 
+import { validarSuelo, type Suelo } from './suelos';
+
 /** Punto en planta: [x, z] en metros. */
 export type Punto = [number, number];
 
@@ -20,6 +22,8 @@ export interface Estancia {
   exterior?: boolean;
   /** Superficie útil que indica el plano (m²), solo para comprobar. */
   superficiePlano?: number;
+  /** Suelo (tipo, color y escala). Si no se indica, uno por defecto según la estancia. */
+  suelo?: Suelo;
 }
 
 export interface Hueco {
@@ -43,7 +47,10 @@ export interface Pared {
   hasta: Punto;
   /** Grosor (m); la pared se extiende grosor/2 a cada lado del eje. */
   grosor: number;
-  /** Altura (m). Si no se indica, la altura de techo de la vivienda. */
+  /**
+   * Altura (m). Si no se indica, la mayor altura de techo de las estancias
+   * que toca (o la de la vivienda si no toca ninguna).
+   */
   alto?: number;
   huecos?: Hueco[];
 }
@@ -87,9 +94,48 @@ export function largoPared(p: Pared): number {
   return Math.hypot(p.hasta[0] - p.desde[0], p.hasta[1] - p.desde[1]);
 }
 
-/** Altura efectiva de una pared (m). */
+/** Tolerancia para decidir que el borde de una estancia toca una pared o un pilar (m). */
+const TOL_CONTACTO = 0.03;
+
+/**
+ * Estancias interiores (con techo) que tocan una pared: las que tienen un
+ * lado paralelo a la pared, pegado a una de sus caras y a lo largo de ella.
+ */
+export function estanciasDePared(p: Pared, v: Vivienda): Estancia[] {
+  const largo = largoPared(p);
+  if (largo <= 0) return [];
+  const ux = (p.hasta[0] - p.desde[0]) / largo, uz = (p.hasta[1] - p.desde[1]) / largo;
+  const local = ([x, z]: Punto) => {
+    const dx = x - p.desde[0], dz = z - p.desde[1];
+    return { u: dx * ux + dz * uz, n: -dx * uz + dz * ux }; // a lo largo / a lo ancho
+  };
+  return v.estancias.filter((e) => !e.exterior && e.poligono.some((a, i) => {
+    const la = local(a), lb = local(e.poligono[(i + 1) % e.poligono.length]);
+    const paralelo = Math.abs(la.n - lb.n) < 1e-3;
+    const pegado = Math.abs(Math.abs(la.n) - p.grosor / 2) <= TOL_CONTACTO;
+    const solape = Math.min(largo, Math.max(la.u, lb.u)) - Math.max(0, Math.min(la.u, lb.u));
+    return paralelo && pegado && solape > 0.01;
+  }));
+}
+
+/**
+ * Altura efectiva de una pared (m): la suya si la tiene; si no, la mayor
+ * altura de techo de las estancias que toca; si no toca ninguna, la de la vivienda.
+ */
 export function altoPared(p: Pared, v: Vivienda): number {
-  return p.alto ?? v.alturaTecho;
+  if (p.alto !== undefined) return p.alto;
+  const alturas = estanciasDePared(p, v).map((e) => alturaEstancia(e, v));
+  return alturas.length ? Math.max(...alturas) : v.alturaTecho;
+}
+
+/** Altura de un pilar (m): la mayor altura de techo de las estancias que lo rodean. */
+export function altoPilar(p: Pilar, v: Vivienda): number {
+  const minX = Math.min(p.desde[0], p.hasta[0]) - TOL_CONTACTO, maxX = Math.max(p.desde[0], p.hasta[0]) + TOL_CONTACTO;
+  const minZ = Math.min(p.desde[1], p.hasta[1]) - TOL_CONTACTO, maxZ = Math.max(p.desde[1], p.hasta[1]) + TOL_CONTACTO;
+  const alturas = v.estancias
+    .filter((e) => !e.exterior && e.poligono.some(([x, z]) => x >= minX && x <= maxX && z >= minZ && z <= maxZ))
+    .map((e) => alturaEstancia(e, v));
+  return alturas.length ? Math.max(...alturas) : v.alturaTecho;
 }
 
 /** Altura de techo efectiva de una estancia (m). */
@@ -125,6 +171,10 @@ export function validarVivienda(v: Vivienda): string[] {
     if (e?.alturaTecho !== undefined && !(esNumero(e.alturaTecho) && e.alturaTecho > 0)) {
       errores.push(`${donde}: "alturaTecho" debe ser > 0`);
     }
+    if (e?.suelo !== undefined) {
+      const error = validarSuelo(e.suelo);
+      if (error) errores.push(`${donde}: ${error}`);
+    }
   }
 
   for (const [i, p] of (v.paredes ?? []).entries()) {
@@ -137,7 +187,7 @@ export function validarVivienda(v: Vivienda): string[] {
     const largo = largoPared(p);
     if (largo <= 0) errores.push(`${donde}: tiene largo 0`);
     if (!(esNumero(p.grosor) && p.grosor > 0)) errores.push(`${donde}: "grosor" debe ser > 0`);
-    const alto = p.alto ?? v.alturaTecho;
+    const alto = altoPared(p, v);
     for (const [j, h] of (p.huecos ?? []).entries()) {
       const dh = `${donde}, hueco ${h?.nombre ?? j}`;
       if (h?.tipo !== 'puerta' && h?.tipo !== 'ventana') errores.push(`${dh}: "tipo" debe ser "puerta" o "ventana"`);

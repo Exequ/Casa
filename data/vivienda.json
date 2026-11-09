@@ -17,6 +17,11 @@
       "nombre": "Salón comedor",
       "alturaTecho": 2.5,
       "superficiePlano": 15.74,
+      "suelo": {
+        "tipo": "tarima",
+        "color": "#5c3b26",
+        "escala": 2.4
+      },
       "poligono": [
         [
           0.86,
@@ -105,6 +110,11 @@
       "nombre": "Cocina",
       "alturaTecho": 2.5,
       "superficiePlano": 6.37,
+      "suelo": {
+        "tipo": "marmol",
+        "color": "#e9e5df",
+        "escala": 1.2
+      },
       "poligono": [
         [
           1.83,
@@ -137,6 +147,11 @@
       "nombre": "Tendedero",
       "alturaTecho": 2.5,
       "superficiePlano": 3.55,
+      "suelo": {
+        "tipo": "marmol",
+        "color": "#e9e5df",
+        "escala": 1.2
+      },
       "poligono": [
         [
           0.51,
@@ -169,6 +184,11 @@
       "nombre": "Baño",
       "alturaTecho": 2.5,
       "superficiePlano": 3.34,
+      "suelo": {
+        "tipo": "marmol",
+        "color": "#e9e5df",
+        "escala": 1.2
+      },
       "poligono": [
         [
           6.07,
@@ -201,6 +221,11 @@
       "nombre": "Distribuidor",
       "alturaTecho": 2.5,
       "superficiePlano": 2.81,
+      "suelo": {
+        "tipo": "tarima",
+        "color": "#5c3b26",
+        "escala": 2.4
+      },
       "poligono": [
         [
           6.07,
@@ -225,6 +250,11 @@
       "nombre": "Dormitorio",
       "alturaTecho": 2.5,
       "superficiePlano": 10.91,
+      "suelo": {
+        "tipo": "tarima",
+        "color": "#5c3b26",
+        "escala": 2.4
+      },
       "poligono": [
         [
           9.03,
@@ -288,6 +318,11 @@
       "id": "balcon",
       "nombre": "Balcón",
       "exterior": true,
+      "suelo": {
+        "tipo": "exterior",
+        "color": "#a9714f",
+        "escala": 1
+      },
       "poligono": [
         [
           12.49,

@@ -163,3 +163,21 @@ export function encoger(poli: Punto[], d: number): Punto[] {
     return [x - (dx / l) * d, z - (dz / l) * d];
   });
 }
+
+/**
+ * ¿Se solapan dos polígonos convexos? (teorema del eje separador).
+ * Tocarse por un borde no cuenta como solape.
+ */
+export function convexosSeSolapan(a: Punto[], b: Punto[]): boolean {
+  for (const poli of [a, b]) {
+    for (let i = 0; i < poli.length; i++) {
+      const p = poli[i], q = poli[(i + 1) % poli.length];
+      const nx = -(q[1] - p[1]), nz = q[0] - p[0]; // normal del lado
+      let minA = Infinity, maxA = -Infinity, minB = Infinity, maxB = -Infinity;
+      for (const [x, z] of a) { const d = x * nx + z * nz; minA = Math.min(minA, d); maxA = Math.max(maxA, d); }
+      for (const [x, z] of b) { const d = x * nx + z * nz; minB = Math.min(minB, d); maxB = Math.max(maxB, d); }
+      if (maxA <= minB + EPS || maxB <= minA + EPS) return false; // hay un eje que los separa
+    }
+  }
+  return true;
+}

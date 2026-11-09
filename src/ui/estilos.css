@@ -248,3 +248,40 @@ summary { cursor: pointer; font-weight: 600; font-size: 13px; }
   /* En el móvil la sección de objeto seleccionado del cajón sobra (está la barra inferior) */
   #panel .seleccion { display: none; }
 }
+
+/* --- Fase 3a: selector de suelo ----------------------------------------------- */
+.mensaje { padding: 6px 8px; border-radius: 6px; background: #eef4ff; color: var(--texto); }
+.mensaje.error { background: #fff1f1; }
+.rejilla-suelos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.muestra-suelo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: #fff;
+  font-size: 10.5px;
+  line-height: 1.15;
+  text-align: center;
+  min-width: 0;
+}
+.muestra-suelo span { overflow-wrap: anywhere; }
+.vista-suelo {
+  width: 100%;
+  max-width: 56px;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: block;
+}
+.muestra-suelo.activo { border: 2px solid var(--acento); padding: 3px; }
+.muestra-suelo:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+button:disabled { opacity: 0.5; cursor: default; }
+
+/* Las barras siempre por encima de las etiquetas de las estancias */
+.capa-etiquetas { z-index: 1; }
+.barra, .barra-objeto { z-index: 2; }

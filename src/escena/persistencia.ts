@@ -1,23 +1,32 @@
 // Guardar y cargar la escena.
 //
-// Formato del archivo (JSON), versión 2:
+// Formato del archivo (JSON), versión 3:
 // {
-//   "version": 2,
+//   "version": 3,
 //   "vivienda": "Vivienda 2ºA",
 //   "objetos": [
 //     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
-//   ]
+//   ],
+//   "suelos": {
+//     "salon": { "tipo": "tarima", "color": "#a97b4f", "escala": 1.2 }
+//   }
 // }
 //   - "catalogo": id del objeto (nombre del .json del catálogo sin extensión)
 //   - "posicion": centro de la base del objeto, en metros, en coordenadas de vivienda.json
 //   - "rotacion": giro alrededor del eje vertical, en grados
+//   - "suelos": solo las estancias cuyo suelo se ha cambiado respecto a vivienda.json
 //
-// Versión 1 (fase 1): igual, pero las posiciones eran relativas al centro de
-// una habitación de ejemplo. Al cargarla se colocan relativas al centro del
-// salón y, si algún objeto no cabe, se mueve al sitio libre más cercano.
+// Versiones anteriores (se migran solas al cargarlas):
+//   - v2 (fase 2): igual, pero sin "suelos".
+//   - v1 (fase 1, o sin versión): las posiciones eran relativas al centro de una
+//     habitación de ejemplo; se colocan relativas al centro del salón.
+// Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
+// sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa.
 
 import type { ItemCatalogo } from '../catalogo/catalogo';
+import type { Suelo } from '../vivienda/suelos';
 import type { GestorObjetos } from './objetos';
+import type { GestorSuelos } from './suelos3d';
 
 export interface ObjetoGuardado {
   catalogo: string;
@@ -26,9 +35,17 @@ export interface ObjetoGuardado {
 }
 
 export interface EscenaGuardada {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   vivienda?: string;
   objetos: ObjetoGuardado[];
+  suelos?: Record<string, Suelo>;
+}
+
+/** Lo que forma una escena: los muebles colocados y los suelos elegidos. */
+export interface EstadoEscena {
+  objetos: GestorObjetos;
+  suelos: GestorSuelos;
+  nombreVivienda?: string;
 }
 
 /** Clave usada para el autoguardado en el navegador. */
@@ -38,11 +55,11 @@ const CLAVE_AUTOGUARDADO = 'casa3d:escena';
 const redondear = (n: number, decimales = 3) => Number(n.toFixed(decimales));
 
 /** Convierte el estado actual de la escena en un objeto JSON. */
-export function serializar(gestor: GestorObjetos, nombreVivienda?: string): EscenaGuardada {
+export function serializar(estado: EstadoEscena): EscenaGuardada {
   return {
-    version: 2,
-    ...(nombreVivienda ? { vivienda: nombreVivienda } : {}),
-    objetos: gestor.objetos.map((o) => ({
+    version: 3,
+    ...(estado.nombreVivienda ? { vivienda: estado.nombreVivienda } : {}),
+    objetos: estado.objetos.objetos.map((o) => ({
       catalogo: o.item.id,
       posicion: {
         x: redondear(o.raiz.position.x),
@@ -51,56 +68,70 @@ export function serializar(gestor: GestorObjetos, nombreVivienda?: string): Esce
       },
       rotacion: redondear(o.rotacion, 2),
     })),
+    suelos: estado.suelos.cambios(),
   };
 }
 
 /**
- * Pasa una escena de cualquier versión a la versión 2.
+ * Pasa una escena de cualquier versión a la versión 3.
  * `centroV1` es el punto donde se colocaba el centro de la habitación de la fase 1.
  */
 export function migrar(datos: EscenaGuardada, centroV1: { x: number; z: number }): EscenaGuardada {
   if (!datos || !Array.isArray(datos.objetos)) throw new Error('El archivo no tiene una lista "objetos".');
   const version = datos.version ?? 1;
-  if (version === 2) return datos;
+  if (version === 3) return { ...datos, suelos: datos.suelos ?? {} };
+  if (version === 2) return { ...datos, version: 3, suelos: {} };
   if (version !== 1) throw new Error(`Versión de escena desconocida: ${String(version)}`);
   return {
-    version: 2,
+    version: 3,
     objetos: datos.objetos.map((o) => ({
       ...o,
       posicion: { x: (o.posicion?.x ?? 0) + centroV1.x, y: 0, z: (o.posicion?.z ?? 0) + centroV1.z },
     })),
+    suelos: {},
   };
 }
 
-/**
- * Sustituye la escena actual por la guardada. Los objetos que ya no existen
- * en el catálogo se ignoran (con un aviso en la consola).
- */
+/** Resultado de cargar una escena: lo que no se ha podido poner. */
+export interface ResultadoCarga {
+  /** Nombres de objetos que no estaban en el catálogo o no cabían en ninguna parte. */
+  omitidos: string[];
+  /** Suelos ignorados (estancia desconocida o formato no válido). */
+  suelosIgnorados: number;
+}
+
+/** Sustituye la escena actual (muebles y suelos) por la guardada. */
 export async function aplicar(
-  gestor: GestorObjetos,
+  estado: EstadoEscena,
   datos: EscenaGuardada,
   catalogo: ItemCatalogo[],
   centroV1: { x: number; z: number },
-) {
+): Promise<ResultadoCarga> {
   const escena = migrar(datos, centroV1);
+  const gestor = estado.objetos;
   gestor.vaciar();
+  const suelosIgnorados = estado.suelos.restaurar(escena.suelos);
   const porId = new Map(catalogo.map((item) => [item.id, item]));
+  const omitidos: string[] = [];
   for (const o of escena.objetos) {
     const item = porId.get(o.catalogo);
     if (!item) {
       console.warn(`Escena: el objeto "${o.catalogo}" no está en el catálogo; se omite.`);
+      omitidos.push(o.catalogo);
       continue;
     }
-    await gestor.agregar(item, o.posicion?.x ?? 0, o.posicion?.z ?? 0, o.rotacion ?? 0);
+    const obj = await gestor.agregar(item, o.posicion?.x ?? 0, o.posicion?.z ?? 0, o.rotacion ?? 0);
+    if (!obj) omitidos.push(item.nombre);
   }
   gestor.notificar();
+  return { omitidos, suelosIgnorados };
 }
 
 // --- Autoguardado en localStorage --------------------------------------------
 
-export function autoguardar(gestor: GestorObjetos, nombreVivienda?: string) {
+export function autoguardar(estado: EstadoEscena) {
   try {
-    localStorage.setItem(CLAVE_AUTOGUARDADO, JSON.stringify(serializar(gestor, nombreVivienda)));
+    localStorage.setItem(CLAVE_AUTOGUARDADO, JSON.stringify(serializar(estado)));
   } catch (e) {
     console.warn('No se pudo autoguardar', e);
   }
@@ -129,8 +160,8 @@ interface VisorDescargas {
  * Dentro del visor de claude.ai las descargas normales están bloqueadas: allí
  * se usa su capacidad "downloads", que pide confirmación al usuario.
  */
-export async function descargarArchivo(gestor: GestorObjetos, nombreVivienda?: string, nombre = 'escena.json'): Promise<string | null> {
-  const texto = JSON.stringify(serializar(gestor, nombreVivienda), null, 2);
+export async function descargarArchivo(estado: EstadoEscena, nombre = 'escena.json'): Promise<string | null> {
+  const texto = JSON.stringify(serializar(estado), null, 2);
   const visor = (window as { claude?: { use?: (n: string) => Promise<unknown> } }).claude;
   if (visor?.use) {
     try {

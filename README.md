@@ -6,9 +6,15 @@ Todas las medidas están en **metros**, a escala real.
 
 - **Fase 1:** una habitación de ejemplo donde colocar, mover, girar y borrar
   objetos del catálogo, con guardado y carga de la escena.
-- **Fase 2 (actual):** la vivienda real (2ºA), sacada de los planos de
+- **Fase 2:** la vivienda real (2ºA), sacada de los planos de
   `planos/`: estancias, paredes con sus puertas y ventanas, pilares, selector
   de estancia y modo de comprobación con el plano superpuesto.
+- **Fase 2.5 y 3a (actual):** choques entre muebles, altura de paredes según
+  las estancias, mejor corte de paredes, calidad gráfica adaptada al móvil y
+  **suelos con textura** por estancia, con selector en la interfaz.
+
+**App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
+Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
 
 ## Cómo ejecutarlo
 
@@ -37,13 +43,14 @@ Abre <http://localhost:5173> en el navegador.
 - **Selector de estancia:** centra la cámara en una estancia o en toda la vivienda.
 - **Planta:** vista desde arriba.
 - **Plano:** superpone el plano original (ver [Comprobar con el plano](#comprobar-con-el-plano)).
-- **☰** (solo en el móvil): abre el menú con el catálogo, guardar y cargar.
+- **☰** (solo en el móvil): abre el menú con el catálogo, los suelos, guardar y cargar.
 
 **Ordenador:**
 
 - **Cámara:** arrastrar con el botón izquierdo = girar · rueda = zoom · botón derecho = desplazar.
-- **Añadir:** clic en un objeto del catálogo. Aparece en la estancia que se
-  está viendo, ya seleccionado.
+- **Añadir:** clic en un objeto del catálogo. Aparece en el sitio libre más
+  cercano al centro de la estancia elegida en la barra superior (o del
+  salón), ya seleccionado. Si no cabe en ninguna parte, se avisa en el panel.
 - **Seleccionar:** clic sobre el objeto. Clic en vacío o `Esc` deselecciona.
 - **Mover:** arrastrar el objeto por el suelo.
 - **Girar:** `Q` / `E` o los botones ⟲ ⟳ (pasos de 15°). Giro libre con el
@@ -63,13 +70,29 @@ Abre <http://localhost:5173> en el navegador.
 - Pasan de una estancia a otra **por las puertas, solo si caben** (como en la
   realidad). Si se sueltan en mitad de una puerta, se colocan solos en el
   sitio libre más cercano.
+- **No se solapan entre sí:** al arrastrar uno contra otro se queda pegado;
+  al girarlo, si chocaría, se aparta lo justo; al añadirlo o al cargar una
+  escena, va al sitio libre más cercano.
 - El salón y la cocina abierta son un mismo espacio: se puede poner algo a caballo.
-- Si al girar un mueble chocaría con una pared, se aparta lo justo; si no
-  cabe girado, no se gira.
+- Si al girar un mueble chocaría con una pared u otro mueble, se aparta lo
+  justo; si no cabe girado, no se gira.
 
 **Paredes:** las que tapan la vista se bajan solas a 25 cm (como en un plano).
-En la vista de toda la vivienda se quedan en pie solo las del fondo; al elegir
-una estancia, las que hay entre la cámara y esa estancia.
+La regla: se mira qué trozo de suelo tapa cada pared vista desde la cámara (su
+"sombra"); si tapa suelo de la vivienda, se baja. Así se bajan también las
+paredes cortas, como los laterales del armario empotrado, y se quedan en pie
+las fachadas del fondo. Al elegir una estancia, se bajan las que quedan entre
+la cámara y ella y las que tapan su suelo; las del fondo de la estancia se
+quedan en pie. Cada pared mide la mayor altura de techo de las estancias que toca.
+
+**Suelos:** en el panel (en el móvil, menú ☰), sección *Suelo*: elige la
+estancia (o elígela en la barra superior) y toca uno de los 8 suelos. *Volver
+al original* deja el de `vivienda.json`. Los cambios se guardan con la escena.
+
+**Calidad gráfica:** en pantallas táctiles o pequeñas la app usa sombras de
+1024 px y menos píxeles por punto (más fluido); en el ordenador, sombras de
+2048 px. Se puede forzar con `?calidad=ligera`, `?calidad=normal` o
+`?calidad=alta` (4096 px) al final de la dirección.
 
 **Guardar / Cargar / Vaciar:** descarga la escena como `escena.json` o abre una
 guardada (si el archivo no vale, se explica en el panel y la escena no cambia).
@@ -86,17 +109,21 @@ scripts/
   digitalizar-plano.mjs   Medidas tomadas del plano (en píxeles) → data/vivienda.json
   generar-catalogo.mjs    Crea los objetos de ejemplo del catálogo
 tests/                    Tests automáticos (Vitest)
+docs/                     Estado del proyecto (ESTADO.md) y resumen de la fase 2
 src/main.ts               Punto de entrada: une todas las piezas
 src/vivienda/             Datos y geometría en planta (sin 3D)
   modelo.ts               Formato de vivienda.json y su validación
   geometria.ts            Áreas, puntos en polígonos, cruces de segmentos...
-  espacio.ts              Dónde caben los muebles (paredes, puertas, pilares)
+  espacio.ts              Dónde caben los muebles (paredes, puertas, pilares, otros muebles)
+  suelos.ts               Formato del campo "suelo", suelos disponibles y por defecto
 src/escena/               Todo lo 3D
   escena.ts               Renderizador, cámara orbital, luces y encuadres
   vivienda3d.ts           Suelos, paredes con huecos y pilares a partir del JSON
-  corte.ts                Bajar las paredes que tapan la vista
+  corte.ts                Bajar las paredes que tapan la vista (regla de la "sombra")
   etiquetas.ts            Nombre, superficie y altura de techo de cada estancia
   plano.ts                Plano original superpuesto (modo comprobación)
+  texturasSuelo.ts        Texturas de suelo dibujadas por código (canvas) y sus materiales
+  suelos3d.ts             Pone el suelo de cada estancia y recuerda los cambios
   objetos.ts              Objetos colocados: añadir, mover, girar, borrar, seleccionar
   interaccion.ts          Ratón, dedo y teclado sobre la escena 3D
   persistencia.ts         Guardar/cargar JSON, autoguardado y migración de escenas
@@ -106,6 +133,7 @@ src/catalogo/
 src/ui/
   panel.ts                Panel lateral (cajón en el móvil)
   barra.ts                Barra superior y barra del objeto seleccionado (móvil)
+  selectorSuelo.ts        Selector de suelo con vistas previas
   estilos.css             Estilos
 ```
 
@@ -132,6 +160,7 @@ suelo está en `y = 0`. Un punto se escribe `[x, z]`.
       "alturaTecho": 2.5,              // opcional
       "superficiePlano": 15.74,        // opcional: la del plano, para comprobar
       "exterior": false,               // opcional: true en balcones y terrazas
+      "suelo": { "tipo": "tarima", "color": "#5c3b26", "escala": 2.4 },  // opcional (ver abajo)
       "poligono": [[0.86, 0.23], [5.93, 0.23], [5.93, 2.84], ...]
     }
   ],
@@ -141,7 +170,7 @@ suelo está en `y = 0`. Un punto se escribe `[x, z]`.
       "desde": [6.0, 0.05],            // extremos del EJE CENTRAL de la pared
       "hasta": [6.0, 2.84],
       "grosor": 0.14,                  // la pared ocupa grosor/2 a cada lado del eje
-      "alto": 2.5,                     // opcional (por defecto, alturaTecho)
+      "alto": 2.5,                     // opcional (por defecto, la mayor alturaTecho de las estancias que toca)
       "huecos": [
         {
           "tipo": "puerta",            // "puerta" o "ventana"
@@ -171,6 +200,34 @@ Reglas:
 - Los **huecos** son puertas y ventanas; las ventanas llevan cristal. Una
   puerta-ventana (balconera) es una `ventana` con `alfeizar: 0`.
 - Al abrir la app se valida el archivo; si hay errores, se muestran en pantalla.
+
+### El campo `suelo`
+
+Cada estancia puede llevar un `suelo`:
+
+```json
+"suelo": { "tipo": "tarima", "color": "#5c3b26", "escala": 2.4 }
+```
+
+- `tipo`: el dibujo. Uno de `tarima`, `baldosa`, `marmol`, `microcemento`,
+  `terrazo` o `exterior`.
+- `color`: color base, en hexadecimal (`#rrggbb`).
+- `escala`: **metros reales que ocupa una repetición de la textura**. Por
+  ejemplo, `baldosa` con escala 1,2 son 2 × 2 baldosas de 60 cm; `exterior`
+  con escala 1 son 3 × 3 baldosas de 33 cm; `tarima` con escala 2,4 son
+  12 filas de tablas de 20 cm, de 0,8 a 1,6 m de largo.
+
+Si una estancia no tiene `suelo`, se usa uno por defecto: tarima de nogal
+oscuro en las zonas de estar, mármol blanco en baño, cocina y tendedero, y
+gres de exterior en balcones y terrazas. Son también los que lleva ahora
+`vivienda.json` (salón, dormitorio y distribuidor con tarima; baño, cocina y
+tendedero con mármol; balcón con gres).
+
+**Texturas:** se dibujan por código en el navegador (`src/escena/texturasSuelo.ts`,
+con `<canvas>`), así que no hay imágenes descargadas ni licencias de terceros:
+son obra de este proyecto. Pesan 0 KB en el repositorio y cada una ocupa 512 ×
+512 px en memoria. Las coordenadas de textura del suelo van en metros en
+planta, de modo que la escala es real y no se deforman en polígonos irregulares.
 
 ## Cómo se pasó el plano a datos
 
@@ -262,50 +319,66 @@ para crear otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "vivienda": "Vivienda 2ºA",
   "objetos": [
     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
-  ]
+  ],
+  "suelos": {
+    "salon": { "tipo": "microcemento", "color": "#bcb5aa", "escala": 2 }
+  }
 }
 ```
 
 `posicion` es el centro de la base del objeto en metros, en las coordenadas de
 `vivienda.json`, y `rotacion` el giro alrededor del eje vertical en grados
-(positivo = antihorario visto desde arriba).
+(positivo = antihorario visto desde arriba). `suelos` lleva solo las
+estancias cuyo suelo se ha cambiado respecto a `vivienda.json`.
 
-**Escenas de la fase 1** (`"version": 1` o sin versión): sus posiciones eran
-relativas al centro de la habitación de ejemplo. Al cargarlas se colocan
-relativas al centro del salón y, si algún objeto no cabe donde cae, se mueve
-al sitio libre más cercano. Igual con el autoguardado antiguo.
+**Escenas antiguas** (se migran solas al cargarlas, también el autoguardado):
+
+- **v2** (fase 2): igual pero sin `suelos`; se cargan con los suelos originales.
+- **v1** (fase 1, o sin versión): las posiciones eran relativas al centro de
+  la habitación de ejemplo; se colocan relativas al centro del salón.
+
+Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
+sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa en
+el panel. Los suelos de estancias que no existen o mal escritos se ignoran
+(también con aviso).
 
 ## Tests
 
 `npm test` comprueba, entre otras cosas:
 
 - que el área, el ancho y el fondo del suelo de cada estancia en la escena 3D
-  coinciden con su polígono en `vivienda.json`;
+  coinciden con su polígono en `vivienda.json`, y que sus coordenadas de
+  textura van en metros (escala real);
 - que las superficies coinciden con las del plano (±5 % por estancia, ±2 % en total);
-- que cada pared 3D mide lo que dice el JSON y tiene sus huecos (volumen exacto);
+- que cada pared 3D mide lo que dice el JSON y tiene sus huecos (volumen exacto),
+  y que su altura es la mayor de las estancias que toca;
 - que ninguna pared invade el suelo de una estancia y que cada puerta comunica
   dos estancias;
-- que los muebles no atraviesan paredes, pilares, puertas ni ventanas, que
-  pasan por las puertas solo si caben, y la migración de escenas de la fase 1.
+- que los muebles no atraviesan paredes, pilares, puertas, ventanas ni otros
+  muebles, que pasan por las puertas solo si caben, y que se avisa si no hay sitio;
+- el corte automático de paredes (incluidas las cortas y la barandilla);
+- el formato del suelo, los suelos por defecto y la migración de escenas v1 → v3 y v2 → v3.
 
 ## Publicación
 
 Cada cambio en `main` pasa los tests y se publica solo con GitHub Actions
-(`.github/workflows/desplegar.yml`) en GitHub Pages, en
-`https://<usuario>.github.io/<repositorio>/`. La ruta base de Vite se toma de
-la variable `BASE_PATH` (en Pages, `/<nombre-del-repositorio>/`).
+(`.github/workflows/desplegar.yml`) en **GitHub Pages**:
+<https://exequ.github.io/Casa/>. La ruta base de Vite se toma de la variable
+`BASE_PATH` (en Pages, `/<nombre-del-repositorio>/`).
 
-Para que publique hay que activar Pages una vez: *Settings → Pages → Build and
-deployment → Source = GitHub Actions*. Mientras no esté activado, el workflow
-compila y prueba igualmente, y se salta la publicación con un aviso (no falla).
+Pages tiene que estar activado una vez en el repositorio (el workflow lo
+intenta, pero el token de GitHub Actions no tiene permiso para hacerlo):
+*Settings → Pages → Build and deployment → Source = **GitHub Actions***.
+Mientras no esté activado, el workflow compila y prueba igualmente y se salta
+la publicación con un aviso (no falla). Además se ejecuta solo cada hora: en
+cuanto Pages esté activado y la web no exista aún, la publica sin esperar al
+siguiente cambio.
 
-GitHub Pages en un **repositorio privado** necesita un plan de pago de GitHub.
-Alternativa gratuita más sencilla, **Netlify** (ya está preparado en
-`netlify.toml`):
+Alternativa gratuita, **Netlify** (ya está preparado en `netlify.toml`):
 
 1. Entra en <https://app.netlify.com> con tu cuenta de GitHub.
 2. *Add new site → Import an existing project → GitHub* y elige este repositorio.

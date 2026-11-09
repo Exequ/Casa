@@ -133,3 +133,42 @@ describe('muebles en la vivienda', () => {
     expect(estancia('salon')).toBeDefined();
   });
 });
+
+describe('choques entre muebles', () => {
+  const mesaEn = (x: number, z: number) => huellaRectangulo(x, z, 1.2, 0.8, 0);
+
+  it('un mueble no puede pisar a otro', () => {
+    const otros = [mesaEn(3, 1.5)];
+    expect(espacio.esValida({ ...mesa, x: 3.5, z: 1.5 }, false, otros)).toBe(false);
+    expect(espacio.esValida({ ...mesa, x: 4.3, z: 1.5 }, false, otros)).toBe(true);
+  });
+
+  it('dos muebles pueden quedar pegados (tocarse no es solaparse)', () => {
+    expect(espacio.esValida({ ...mesa, x: 4.2, z: 1.5 }, false, [mesaEn(3, 1.5)])).toBe(true);
+  });
+
+  it('al arrastrar contra otro mueble se queda pegado a él', () => {
+    const p = espacio.mover({ ...mesa, x: 1.5, z: 1.5 }, 4.5, 1.5, [mesaEn(3.5, 1.5)]);
+    expect(p.x + 0.6).toBeCloseTo(3.5 - 0.6, 2);
+  });
+
+  it('girar dentro de otro mueble no vale', () => {
+    const otros = [mesaEn(3, 2.2)];
+    expect(espacio.esValida({ ...mesa, x: 3, z: 1.4 }, false, otros)).toBe(true);
+    expect(espacio.esValida({ ...mesa, x: 3, z: 1.4, giro: Math.PI / 2 }, false, otros)).toBe(false);
+  });
+
+  it('el sitio libre más cercano evita los otros muebles', () => {
+    const otros = [mesaEn(3, 1.6)];
+    const sitio = espacio.buscarSitio({ ...mesa, x: 3, z: 1.6 }, espacio.radioTotal(), otros)!;
+    expect(sitio).not.toBeNull();
+    expect(espacio.esValida({ ...mesa, ...sitio }, false, otros)).toBe(true);
+    expect(Math.hypot(sitio.x - 3, sitio.z - 1.6)).toBeLessThan(1.3);
+  });
+
+  it('si la vivienda está llena, no hay sitio', () => {
+    // Un mueble de 6 × 6 m no cabe en ninguna estancia
+    expect(espacio.buscarSitio({ ancho: 6, fondo: 6, giro: 0, x: 3, z: 1.6 }, espacio.radioTotal())).toBeNull();
+  });
+});
+

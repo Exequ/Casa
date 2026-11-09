@@ -15,11 +15,14 @@
 //
 // Las estancias que comparten un borde sin muro (salón y cocina abierta) se
 // tratan como un solo espacio: un mueble puede quedar a caballo entre ambas.
+//
+// Los demás muebles son obstáculos: todas las funciones aceptan una lista de
+// "obstáculos" (las huellas de los otros muebles) que la huella no puede pisar.
 
 import type { Punto, Vivienda } from './modelo';
 import { largoPared } from './modelo';
 import {
-  caja, encoger, huellaRectangulo, puntoEnPoligono, segmentoTocaConvexo,
+  caja, convexosSeSolapan, encoger, huellaRectangulo, puntoEnPoligono, segmentoTocaConvexo,
 } from './geometria';
 
 /** Margen para que un mueble pueda quedar pegado a la pared sin contar como choque (1 mm). */
@@ -30,6 +33,9 @@ const TOL_LINEA = 0.005;
 const PASO = 0.02;
 
 type Segmento = [Punto, Punto];
+
+/** Huella de otro mueble que no se puede pisar: sus 4 esquinas (polígono convexo). */
+export type Obstaculo = Punto[];
 
 export interface Huella {
   x: number;
@@ -78,12 +84,18 @@ export class EspacioLibre {
 
   /**
    * ¿Está bien colocado un mueble con esta huella? (sin atravesar muros,
-   * pilares ni huecos). Con `transito = true`, los huecos de las puertas
-   * interiores cuentan como suelo (se usa mientras se arrastra).
+   * pilares, huecos ni otros muebles). Con `transito = true`, los huecos de
+   * las puertas interiores cuentan como suelo (se usa mientras se arrastra).
    */
-  esValida(h: Huella, transito = false): boolean {
+  esValida(h: Huella, transito = false, obstaculos: Obstaculo[] = []): boolean {
     const region = transito ? this.transito : this.estancias;
+    // Descarte rápido: el centro tiene que estar sobre suelo.
+    if (!region.poligonos.some((poli) => puntoEnPoligono([h.x, h.z], poli, 1e-4))) return false;
     const esquinas = encoger(huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro), HOLGURA);
+    // 0. No pisa otros muebles
+    for (const o of obstaculos) {
+      if (convexosSeSolapan(esquinas, o)) return false;
+    }
     // 1. Todas las esquinas sobre suelo
     if (!esquinas.every((p) => region.poligonos.some((poli) => puntoEnPoligono(p, poli, 1e-4)))) return false;
     // 2. Ningún borde del suelo (muro, pilar, jamba) cruza la huella
@@ -98,15 +110,15 @@ export class EspacioLibre {
    * continua: si choca, se detiene junto a la pared o se desliza a lo largo
    * de ella. Puede cruzar puertas si cabe. Devuelve la posición final.
    */
-  mover(h: Huella, x: number, z: number): { x: number; z: number } {
+  mover(h: Huella, x: number, z: number, obstaculos: Obstaculo[] = []): { x: number; z: number } {
     // Si el mueble ya estaba mal colocado (no cabía en ningún sitio), lo dejamos moverse libre.
-    if (!this.esValida(h, true)) return { x, z };
+    if (!this.esValida(h, true, obstaculos)) return { x, z };
     // 1. Avanzamos en línea recta hasta llegar o chocar...
-    const choque = this.hastaChocar(h, x, z);
+    const choque = this.hastaChocar(h, x, z, obstaculos);
     if (Math.hypot(x - choque.x, z - choque.z) < 1e-9) return choque;
     // 2. ...y desde ahí intentamos seguir deslizando a lo largo de la pared, en X o en Z.
     const desde = { ...h, ...choque };
-    const candidatos = [choque, this.hastaChocar(desde, x, choque.z), this.hastaChocar(desde, choque.x, z)];
+    const candidatos = [choque, this.hastaChocar(desde, x, choque.z, obstaculos), this.hastaChocar(desde, choque.x, z, obstaculos)];
     // Nos quedamos con el candidato más cercano al destino.
     let mejor = candidatos[0];
     for (const c of candidatos) {
@@ -120,15 +132,15 @@ export class EspacioLibre {
    * ha quedado en el hueco de una puerta (o en un sitio no válido), se mueve
    * al sitio libre más cercano. Devuelve null si no hay sitio cerca.
    */
-  asentar(h: Huella): { x: number; z: number } | null {
-    return this.buscarSitio(h, 1.5);
+  asentar(h: Huella, obstaculos: Obstaculo[] = []): { x: number; z: number } | null {
+    return this.buscarSitio(h, 1.5, obstaculos);
   }
 
   /** Avanza en línea recta hacia (x, z) hasta justo antes de que deje de ser válida (en tránsito). */
-  private hastaChocar(h: Huella, x: number, z: number): { x: number; z: number } {
+  private hastaChocar(h: Huella, x: number, z: number, obstaculos: Obstaculo[]): { x: number; z: number } {
     const dist = Math.hypot(x - h.x, z - h.z);
     const en = (t: number) => ({ x: h.x + (x - h.x) * t, z: h.z + (z - h.z) * t });
-    const valida = (t: number) => this.esValida({ ...h, ...en(t) }, true);
+    const valida = (t: number) => this.esValida({ ...h, ...en(t) }, true, obstaculos);
     // 1. Avance en pasos pequeños hasta el primer choque (nunca se salta un muro)...
     const pasos = Math.max(1, Math.ceil(dist / PASO));
     let bien = 0, mal = -1;
@@ -146,21 +158,29 @@ export class EspacioLibre {
   }
 
   /**
-   * Busca la posición válida (fuera de puertas) más cercana a (x, z) para la
-   * huella, en espiral, hasta `radioMax` metros. Devuelve null si no hay sitio.
+   * Busca la posición válida (fuera de puertas y de otros muebles) más
+   * cercana a (x, z) para la huella, en espiral, hasta `radioMax` metros.
+   * Devuelve null si no hay sitio.
    */
-  buscarSitio(h: Huella, radioMax = 3): { x: number; z: number } | null {
-    if (this.esValida(h)) return { x: h.x, z: h.z };
-    const paso = 0.05;
-    for (let r = paso; r <= radioMax + 1e-9; r += paso) {
+  buscarSitio(h: Huella, radioMax = 3, obstaculos: Obstaculo[] = []): { x: number; z: number } | null {
+    if (this.esValida(h, false, obstaculos)) return { x: h.x, z: h.z };
+    // Anillos cada 5 cm el primer metro y cada 10 cm después (para que sea rápido en toda la casa).
+    for (let r = 0.05; r <= radioMax + 1e-9; r += r < 1 ? 0.05 : 0.1) {
+      const paso = r < 1 ? 0.05 : 0.1;
       const n = Math.max(8, Math.ceil((2 * Math.PI * r) / paso));
       for (let i = 0; i < n; i++) {
         const a = (2 * Math.PI * i) / n;
         const p = { x: h.x + r * Math.cos(a), z: h.z + r * Math.sin(a) };
-        if (this.esValida({ ...h, ...p })) return p;
+        if (this.esValida({ ...h, ...p }, false, obstaculos)) return p;
       }
     }
     return null;
+  }
+
+  /** Radio que cubre toda la vivienda desde cualquier punto de ella (para buscar sitio en toda la casa). */
+  radioTotal(): number {
+    const c = this.cajaTotal();
+    return Math.hypot(c.ancho, c.fondo);
   }
 
   /** Caja que envuelve todas las estancias. */

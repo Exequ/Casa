@@ -147,6 +147,18 @@ const pilares = [
 ];
 
 // ---------------------------------------------------------------------------
+// 3b. Suelos por defecto (tipo, color, metros por repetición de la textura)
+// ---------------------------------------------------------------------------
+const TARIMA_OSCURA = { tipo: 'tarima', color: '#5c3b26', escala: 2.4 };
+const MARMOL_CLARO = { tipo: 'marmol', color: '#e9e5df', escala: 1.2 };
+const GRES_EXTERIOR = { tipo: 'exterior', color: '#a9714f', escala: 1 };
+const SUELO_DE = {
+  salon: TARIMA_OSCURA, dormitorio: TARIMA_OSCURA, distribuidor: TARIMA_OSCURA,
+  bano: MARMOL_CLARO, cocina: MARMOL_CLARO, tendedero: MARMOL_CLARO,
+  balcon: GRES_EXTERIOR,
+};
+
+// ---------------------------------------------------------------------------
 // 4. Escala y origen
 // ---------------------------------------------------------------------------
 /** Píxel de la imagen original que será el punto (0, 0) en metros. */
@@ -191,6 +203,7 @@ const vivienda = {
     nombre: e.nombre,
     ...(e.exterior ? { exterior: true } : { alturaTecho: 2.5 }),
     ...(e.superficie ? { superficiePlano: e.superficie } : {}),
+    suelo: SUELO_DE[e.id],
     poligono: e.px.map(aM),
   })),
   paredes: muros.map((m) => {
