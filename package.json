@@ -1,0 +1,23 @@
+{
+  "name": "casa-3d",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Herramienta web local para diseñar y decorar una casa en 3D",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "comprobar": "tsc --noEmit",
+    "catalogo:ejemplos": "node scripts/generar-catalogo.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@types/three": "^0.187.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7"
+  }
+}
