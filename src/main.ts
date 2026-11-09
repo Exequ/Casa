@@ -103,8 +103,9 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
   async cargar(archivo) {
     try {
       await aplicar(gestor, await leerArchivo(archivo), catalogo, centroV1);
+      panel.avisar(`Escena "${archivo.name}" cargada: ${gestor.objetos.length} objetos.`);
     } catch (e) {
-      alert(`No se pudo cargar el archivo: ${(e as Error).message}`);
+      panel.avisar(`No se pudo cargar "${archivo.name}": ${(e as Error).message}. Comprueba que es un archivo guardado con esta app.`, true);
     }
   },
   vaciar: () => gestor.vaciar(),

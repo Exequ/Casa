@@ -1,6 +1,10 @@
 # Publica la app en GitHub Pages cada vez que cambia main.
-# Requisito: en GitHub, Settings → Pages → Source = "GitHub Actions".
-# (En repositorios privados, GitHub Pages solo está disponible con un plan de pago.)
+#
+# Requisito: en GitHub, Settings → Pages → Build and deployment → Source =
+# "GitHub Actions". En repositorios privados, GitHub Pages solo está
+# disponible con un plan de pago. Mientras Pages no esté activado, este
+# workflow compila y prueba la app pero se salta la publicación (con un aviso)
+# en vez de fallar. Alternativa gratuita: Netlify (ver README y netlify.toml).
 name: Desplegar en GitHub Pages
 
 on:
@@ -20,6 +24,8 @@ concurrency:
 jobs:
   compilar:
     runs-on: ubuntu-latest
+    outputs:
+      pages: ${{ steps.pages.outputs.activo }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -32,15 +38,27 @@ jobs:
         run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v4
+      - name: ¿Está GitHub Pages activado?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" --silent 2>/dev/null; then
+            echo "activo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "activo=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub Pages no está activado en este repositorio (Settings → Pages → Source = GitHub Actions). Se omite la publicación."
+          fi
+      - if: steps.pages.outputs.activo == 'true'
+        uses: actions/configure-pages@v5
+      - if: steps.pages.outputs.activo == 'true'
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   desplegar:
     needs: compilar
+    if: needs.compilar.outputs.pages == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
