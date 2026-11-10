@@ -8,7 +8,12 @@ import { crearEscena, type Caja2D } from './escena/escena';
 import { crearEtiquetas } from './escena/etiquetas';
 import { activarInteraccion } from './escena/interaccion';
 import { GestorObjetos } from './escena/objetos';
-import { aplicar, autoguardar, descargarArchivo, leerArchivo, leerAutoguardado, type EstadoEscena, type ResultadoCarga } from './escena/persistencia';
+import {
+  aplicar, autoguardar, descargarArchivo, leerArchivo, leerAutoguardado, serializar, VERSION_ESCENA,
+  type EstadoEscena, type ResultadoCarga,
+} from './escena/persistencia';
+import { Historial } from './escena/historial';
+import { carasColgables, type CaraColgable } from './vivienda/colgar';
 import { crearCapaPlano } from './escena/plano';
 import * as THREE from 'three';
 import { construirVivienda, resaltarMuros } from './escena/vivienda3d';
@@ -71,8 +76,24 @@ escena.cadaFotograma(() => {
 });
 
 // 2. Objetos colocados + interacción con ratón, dedo y teclado
-const gestor = new GestorObjetos(escena.escena, espacio);
-activarInteraccion(escena, gestor);
+const gestor = new GestorObjetos(escena.escena, espacio, carasColgables(vivienda));
+/** ¿Se ve la cara de pared? (no, si su muro está bajado por el corte) */
+const verticalPorNombre = new Map(casa.verticales.map((v) => [v.objeto.name, v]));
+const caraVisible = (c: CaraColgable) => {
+  const v = verticalPorNombre.get(c.elemento);
+  return !v || (v.acabados.visible && v.nucleo.scale.y > 0.9);
+};
+/** ¿Se ve la cara de frente desde la cámara? (para colgar los objetos nuevos donde se vean) */
+const caraDeFrente = (c: CaraColgable) => {
+  const cam = escena.camara.position;
+  const px = c.a[0] + c.n[0] * c.adelanto, pz = c.a[1] + c.n[1] * c.adelanto;
+  return caraVisible(c) && (cam.x - px) * c.n[0] + (cam.z - pz) * c.n[1] > 0.2;
+};
+activarInteraccion(escena, gestor, { espacio, caraVisible, deshacer, rehacer, duplicar });
+// Los cuadros y espejos de un muro bajado se ocultan (si no, flotarían en el aire)
+escena.cadaFotograma(() => {
+  for (const o of gestor.objetos) if (o.colocacion === 'pared' && o.pared) o.raiz.visible = caraVisible(o.pared.cara);
+});
 const estado: EstadoEscena = {
   objetos: gestor, suelos, paredes, nombreVivienda: vivienda.nombre,
   ajustes: {
@@ -96,6 +117,58 @@ gestor.alCambiar(programarAutoguardado);
 suelos.alCambiar(programarAutoguardado);
 paredes.alCambiar(programarAutoguardado);
 luces.alCambiar(programarAutoguardado);
+
+// 3b. Deshacer y rehacer: una "foto" de muebles, suelos y colores tras cada cambio.
+const fotoEscena = () => {
+  const g = serializar(estado);
+  return JSON.stringify({ objetos: g.objetos, suelos: g.suelos, paredes: g.paredes });
+};
+const historial = new Historial(fotoEscena, async (foto) => {
+  // Se intenta volver a seleccionar el mismo objeto (el del mismo tipo más cercano)
+  const sel = gestor.seleccionado;
+  const antes = sel ? { id: sel.item.id, p: sel.raiz.position.clone() } : null;
+  await aplicar(estado, { version: VERSION_ESCENA, ...JSON.parse(foto) }, catalogo, centroV1, false);
+  if (antes) {
+    const mismo = gestor.objetos
+      .filter((o) => o.item.id === antes.id)
+      .sort((a, b) => a.raiz.position.distanceTo(antes.p) - b.raiz.position.distanceTo(antes.p))[0];
+    gestor.seleccionar(mismo && mismo.raiz.position.distanceTo(antes.p) < 1 ? mismo : null);
+  }
+});
+const anotarCambio = () => historial.cambio();
+gestor.alCambiar(anotarCambio);
+suelos.alCambiar(anotarCambio);
+paredes.alCambiar(anotarCambio);
+
+function deshacer() { void historial.deshacer(); }
+function rehacer() { void historial.rehacer(); }
+
+/** Duplica el objeto seleccionado y selecciona la copia. */
+async function duplicar() {
+  const sel = gestor.seleccionado;
+  if (!sel) return;
+  const copia = await gestor.duplicar(sel);
+  if (!copia) {
+    panel.avisar(`No hay sitio libre para duplicar "${sel.item.nombre}".`, true);
+    return;
+  }
+  gestor.seleccionar(copia);
+  gestor.notificar();
+}
+
+/** Descarga una imagen PNG de la vista actual, sin la interfaz (barras, etiquetas ni la caja de selección). */
+function captura() {
+  gestor.mostrarResaltado(false);
+  escena.renderer.render(escena.escena, escena.camara);
+  const url = escena.renderer.domElement.toDataURL('image/png');
+  gestor.mostrarResaltado(true);
+  const f = new Date();
+  const dos = (n: number) => String(n).padStart(2, '0');
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `casa-${f.getFullYear()}${dos(f.getMonth() + 1)}${dos(f.getDate())}-${dos(f.getHours())}${dos(f.getMinutes())}${dos(f.getSeconds())}.png`;
+  enlace.click();
+}
 
 // --- Puertas y cortinas -----------------------------------------------------------------
 function ponerPuertas(abiertas: boolean) {
@@ -160,10 +233,10 @@ const [cx1, cz1] = puntoInterior(salon.poligono);
 const centroV1 = { x: cx1, z: cz1 };
 
 /** Dónde poner un objeto nuevo: lo más cerca posible del centro de la estancia elegida (o del salón). */
-function puntoParaNuevo(): { x: number; z: number; estancia: string } {
+function puntoParaNuevo(): { x: number; z: number; estancia: string; id: string } {
   const e = estanciaPorId(barra.estancia()) ?? salon;
   const [x, z] = puntoInterior(e.poligono);
-  return { x, z, estancia: e.nombre };
+  return { x, z, estancia: e.nombre, id: e.id };
 }
 
 /** Explica lo que no se ha podido poner al cargar una escena. */
@@ -228,9 +301,11 @@ function pulsar(cual: Interruptor, activo: boolean) {
 const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, gestor, {
   async agregar(item: ItemCatalogo) {
     const p = puntoParaNuevo();
-    const obj = await gestor.agregar(item, p.x, p.z, 0);
+    const obj = await gestor.agregarSegunTipo(item, p.x, p.z, p.id, caraDeFrente);
     if (!obj) {
-      panel.avisar(`No hay sitio libre para "${item.nombre}" en ninguna estancia. Aparta o borra algún mueble.`, true);
+      panel.avisar(item.colocacion === 'pared'
+        ? `No hay sitio libre para "${item.nombre}" en ninguna pared. Aparta o borra algún cuadro.`
+        : `No hay sitio libre para "${item.nombre}" en ninguna estancia. Aparta o borra algún mueble.`, true);
       return;
     }
     gestor.seleccionar(obj);
@@ -243,12 +318,14 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
   async cargar(archivo) {
     try {
       const r = await aplicar(estado, await leerArchivo(archivo), catalogo, centroV1);
+      historial.apuntar(); // cargar una escena también se puede deshacer
       panel.avisar(`Escena "${archivo.name}" cargada: ${textoCarga(r)}.`, r.omitidos.length > 0);
     } catch (e) {
       panel.avisar(`No se pudo cargar "${archivo.name}": ${(e as Error).message}. Comprueba que es un archivo guardado con esta app.`, true);
     }
   },
   vaciar: () => gestor.vaciar(),
+  duplicar,
   verPlano,
   opacidadPlano(valor) {
     if (capaPlano) (capaPlano.material as { opacity: number }).opacity = valor;
@@ -261,7 +338,12 @@ const barra = crearBarra(visor, vivienda, gestor, {
   estancia: elegirEstancia,
   pulsar,
   abrirMenu: () => panel.abrir(true),
+  deshacer,
+  rehacer,
+  captura,
+  duplicar,
 });
+historial.alCambiar(() => barra.historial(historial.puedeDeshacer(), historial.puedeRehacer()));
 barra.marcar('luces', true);
 barra.marcar('cortinas', true);
 
@@ -276,10 +358,13 @@ const guardada = leerAutoguardado();
 if (guardada) {
   aplicar(estado, guardada, catalogo, centroV1)
     .then((r) => { if (r.omitidos.length) panel.avisar(`Al recuperar la última escena: ${textoCarga(r)}.`, true); })
-    .catch((e) => console.warn('Autoguardado no válido', e));
+    .catch((e) => console.warn('Autoguardado no válido', e))
+    .finally(() => historial.iniciar());
+} else {
+  historial.iniciar();
 }
 
 // Acceso desde la consola del navegador, útil para depurar y para las pruebas automáticas.
 Object.assign(window, {
-  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra },
+  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra, historial, captura, caraVisible },
 });

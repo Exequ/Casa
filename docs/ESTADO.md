@@ -1,14 +1,116 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 3b (acabados,
-carpintería, techos y luces). El detalle de la fase 2 (medidas del plano,
-suposiciones, comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
+Última actualización: 10 de noviembre de 2026, tras la fase 4 (herramientas
+para decorar). El detalle de la fase 2 (medidas del plano, suposiciones,
+comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
 
 ---
 
-## Fase 3b: acabados reales, carpintería, techos y luces
+## Fase 4: herramientas para decorar
+
+| # | Requisito | Estado | Detalle |
+|---|---|---|---|
+| 1 | Campo `colocacion` en el catálogo (`suelo` / `pared` / `superficie`), `alturaCentro`, `superficies`; los .json antiguos siguen valiendo | **Hecho** | Validado al leer el catálogo (`src/catalogo/catalogo.ts`) y documentado en el README. Sin `colocacion` → suelo; sin `superficies` → el borde superior del mueble; sin `alturaCentro` → 1,50 m. |
+| 2 | Objetos de pared | **Hecho** | Se pegan a la pared a la que apunta el cursor o el dedo (o a la más cercana al punto del suelo señalado), con el frente hacia la estancia, y corren a lo largo de ella o pasan a otra. No pueden tapar puertas (con 7 cm de tapajuntas) ni ventanas (con 3 cm de marco), ni solaparse con otro objeto de la misma pared, ni salirse de la pared, el suelo o el techo: se quedan en el sitio libre más cercano. Altura con deslizador y número en el panel, y ▲ ▼ (5 cm) en la barra del móvil. Si su muro se baja en la vista desde fuera, se ocultan con él. |
+| 3 | Objetos de superficie | **Hecho** | Al arrastrarlos sobre un mueble se apoyan en la tapa o balda señalada (la más alta por debajo del puntero; si no cabe, las demás), dentro del mueble, sin solaparse y comprobando que caben en altura bajo la balda de encima. Se mueven y giran con el mueble. Al borrar el mueble pasan a otro mueble libre a menos de 1,5 m o, si no hay, al suelo. Si no hay mueble bajo el puntero, van por el suelo. |
+| 4 | Los de suelo no se solapan; los de pared y superficie no son obstáculo | **Hecho** | Solo los objetos que están en el suelo cuentan como obstáculo (un jarrón que esté en el suelo, sí). |
+| 5 | Deshacer y rehacer, mínimo 50 pasos | **Hecho** | Botones ↶ ↷ y `Ctrl+Z` / `Ctrl+Mayús+Z` (o `Ctrl+Y`). Recuerda 100 pasos: añadir, mover, girar, borrar, vaciar, duplicar, colgar, apoyar, altura, cargar una escena y cambiar suelos o colores de pared. Los cambios muy seguidos (p. ej. el selector de color) cuentan como uno. No incluye luces, puertas ni cortinas. Se borra al recargar la página. |
+| 6 | Duplicar | **Hecho** | Tecla `D`, botón *Duplicar* del panel y ⧉ en la barra del móvil. La copia va al lado (en la misma pared o el mismo mueble si cabe) y queda seleccionada. |
+| 7 | Catálogo: categorías plegables y buscador | **Hecho** | Categorías como desplegables (abiertas al empezar) y buscador por nombre sin importar tildes ni mayúsculas, con aviso si no hay resultados. También en el menú del móvil. |
+| 8 | Imagen PNG de la vista | **Hecho** | Botón 📷: descarga `casa-AAAAMMDD-HHMMSS.png` con lo que se ve, sin barras, etiquetas ni caja de selección. |
+| 9 | Escena v5 con migración | **Hecho** | Cada objeto guarda `colocacion`; los de pared, el muro, la estancia y la `altura` del centro; los apoyados, `soporte` (posición del mueble en la lista) y `nivel`. Al cargar: primero los muebles, luego lo apoyado y luego lo colgado, en el orden del archivo. v1–v4 se migran (todo al suelo). |
+| 10 | 4 objetos de ejemplo provisionales con su script | **Hecho** | `scripts/generar-catalogo.mjs`: cuadro 40 × 30 cm y espejo 60 × 90 cm (pared), jarrón de 25 cm y planta en maceta de 45 cm (superficie o suelo). Hechos con cajas y cilindros. |
+| 11 | Tests y navegador | **Hecho** | Ver "Comprobaciones". |
+| 12 | README y este documento | **Hecho** | |
+
+---
+
+## Comprobaciones
+
+- **`npm test`: 157 tests, todos pasan.** Nuevos (`tests/decorar.test.ts`, 26):
+  - catálogo: colocación de los ejemplos, valores por defecto y validación de los campos nuevos;
+  - pared: caras de cada estancia (no en el balcón ni barandillas); no tapar la puerta del salón (ni su tapajuntas) ni el mirador; no salirse; pegado a la pared mirando a la estancia; rayo que encuentra la pared por delante; arrastrar contra la puerta; dos objetos sin solaparse (y sí uno encima de otro); altura con techo y con otro cuadro debajo; no estorban a los muebles; no se giran;
+  - superficie: altura de la tapa; sin solapes; sin salirse al arrastrar fuera; mesa llena; moverse y girar con la mesa; borrar la mesa (a otra mesa y luego al suelo); estantería con tres baldas (altura libre entre baldas); del suelo a la mesa y vuelta;
+  - duplicar en el suelo, en la pared y en la mesa;
+  - escena v5: guardar y cargar deja todo exactamente igual (posiciones, pared, altura, soporte y orden); v4 → v5; cuadro de una escena antigua; apoyado sin mueble;
+  - deshacer/rehacer: 60 pasos y deshacer 50 en orden; rehacer; un cambio nuevo borra lo rehacible; cambios seguidos juntos; añadir, mover, girar, apoyar, colgar y borrar con la escena real.
+- **`npm run build`** sin errores.
+- **Navegador automático, escritorio (1400 × 860, ratón), 46 comprobaciones, todas bien:**
+  - buscador (con y sin tildes), aviso sin resultados, plegar una categoría;
+  - añadir mesa, jarrón (queda sobre la mesa) y cuadro (en una pared del salón);
+  - arrastrar el cuadro a lo largo de la pared, y hasta la puerta del salón (se queda al lado);
+  - altura con el deslizador; sin controles de giro en objetos de pared;
+  - `D` duplica el cuadro; espejo colgado sin solapes;
+  - jarrón de la mesa al suelo y de vuelta; planta en la mesa; planta arrastrada contra el jarrón sin solaparse;
+  - mover y girar la mesa con lo de encima;
+  - `Ctrl+Z` / `Ctrl+Mayús+Z`; borrar la mesa (lo de encima al suelo) y deshacerlo con ↶; deshacer 15 veces hasta la casa vacía y rehacerlo todo; deshacer un cambio de suelo y uno de color;
+  - botón *Duplicar*; 📷 descarga un PNG (y la selección sigue);
+  - autoguardado v5 y recarga con todo en su sitio; Guardar v5; cargar v4; deshacer una carga; cargar la v5 guardada;
+  - un cuadro en el muro del rellano se oculta cuando el muro se baja y se ve desde dentro;
+  - sin errores en la consola.
+- **Navegador automático, móvil (iPhone 13 emulado, eventos táctiles reales), 15 comprobaciones, todas bien:** buscador en el menú; añadir cuadro, mesa y jarrón; tocar para seleccionar; arrastrar el cuadro con el dedo por la pared; ▲ ▲ ▼; ⧉ duplicar; jarrón al suelo y a la mesa con el dedo; ↶ ↷; las herramientas no quedan tapadas por la barra del objeto; 📷; recarga; sin errores.
+- **Batería de la fase 3b** (63 + 10 comprobaciones): todo bien salvo dos que esperaban la versión 4 de la escena (ahora es la 5).
+- **Capturas** de cada función revisadas; corregido: el espejo se veía negro (sin entorno que reflejar en el móvil) y los cuadros de un muro bajado flotaban en el aire.
+
+---
+
+## Problemas conocidos y limitaciones
+
+- Los 4 objetos de decoración son **provisionales** (cajas y cilindros).
+- Al apoyar varias cosas en un mueble, cada una va al sitio libre más cercano
+  a donde se suelta: no se busca el mejor reparto (en la mesa de 1,20 × 0,80
+  caben con seguridad 3 macetas de 30 cm, aunque en teoría cabrían 8).
+- Se supone que cada tapa o balda ocupa **toda la planta del mueble**.
+- Las **baldas de abajo** solo se pueden elegir si el puntero apunta a esa
+  altura del mueble (de frente); desde arriba se apoya en la tapa.
+- Los objetos de pared no comprueban si chocan con un **mueble alto** pegado a
+  esa pared (p. ej. un cuadro detrás de un armario), ni con otro cuadro en la
+  pared de al lado justo en la esquina.
+- El **historial** se pierde al recargar la página, y deshacer vuelve a
+  colocar todos los objetos (con muchos objetos puede tardar un momento).
+- La **imagen PNG** en el visor de claude.ai puede no descargarse (allí las
+  descargas normales están bloqueadas); en GitHub Pages funciona.
+- No probado en un móvil real ni en Safari o Firefox.
+
+---
+
+## Decisiones que tomé por mi cuenta
+
+- **"superficie" también puede ir al suelo**: es la forma de dar a la planta
+  la opción "suelo o superficie" con los valores pedidos. Al añadirla se busca
+  primero un mueble libre de la estancia; si no hay, va al suelo.
+- **Cualquier mueble de suelo es un soporte** (por defecto, su tapa de
+  arriba), también el armario. Los objetos de pared o superficie no son soportes.
+- **Márgenes**: 7 cm alrededor de las puertas (el tapajuntas) y 3 cm
+  alrededor de las ventanas.
+- **Altura** con pasos de 5 cm en el móvil y de 1 cm en el panel; el
+  espejo empieza a 1,45 m y el cuadro a 1,50 m.
+- Al **añadir** un cuadro se prefiere una pared de la estancia elegida que se
+  vea de frente desde la cámara.
+- **Duplicar** coloca la copia al lado (+10 cm en la pared, +30 cm en diagonal en el suelo).
+- **Deshacer** guarda 100 pasos y no incluye luces, puertas ni cortinas.
+- **Botones ↶ ↷ 📷 flotando abajo a la derecha** (encima de la barra del
+  objeto en el móvil), para no añadir una tercera fila a la barra superior.
+- En la escena, el **soporte** se guarda como la posición del mueble en la lista de objetos.
+- Al cargar una escena antigua, un cuadro guardado "en el suelo" se cuelga en la pared más cercana.
+
+---
+
+## Qué falta: fase 3c y siguientes
+
+1. **Fase 3c:** cocina completa, sanitarios, plato de ducha y mampara y
+   armario empotrado (fijos).
+2. Sustituir los 4 objetos provisionales por modelos reales y ampliar el
+   catálogo (con `superficies` en las estanterías y muebles de TV).
+3. Posibles mejoras de decoración: reparto automático de lo apoyado, choques
+   de cuadros con muebles altos, historial que sobreviva a recargar.
+4. Vista de paseo en primera persona y luces nuevas (no pedidas aún).
+
+---
+
+## Fase 3b (anterior): acabados reales, carpintería, techos y luces
 
 Todo sacado de las fotos del anuncio (colores a ojo) y escrito en
 `data/vivienda.json` (generado por `scripts/digitalizar-plano.mjs`).
@@ -57,6 +159,103 @@ la estancia de la cámara (y las abiertas a ella); en el móvil, sin mapa de
 entorno y con materiales Lambert en lo mate. En el ordenador se mantiene la
 calidad completa porque una GPU de verdad lo mueve sin problema, pero en este
 emulador sin GPU baja a la mitad.
+
+---
+
+<details><summary>Comprobaciones, problemas y decisiones de la fase 3b</summary>
+
+### Comprobaciones
+
+- **`npm test`: 131 tests, todos pasan.** Nuevos en la fase 3b (`tests/acabados.test.ts` y ajustes en los demás):
+  - formato de los acabados y su validación; migración de escenas v1, v2 y v3 → v4 y escena v4 con ajustes parciales;
+  - **cada pared tiene material en sus dos caras**, y la cara que da a una estancia lleva su pintura o su revestimiento (no el muro desnudo); un tabique entre baño y distribuidor tiene un acabado distinto por cada lado;
+  - el alicatado del baño llega exactamente a 1,10 m y al techo en la ducha;
+  - **la altura del techo de cada estancia coincide con `vivienda.json`** (2,40 m en cocina y distribuidor) y ninguna pared queda más baja que el techo de las estancias que toca;
+  - número de focos por estancia, puertas abatibles (cerradas al empezar), cortinas, lamas, puerta vidriera y mirador;
+  - rodapiés (ninguno en el baño, 7 cm en el tendedero);
+  - luces: como mucho 3 con sombra (1 en el móvil), interruptores general y por estancia, guardar y restaurar, focos solo en la estancia de la cámara;
+  - calidad ligera (materiales Lambert, el color de pared sigue funcionando);
+  - punto de vista de la vista interior en cada estancia;
+  - los tests de las fases anteriores, adaptados (paredes medidas por su núcleo macizo, suelos por defecto nuevos).
+- **`npm run build`** sin errores.
+- **Navegador automático, escritorio (1400 × 860), 63 comprobaciones, todas bien:**
+  - suelos y pinturas por defecto; techos ocultos en la vista general; puertas cerradas y cortinas visibles al empezar;
+  - botones **Puertas** (todas abren), **Cortinas** (se ocultan), **Luces** (todas se apagan y el interruptor de la estancia se desactiva);
+  - el panel de acabados sigue a la estancia elegida; el color de pared se oculta en el balcón y el interruptor de luz en las estancias sin focos;
+  - color preset en el dormitorio, color libre en el salón (sin tocar la cocina), *Color original*;
+  - **Interior**: techos visibles dentro y ocultos al salir; interior de las 7 estancias sin errores y con ≤ 3 sombras;
+  - apagar la luz del baño sin apagar el salón; cambiar un suelo; añadir una mesa;
+  - recarga: colores, suelo, luces, puertas, cortinas y mesa se restauran (autoguardado v4);
+  - Guardar descarga un JSON v4;
+  - cargar escenas v3 (suelos aplicados, paredes y ajustes por defecto), v2, v1 y v4 (con un color no válido que se ignora con aviso);
+  - plano superpuesto; sin errores en la consola.
+- **Navegador automático, móvil (iPhone 13 emulado, toques reales), 10 comprobaciones, todas bien:** calidad ligera, la barra cabe en la pantalla, Puertas, pintar el dormitorio desde el menú, vista interior de salón, dormitorio y baño (solo el sol da sombra), recarga, sin errores.
+- **Capturas** de las 7 estancias por fuera y por dentro, en escritorio y móvil, comparadas con las fotos. Corregí:
+  - la tarima salía naranja: ahora es marrón rojizo oscuro (ipé) con menos contraste entre listones;
+  - la vista interior de las estancias pequeñas (baño, tendedero) miraba a una pared a 30 cm: ahora mira a lo largo de la diagonal más larga desde la puerta;
+  - en el móvil en vertical la vista interior era un pasillo estrecho: ahora el ángulo de visión se calcula para ver unos 80° en horizontal;
+  - el interruptor de luz aparecía en estancias sin focos (balcón);
+  - en el móvil, sin mapa de entorno, los techos se veían marrones: corregido el color de la luz ambiental.
+
+---
+
+### Problemas conocidos y limitaciones
+
+- **Colores aproximados a ojo** de las fotos; las texturas son procedurales
+  (no fotorrealistas: sin relieve ni reflejos reales del entorno, solo uno neutro).
+- **En el móvil** el granito pulido no refleja el entorno (sin mapa de entorno
+  para que vaya fluido); solo brilla con el sol y los focos.
+- **Rendimiento:** medido sin GPU. En el ordenador baja a la mitad respecto a
+  la fase 3a en este emulador; no he podido medirlo en un móvil ni en un
+  ordenador reales, ni probar en Safari o Firefox.
+- **Focos:** solo iluminan dentro (vista Interior) y la estancia en la que está
+  la cámara; las de al lado no reciben luz de ellos aunque la puerta esté abierta.
+- La **vista interior** no tiene modo "caminar": se gira alrededor de un punto
+  de la estancia; para cambiar de estancia hay que elegirla arriba.
+- El **frente de la cocina** está pintado en la pared sin muebles (la cocina es de la fase 3c).
+- **Alturas supuestas:** falso techo de 2,40 m, puertas de 2,05–2,10 m, mirador
+  de 2,45 m, alicatado de 1,10 m (todo editable en `vivienda.json`).
+- La **posición de los focos** es a ojo (el número sí sale de las fotos).
+- Lo de antes: el corte de paredes es una heurística; "Guardar" dentro de
+  claude.ai solo probado con un visor simulado.
+
+---
+
+### Decisiones que tomé por mi cuenta
+
+- **Formato de acabados** (`acabado` con `pared`, `rodapie` y
+  `revestimientos` por zonas y alturas; `focos`; `apliques`; `estilo`,
+  `hojas`, `travesano`, `bisagra`, `abre` y `cortina` en los huecos; `tipo:
+  "barandilla"` en paredes). Ver README.
+- **Revestimientos por zona rectangular en planta** (y no por id de pared):
+  así un alicatado puede ocupar solo la ducha aunque la pared siga.
+- **Color de pared por estancia**, no por pared suelta: es lo que pediste y
+  mantiene la interfaz simple.
+- **Escena v4** con `paredes` y `ajustes` (luces, puertas, cortinas); solo lo cambiado.
+- **Focos agrupados** en 1–2 luces por estancia y solo activos dentro, para no
+  hundir los fps; los discos se ven encendidos siempre que el interruptor lo esté.
+- **Calidad ligera** sin mapa de entorno y con materiales Lambert en lo mate.
+- **Tarima de ipé** `#56301e`, listón de 8 cm; granito `#121214` pulido; los
+  demás colores, en el README.
+- **Mirador** como un único hueco de 3 paños con travesaño a 1,05 m; sus laterales, macizos.
+- **Vista interior** desde el extremo de la diagonal más larga más cercano a la puerta, a 1,55 m.
+- **Colores de pared predefinidos**: blanco roto, gris perla, arena, greige,
+  verde salvia, azul niebla, terracota suave y antracita.
+
+---
+
+### Qué falta: fase 3c y siguientes
+
+1. **Cocina completa** (muebles, encimera, electrodomésticos), **sanitarios**,
+   plato de ducha y mampara, **armario empotrado** (fase 3c).
+2. Muebles sueltos y un catálogo más amplio.
+3. Mejoras posibles de la fase 3b:
+   - modo "caminar" en la vista interior;
+   - focos que iluminen también las estancias vecinas con la puerta abierta;
+   - texturas a partir de fotos reales si se quiere más realismo;
+   - medir en un móvil real y ajustar la calidad ligera.
+
+</details>
 
 ---
 
@@ -110,93 +309,3 @@ calidad automática da 2,5 veces más fps que la de la fase 2.
 
 ---
 
-## Comprobaciones
-
-- **`npm test`: 131 tests, todos pasan.** Nuevos en la fase 3b (`tests/acabados.test.ts` y ajustes en los demás):
-  - formato de los acabados y su validación; migración de escenas v1, v2 y v3 → v4 y escena v4 con ajustes parciales;
-  - **cada pared tiene material en sus dos caras**, y la cara que da a una estancia lleva su pintura o su revestimiento (no el muro desnudo); un tabique entre baño y distribuidor tiene un acabado distinto por cada lado;
-  - el alicatado del baño llega exactamente a 1,10 m y al techo en la ducha;
-  - **la altura del techo de cada estancia coincide con `vivienda.json`** (2,40 m en cocina y distribuidor) y ninguna pared queda más baja que el techo de las estancias que toca;
-  - número de focos por estancia, puertas abatibles (cerradas al empezar), cortinas, lamas, puerta vidriera y mirador;
-  - rodapiés (ninguno en el baño, 7 cm en el tendedero);
-  - luces: como mucho 3 con sombra (1 en el móvil), interruptores general y por estancia, guardar y restaurar, focos solo en la estancia de la cámara;
-  - calidad ligera (materiales Lambert, el color de pared sigue funcionando);
-  - punto de vista de la vista interior en cada estancia;
-  - los tests de las fases anteriores, adaptados (paredes medidas por su núcleo macizo, suelos por defecto nuevos).
-- **`npm run build`** sin errores.
-- **Navegador automático, escritorio (1400 × 860), 63 comprobaciones, todas bien:**
-  - suelos y pinturas por defecto; techos ocultos en la vista general; puertas cerradas y cortinas visibles al empezar;
-  - botones **Puertas** (todas abren), **Cortinas** (se ocultan), **Luces** (todas se apagan y el interruptor de la estancia se desactiva);
-  - el panel de acabados sigue a la estancia elegida; el color de pared se oculta en el balcón y el interruptor de luz en las estancias sin focos;
-  - color preset en el dormitorio, color libre en el salón (sin tocar la cocina), *Color original*;
-  - **Interior**: techos visibles dentro y ocultos al salir; interior de las 7 estancias sin errores y con ≤ 3 sombras;
-  - apagar la luz del baño sin apagar el salón; cambiar un suelo; añadir una mesa;
-  - recarga: colores, suelo, luces, puertas, cortinas y mesa se restauran (autoguardado v4);
-  - Guardar descarga un JSON v4;
-  - cargar escenas v3 (suelos aplicados, paredes y ajustes por defecto), v2, v1 y v4 (con un color no válido que se ignora con aviso);
-  - plano superpuesto; sin errores en la consola.
-- **Navegador automático, móvil (iPhone 13 emulado, toques reales), 10 comprobaciones, todas bien:** calidad ligera, la barra cabe en la pantalla, Puertas, pintar el dormitorio desde el menú, vista interior de salón, dormitorio y baño (solo el sol da sombra), recarga, sin errores.
-- **Capturas** de las 7 estancias por fuera y por dentro, en escritorio y móvil, comparadas con las fotos. Corregí:
-  - la tarima salía naranja: ahora es marrón rojizo oscuro (ipé) con menos contraste entre listones;
-  - la vista interior de las estancias pequeñas (baño, tendedero) miraba a una pared a 30 cm: ahora mira a lo largo de la diagonal más larga desde la puerta;
-  - en el móvil en vertical la vista interior era un pasillo estrecho: ahora el ángulo de visión se calcula para ver unos 80° en horizontal;
-  - el interruptor de luz aparecía en estancias sin focos (balcón);
-  - en el móvil, sin mapa de entorno, los techos se veían marrones: corregido el color de la luz ambiental.
-
----
-
-## Problemas conocidos y limitaciones
-
-- **Colores aproximados a ojo** de las fotos; las texturas son procedurales
-  (no fotorrealistas: sin relieve ni reflejos reales del entorno, solo uno neutro).
-- **En el móvil** el granito pulido no refleja el entorno (sin mapa de entorno
-  para que vaya fluido); solo brilla con el sol y los focos.
-- **Rendimiento:** medido sin GPU. En el ordenador baja a la mitad respecto a
-  la fase 3a en este emulador; no he podido medirlo en un móvil ni en un
-  ordenador reales, ni probar en Safari o Firefox.
-- **Focos:** solo iluminan dentro (vista Interior) y la estancia en la que está
-  la cámara; las de al lado no reciben luz de ellos aunque la puerta esté abierta.
-- La **vista interior** no tiene modo "caminar": se gira alrededor de un punto
-  de la estancia; para cambiar de estancia hay que elegirla arriba.
-- El **frente de la cocina** está pintado en la pared sin muebles (la cocina es de la fase 3c).
-- **Alturas supuestas:** falso techo de 2,40 m, puertas de 2,05–2,10 m, mirador
-  de 2,45 m, alicatado de 1,10 m (todo editable en `vivienda.json`).
-- La **posición de los focos** es a ojo (el número sí sale de las fotos).
-- Lo de antes: el corte de paredes es una heurística; "Guardar" dentro de
-  claude.ai solo probado con un visor simulado.
-
----
-
-## Decisiones que tomé por mi cuenta
-
-- **Formato de acabados** (`acabado` con `pared`, `rodapie` y
-  `revestimientos` por zonas y alturas; `focos`; `apliques`; `estilo`,
-  `hojas`, `travesano`, `bisagra`, `abre` y `cortina` en los huecos; `tipo:
-  "barandilla"` en paredes). Ver README.
-- **Revestimientos por zona rectangular en planta** (y no por id de pared):
-  así un alicatado puede ocupar solo la ducha aunque la pared siga.
-- **Color de pared por estancia**, no por pared suelta: es lo que pediste y
-  mantiene la interfaz simple.
-- **Escena v4** con `paredes` y `ajustes` (luces, puertas, cortinas); solo lo cambiado.
-- **Focos agrupados** en 1–2 luces por estancia y solo activos dentro, para no
-  hundir los fps; los discos se ven encendidos siempre que el interruptor lo esté.
-- **Calidad ligera** sin mapa de entorno y con materiales Lambert en lo mate.
-- **Tarima de ipé** `#56301e`, listón de 8 cm; granito `#121214` pulido; los
-  demás colores, en el README.
-- **Mirador** como un único hueco de 3 paños con travesaño a 1,05 m; sus laterales, macizos.
-- **Vista interior** desde el extremo de la diagonal más larga más cercano a la puerta, a 1,55 m.
-- **Colores de pared predefinidos**: blanco roto, gris perla, arena, greige,
-  verde salvia, azul niebla, terracota suave y antracita.
-
----
-
-## Qué falta: fase 3c y siguientes
-
-1. **Cocina completa** (muebles, encimera, electrodomésticos), **sanitarios**,
-   plato de ducha y mampara, **armario empotrado** (fase 3c).
-2. Muebles sueltos y un catálogo más amplio.
-3. Mejoras posibles de la fase 3b:
-   - modo "caminar" en la vista interior;
-   - focos que iluminen también las estancias vecinas con la puerta abierta;
-   - texturas a partir de fotos reales si se quiere más realismo;
-   - medir en un móvil real y ajustar la calidad ligera.

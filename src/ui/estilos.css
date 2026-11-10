@@ -306,3 +306,41 @@ button:disabled { opacity: 0.5; cursor: default; }
 input[type='color'] { width: 44px; height: 30px; padding: 0 2px; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
 /* Lo oculto con el atributo hidden no se ve aunque su clase tenga display */
 [hidden] { display: none !important; }
+
+/* --- Fase 4: decorar ---------------------------------------------------------- */
+.buscador {
+  width: 100%;
+  font: inherit;
+  padding: 6px 8px;
+  margin: 4px 0 8px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+}
+details.categoria { margin-bottom: 6px; }
+details.categoria > summary {
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+/* Deshacer, rehacer e imagen: abajo a la derecha */
+.herramientas {
+  position: absolute;
+  right: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+.herramientas button {
+  min-width: 44px;
+  min-height: 40px;
+  font-size: 18px;
+  line-height: 1;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.barra-objeto { flex-wrap: wrap; }
+.barra-objeto .nombre { flex-basis: 100%; }
+@media (min-width: 420px) { .barra-objeto .nombre { flex-basis: auto; } }

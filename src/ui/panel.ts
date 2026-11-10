@@ -8,11 +8,15 @@ import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
 import { el, m } from './util';
 
+/** Texto en minúsculas y sin tildes, para buscar sin preocuparse de acentos. */
+const sinAcentos = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 export interface AccionesPanel {
   agregar(item: ItemCatalogo): void;
   guardar(): void;
   cargar(archivo: File): void;
   vaciar(): void;
+  duplicar(): void;
   /** Muestra u oculta el plano superpuesto. */
   verPlano(visible: boolean): void;
   opacidadPlano(valor: number): void;
@@ -55,32 +59,73 @@ export function crearPanel(
   mensaje.setAttribute('role', 'status');
   panel.append(mensaje);
 
-  // --- Catálogo (agrupado por categoría) ----------------------------------------
-  const secCatalogo = el('section');
+  // --- Catálogo (categorías plegables y buscador) --------------------------------
+  const secCatalogo = el('section', 'catalogo');
   secCatalogo.append(el('h2', '', 'Catálogo'));
-  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en el sitio libre más cercano al centro de la estancia elegida arriba (o del salón).'));
+  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en la estancia elegida arriba (o en el salón): los muebles en el suelo, los cuadros en una pared libre y los jarrones o plantas sobre un mueble libre.'));
+  const buscador = el('input', 'buscador');
+  buscador.type = 'search';
+  buscador.placeholder = 'Buscar por nombre…';
+  buscador.setAttribute('aria-label', 'Buscar en el catálogo');
+  secCatalogo.append(buscador);
+  const sinResultados = el('p', 'nota', 'Ningún objeto coincide con la búsqueda.');
+  sinResultados.hidden = true;
   if (catalogo.length === 0) {
     secCatalogo.append(el('p', 'nota', 'No hay objetos. Añade archivos .json + .glb a la carpeta catalogo/.'));
   }
-  let categoriaActual = '';
+  const DONDE: Record<string, string> = { pared: ' · pared', superficie: ' · sobre mueble' };
+  const categorias = new Map<string, { detalles: HTMLDetailsElement; items: { boton: HTMLButtonElement; texto: string }[] }>();
   for (const item of catalogo) {
-    if (item.categoria !== categoriaActual) {
-      categoriaActual = item.categoria;
-      secCatalogo.append(el('h3', '', categoriaActual));
+    let cat = categorias.get(item.categoria);
+    if (!cat) {
+      const detalles = el('details', 'categoria');
+      detalles.open = true;
+      detalles.append(el('summary', '', item.categoria));
+      secCatalogo.append(detalles);
+      cat = { detalles, items: [] };
+      categorias.set(item.categoria, cat);
     }
     const boton = el('button', 'item-catalogo');
     boton.title = 'Añadir a la vivienda';
+    boton.dataset.catalogo = item.id;
     boton.append(
       el('span', 'item-nombre', item.nombre),
-      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m`),
+      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${DONDE[item.colocacion] ?? ''}`),
     );
     boton.addEventListener('click', () => {
       acciones.agregar(item);
       abrir(false); // en el móvil, cerramos el cajón para ver el objeto
     });
-    secCatalogo.append(boton);
+    cat.detalles.append(boton);
+    cat.items.push({ boton, texto: sinAcentos(item.nombre) });
   }
+  secCatalogo.append(sinResultados);
   panel.append(secCatalogo);
+  // Mientras se busca, se abren las categorías con resultados y se ocultan las demás.
+  const abiertas = new Map<HTMLDetailsElement, boolean>();
+  buscador.addEventListener('input', () => {
+    const q = sinAcentos(buscador.value.trim());
+    let total = 0;
+    for (const { detalles, items } of categorias.values()) {
+      let n = 0;
+      for (const { boton, texto } of items) {
+        const ve = !q || texto.includes(q);
+        boton.hidden = !ve;
+        if (ve) n++;
+      }
+      total += n;
+      if (q) {
+        if (!abiertas.has(detalles)) abiertas.set(detalles, detalles.open);
+        detalles.hidden = n === 0;
+        detalles.open = true;
+      } else {
+        detalles.hidden = false;
+        if (abiertas.has(detalles)) detalles.open = abiertas.get(detalles)!;
+      }
+    }
+    if (!q) abiertas.clear();
+    sinResultados.hidden = !q || total > 0;
+  });
 
   // --- Acabados (lo rellena src/ui/selectorAcabados.ts) ------------------------------
   const seccionAcabados = el('section', 'seccion-acabados');
@@ -115,9 +160,30 @@ export function crearPanel(
   numero.step = '0.1';
   filaLibre.append(el('span', '', 'Giro'), deslizador, numero, el('span', '', '°'));
 
-  const btnBorrar = el('button', 'peligro', 'Borrar (Supr)');
+  const bloqueGiro = el('div');
+  bloqueGiro.append(el('h3', '', 'Rotación'), filaBotones, filaLibre);
 
-  conSeleccion.append(nombreSel, posicionSel, el('h3', '', 'Rotación'), filaBotones, filaLibre, btnBorrar);
+  // Altura de los objetos de pared (centro del objeto sobre el suelo)
+  const bloqueAltura = el('div');
+  const filaAltura = el('label', 'fila');
+  const deslizadorAltura = el('input');
+  deslizadorAltura.type = 'range';
+  deslizadorAltura.step = '0.01';
+  deslizadorAltura.id = 'altura-pared';
+  const numeroAltura = el('input', 'numero');
+  numeroAltura.type = 'number';
+  numeroAltura.step = '0.01';
+  filaAltura.append(el('span', '', 'Centro a'), deslizadorAltura, numeroAltura, el('span', '', 'm'));
+  bloqueAltura.append(el('h3', '', 'Altura en la pared'), filaAltura,
+    el('p', 'nota', 'Arrástralo para moverlo por la pared o llevarlo a otra.'));
+
+  const filaAcciones = el('div', 'fila');
+  const btnDuplicar = el('button', '', 'Duplicar (D)');
+  btnDuplicar.id = 'duplicar';
+  const btnBorrar = el('button', 'peligro', 'Borrar (Supr)');
+  filaAcciones.append(btnDuplicar, btnBorrar);
+
+  conSeleccion.append(nombreSel, posicionSel, bloqueGiro, bloqueAltura, filaAcciones);
   secSeleccion.append(sinSeleccion, conSeleccion);
   panel.append(secSeleccion);
 
@@ -129,6 +195,14 @@ export function crearPanel(
     if (gestor.seleccionado && Number.isFinite(valor)) gestor.rotar(gestor.seleccionado, valor);
   });
   btnBorrar.addEventListener('click', () => gestor.seleccionado && gestor.borrar(gestor.seleccionado));
+  btnDuplicar.addEventListener('click', () => acciones.duplicar());
+  // Mientras se arrastra el deslizador no se guarda; al soltarlo, sí (un solo paso de deshacer).
+  deslizadorAltura.addEventListener('input', () => gestor.seleccionado && gestor.ponerAltura(gestor.seleccionado, Number(deslizadorAltura.value), false));
+  deslizadorAltura.addEventListener('change', () => gestor.seleccionado && gestor.ponerAltura(gestor.seleccionado, Number(deslizadorAltura.value)));
+  numeroAltura.addEventListener('change', () => {
+    const valor = Number(numeroAltura.value);
+    if (gestor.seleccionado && Number.isFinite(valor)) gestor.ponerAltura(gestor.seleccionado, valor);
+  });
 
   /** Refresca la sección con los datos del objeto seleccionado. */
   function actualizarSeleccion() {
@@ -138,7 +212,19 @@ export function crearPanel(
     if (!sel) return;
     nombreSel.textContent = sel.item.nombre;
     const p = sel.raiz.position;
-    posicionSel.textContent = `Posición: x ${m(p.x)} m · z ${m(p.z)} m`;
+    const donde = sel.colocacion === 'pared' ? ' · en la pared'
+      : sel.colocacion === 'superficie' && sel.apoyo ? ` · sobre ${sel.apoyo.soporte.item.nombre.toLowerCase()} (${m(sel.apoyo.nivel)} m)` : '';
+    posicionSel.textContent = `Posición: x ${m(p.x)} m · z ${m(p.z)} m${donde}`;
+    const enPared = sel.colocacion === 'pared' && !!sel.pared;
+    bloqueGiro.hidden = enPared;
+    bloqueAltura.hidden = !enPared;
+    if (enPared) {
+      const alto = sel.item.dimensiones.alto;
+      deslizadorAltura.min = numeroAltura.min = String(Math.ceil((alto / 2) * 100) / 100);
+      deslizadorAltura.max = numeroAltura.max = String(Math.floor((sel.pared!.cara.alto - alto / 2) * 100) / 100);
+      deslizadorAltura.value = String(sel.pared!.y);
+      if (document.activeElement !== numeroAltura) numeroAltura.value = String(sel.pared!.y);
+    }
     const grados = Math.round(sel.rotacion * 10) / 10;
     // No pisamos el campo mientras el usuario lo está editando.
     if (document.activeElement !== numero) numero.value = String(grados);
@@ -233,12 +319,16 @@ export function crearPanel(
       <li><b>Cámara:</b> arrastrar = girar · rueda = zoom · botón derecho = desplazar</li>
       <li><b>Objeto:</b> clic = seleccionar · arrastrar = mover</li>
       <li><kbd>Q</kbd> / <kbd>E</kbd> girar 15° · con <kbd>Mayús</kbd> 1°</li>
-      <li><kbd>Supr</kbd> borrar · <kbd>Esc</kbd> deseleccionar</li>
+      <li><kbd>D</kbd> duplicar · <kbd>Supr</kbd> borrar · <kbd>Esc</kbd> deseleccionar</li>
+      <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer · <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>Z</kbd> rehacer</li>
+      <li>Cuadros y espejos: arrastrar a lo largo de la pared o a otra pared</li>
+      <li>Jarrones y plantas: arrastrar encima de un mueble para apoyarlos</li>
     </ul>
     <ul class="solo-movil">
       <li><b>Cámara:</b> un dedo = girar · dos dedos = zoom y desplazar</li>
       <li><b>Objeto:</b> tócalo para seleccionarlo y arrástralo para moverlo</li>
-      <li>Girar y borrar: botones de la barra inferior</li>
+      <li>Girar, subir o bajar (cuadros), duplicar y borrar: barra inferior</li>
+      <li>Deshacer, rehacer e imagen: botones ↶ ↷ 📷 de abajo a la derecha</li>
     </ul>`;
   panel.append(ayuda);
 

@@ -1,0 +1,11 @@
+{
+  "nombre": "Jarrón 25 cm (provisional)",
+  "categoria": "Decoración",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.14,
+    "fondo": 0.14,
+    "alto": 0.25
+  },
+  "glb": "jarron.glb"
+}

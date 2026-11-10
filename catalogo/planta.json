@@ -1,0 +1,11 @@
+{
+  "nombre": "Planta en maceta 45 cm (provisional)",
+  "categoria": "Decoración",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.3,
+    "fondo": 0.3,
+    "alto": 0.45
+  },
+  "glb": "planta.glb"
+}
