@@ -1,0 +1,14 @@
+{
+  "nombre": "Puf baúl de borreguito",
+  "categoria": "Dormitorio",
+  "dimensiones": {
+    "ancho": 0.5,
+    "fondo": 0.6,
+    "alto": 0.43
+  },
+  "superficies": [
+    0.43
+  ],
+  "medidas": "estimadas",
+  "glb": "puf.glb"
+}

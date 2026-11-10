@@ -50,24 +50,64 @@ function cama() {
   return m;
 }
 
+/** Madera de las mesitas: cerezo más claro, color miel (foto del lado izquierdo de la cama). */
+const MIEL = { color: 0x9a6230, rugosidad: 0.45, textura: 'madera' };
+
 function mesitaNoche() {
   const W = 0.45, D = 0.38, H = 0.5;
   const m = new Modelo('mesita-noche', { ancho: W, fondo: D, alto: H });
-  const madera = m.material('madera-cerezo', CEREZO);
-  const pomo = m.material('pomo', MAT.plata);
-  const tapa = 0.025;
-  m.cajaRedonda(madera, [W, tapa, D], 0.006, [0, H - tapa / 2, 0], undefined, 2);
-  const pata = 0.04, alto = H - tapa;
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) pataCuadrada(m, madera, sx * (W / 2 - 0.01 - pata / 2), sz * (D / 2 - 0.01 - pata / 2), alto, pata, 0.034);
-  // Costados, trasera y fondo entre las patas, con un hueco abierto bajo el cajón
-  const xin = W / 2 - 0.01 - pata, zin = D / 2 - 0.01 - pata;
-  for (const sx of [-1, 1]) m.caja(madera, [0.016, 0.3, 2 * zin + 0.01], [sx * (xin + 0.004), alto - 0.15, 0]);
-  m.caja(madera, [2 * xin + 0.01, 0.3, 0.016], [0, alto - 0.15, -(zin + 0.004)]);
-  m.caja(madera, [2 * xin, 0.016, 2 * zin], [0, alto - 0.3, 0]);
-  m.caja(madera, [2 * xin, 0.016, 2 * zin], [0, 0.1, 0]); // balda baja
-  // Cajón con frente liso y pomo
-  m.caja(madera, [2 * xin - 0.004, 0.15, 0.02], [0, alto - 0.085, zin + 0.01 - 0.008]);
-  m.esfera(pomo, 0.013, [0, alto - 0.085, zin + 0.012 + 0.008], { segmentos: 14 });
+  const madera = m.material('madera-miel', MIEL);
+  const junta = m.material('junta-oscura', { color: 0x4a3420, rugosidad: 0.8 });
+  // Cuerpo cerrado sobre un zócalo retranqueado, tapa con el canto algo redondeado
+  const tapa = 0.022, zocalo = 0.03, lado = 0.016;
+  m.cajaRedonda(madera, [W, tapa, D], 0.005, [0, H - tapa / 2, 0], undefined, 2);
+  m.caja(madera, [W - 0.03, zocalo, D - 0.03], [0, zocalo / 2, -0.015]);
+  const alto = H - tapa - zocalo;
+  for (const sx of [-1, 1]) m.caja(madera, [lado, alto, D - 0.006], [sx * (W / 2 - lado / 2), zocalo + alto / 2, -0.003]);
+  m.caja(madera, [W - 2 * lado, alto, 0.012], [0, zocalo + alto / 2, -D / 2 + 0.006]);
+  // Tres cajones iguales de frente liso, sin tiradores, separados por juntas finas
+  const n = 3, sep = 0.005, h = (alto - sep * (n + 1)) / n;
+  m.caja(junta, [W - 2 * lado, alto, 0.006], [0, zocalo + alto / 2, D / 2 - 0.025]);
+  for (let i = 0; i < n; i++) {
+    m.caja(madera, [W - 2 * lado - 0.004, h, 0.02], [0, zocalo + sep + i * (h + sep) + h / 2, D / 2 - 0.012]);
+  }
+  return m;
+}
+
+/** Puf baúl de borreguito blanco, de esquinas blandas, con la tapa marcada por una costura. */
+function puf() {
+  const W = 0.5, D = 0.6, H = 0.43;
+  const m = new Modelo('puf', { ancho: W, fondo: D, alto: H });
+  const borrego = m.material('borreguito-blanco', { color: 0xefebe2, rugosidad: 0.95, textura: 'borrego' });
+  const costura = m.material('costura', { color: 0xd6d1c6, rugosidad: 0.95 });
+  const pata = m.material('pata-oscura', { color: 0x2b2622, rugosidad: 0.6 });
+  const hTapa = 0.09, yCuerpo = 0.015;
+  m.cajaRedonda(borrego, [W - 0.006, H - hTapa - yCuerpo, D - 0.006], 0.035, [0, yCuerpo + (H - hTapa - yCuerpo) / 2, 0], undefined, 4);
+  m.cajaRedonda(costura, [W - 0.012, 0.012, D - 0.012], 0.006, [0, H - hTapa, 0], undefined, 2);
+  m.cajaRedonda(borrego, [W, hTapa, D], 0.04, [0, H - hTapa / 2, 0], undefined, 4);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.cilindro(pata, [0.012, 0.012, yCuerpo + 0.004], [sx * (W / 2 - 0.05), (yCuerpo + 0.004) / 2, sz * (D / 2 - 0.05)], undefined, 10);
+  return m;
+}
+
+/** Cuadro de marco plateado fino, paspartú blanco y lámina de una calle (foto del lado izquierdo de la cama). */
+function cuadroPlateado() {
+  const W = 0.5, D = 0.02, H = 0.42, marco = 0.012;
+  const m = new Modelo('cuadro-marco-plateado', { ancho: W, fondo: D, alto: H });
+  const plata = m.material('marco-plateado', { color: 0xc4c6c8, rugosidad: 0.3, metalico: 0.6 });
+  const paspartu = m.material('paspartu', { color: 0xf3f1ea, rugosidad: 0.9 });
+  const cielo = m.material('lamina-cielo', { color: 0x9fb3bd, rugosidad: 0.85 });
+  const ocre = m.material('lamina-ocre', { color: 0xb88d58, rugosidad: 0.85 });
+  const sombra = m.material('lamina-sombra', { color: 0x6f6a5a, rugosidad: 0.85 });
+  const verde = m.material('lamina-verde', { color: 0x7c8a5e, rugosidad: 0.85 });
+  marcoRectangular(m, plata, W, H, D, marco);
+  m.caja(paspartu, [W - 2 * marco + 0.002, H - 2 * marco + 0.002, 0.004], [0, H / 2, 0.002]);
+  // Lámina: una calle entre fachadas, cielo arriba y algo de verde
+  const lw = 0.3, lh = 0.24, ly = H / 2, z = 0.005;
+  m.caja(cielo, [lw, lh, 0.002], [0, ly, z]);
+  m.caja(ocre, [0.11, lh * 0.8, 0.002], [-lw / 2 + 0.055, ly - lh * 0.1, z + 0.001]);
+  m.caja(sombra, [0.09, lh * 0.7, 0.002], [lw / 2 - 0.045, ly - lh * 0.15, z + 0.001]);
+  m.caja(verde, [0.08, 0.05, 0.002], [0.01, ly - lh / 2 + 0.035, z + 0.0015]);
+  m.caja(plata, [W - 2 * marco, H - 2 * marco, 0.004], [0, H / 2, -D / 2 + 0.002]);
   return m;
 }
 
@@ -239,9 +279,9 @@ const OBJETOS = [
   },
   {
     ruta: 'dormitorio/mesita-noche', construir: mesitaNoche,
-    ficha: { nombre: 'Mesita de noche de cerezo', categoria: 'Dormitorio', superficies: [0.11, 0.5] },
-    como: 'Las del encargo; balda baja a 0,11 m.',
-    fotos: 'Tapa de cerezo claro al sol, cajón de frente liso; en la foto la lámpara ocupa casi media tapa.',
+    ficha: { nombre: 'Mesita de noche de 3 cajones', categoria: 'Dormitorio', superficies: [0.5] },
+    como: 'Las del encargo. Hay dos iguales, una a cada lado de la cama (foto del lado izquierdo).',
+    fotos: 'Madera color miel (más clara que el cabecero), tres cajones iguales de frente liso sin tiradores, zócalo retranqueado.',
   },
   {
     ruta: 'iluminacion/lampara-sobremesa', construir: lamparaMesa,
@@ -260,6 +300,18 @@ const OBJETOS = [
     ficha: { nombre: 'Cuadro de marco gris', categoria: 'Decoración de pared', colocacion: 'pared', alturaCentro: 1.55 },
     como: 'Las del encargo. Mía: centro a 1,55 m (en la foto, junto a la cama, algo por encima del cabecero).',
     fotos: 'Marco gris fino con paspartú y lámina clara.',
+  },
+  {
+    ruta: 'pared/cuadro-marco-plateado', construir: cuadroPlateado,
+    ficha: { nombre: 'Cuadro de marco plateado', categoria: 'Decoración de pared', colocacion: 'pared', alturaCentro: 1.5 },
+    como: 'Mías: algo más ancho que la mesita sobre la que cuelga (0,50 × 0,42); centro a 1,50 m.',
+    fotos: 'Marco plateado fino, paspartú blanco y lámina de una calle con fachadas ocres (foto del lado izquierdo de la cama).',
+  },
+  {
+    ruta: 'dormitorio/puf', construir: puf,
+    ficha: { nombre: 'Puf baúl de borreguito', categoria: 'Dormitorio', superficies: [0.43] },
+    como: 'Mías, con la mesita (0,45) de referencia en la foto: 0,50 × 0,60 × 0,43.',
+    fotos: 'Borreguito blanco roto, esquinas blandas, tapa marcada por una costura, patas ocultas.',
   },
   {
     ruta: 'pared/marco-madera', construir: marcoMadera,
@@ -297,7 +349,8 @@ await procesarLote(OBJETOS, {
   reiniciar: process.argv.includes('--reiniciar'),
   seccion: 'lote2',
   titulo: 'Lote 2: dormitorio, balcón y tendedero',
-  introduccion: `Hecho a partir de las fotos del dormitorio y de la terraza. Todas las
+  introduccion: `Hecho a partir de las fotos del dormitorio y de la terraza (y, para las
+mesitas, el puf y el cuadro plateado, la foto del lado izquierdo de la cama). Todas las
 medidas son **estimadas**: las exteriores son las del encargo; las interiores
 y los detalles salen de las fotos con la balconera (2,10 m), la puerta (2,05 m)
 y la tarima como referencia.`,

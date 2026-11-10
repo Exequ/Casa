@@ -1,5 +1,5 @@
 {
-  "nombre": "Mesita de noche de cerezo",
+  "nombre": "Mesita de noche de 3 cajones",
   "categoria": "Dormitorio",
   "dimensiones": {
     "ancho": 0.45,
@@ -7,7 +7,6 @@
     "alto": 0.5
   },
   "superficies": [
-    0.11,
     0.5
   ],
   "medidas": "estimadas",

@@ -33,7 +33,7 @@ Todas las medidas están en **metros**, a escala real.
   cuadros, mesa y sillas de balcón, planta y lavadora). Medidas estimadas en
   [`docs/OBJETOS.md`](docs/OBJETOS.md).
 - **Fase 5, lote 3:** la casa viene **amueblada por defecto** como
-  en las fotos (`data/escena-inicial.json`, 39 objetos), todo editable, con
+  en las fotos (`data/escena-inicial.json`, 43 objetos), todo editable, con
   el botón *Restaurar disposición original*.
 - **Fase 3c:** los **elementos fijos** de la vivienda, sacados de
   las fotos y del plano: la **cocina** (muebles bajos y altos, columna con el
@@ -42,7 +42,9 @@ Todas las medidas están en **metros**, a escala real.
   no se mueven ni se borran y los muebles no pueden atravesarlos.
 - **Ajustes con fotos de cerca (actual):** cocina como en las fotos nuevas
   (fregadero junto al frigorífico y luego el lavavajillas, horno y campana
-  alineados, pared lisa entre muebles).
+  alineados, pared lisa entre muebles) y dormitorio completo: una mesita con
+  lámpara a cada lado de la cama, puf de borreguito, cuadro plateado, y la
+  cómoda y sus marcos mirando hacia las mesitas.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).

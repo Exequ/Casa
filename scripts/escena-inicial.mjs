@@ -78,17 +78,23 @@ pared('pared/espejo-marco-plateado', 'rellano', 'distribuidor', 7.2, 2.84, 1.38)
 pared('pared/cuadro-marco-blanco', 'bano-distribuidor', 'distribuidor', 6.45, 1.78, 1.6);
 pared('pared/cuadro-marco-blanco', 'bano-distribuidor', 'distribuidor', 8.2, 1.78, 1.6);
 
-// --- Dormitorio (fotos "Habitación" y "Terraza") ------------------------------------------
-// Cama con el cabecero contra la pared norte; mesita de noche entre la cama y la balconera.
-suelo('dormitorio/cama', 10.935, 1.27, 0);
-suelo('dormitorio/mesita-noche', 11.955, 0.425, 0, 'mesita-noche');
+// --- Dormitorio (fotos "Habitación", "Terraza" y la del lado izquierdo de la cama) ----------
+// Cama con el cabecero contra la pared norte, casi centrada; una mesita de noche a cada
+// lado (la izquierda, a 22 cm del pilar de la esquina, como en la foto), cada una con su
+// lámpara y un cuadro encima. Puf baúl contra la pared de la puerta, delante del pilar.
+suelo('dormitorio/cama', 10.5, 1.27, 0);
+suelo('dormitorio/mesita-noche', 11.52, 0.425, 0, 'mesita-noche');
 sobre('iluminacion/lampara-sobremesa', 'mesita-noche', 0.5);
-// Cómoda en la pared de la balconera, entre ella y el armario, mirando a la cama; lámpara encima.
-suelo('dormitorio/comoda-alta', 11.975, 2.6, 270, 'comoda');
-sobre('iluminacion/lampara-sobremesa', 'comoda', 1.15);
-// Cuadro gris sobre la mesita; 4 marcos de madera sobre la cómoda (2 columnas, la derecha más alta).
-pared('pared/cuadro-marco-gris', 'fachada-norte', 'dormitorio', 11.85, 0.23, 1.5);
-for (const [z, y] of [[2.4, 1.42], [2.4, 1.68], [2.63, 1.42], [2.63, 1.74]]) pared('pared/marco-madera', 'fachada-este', 'dormitorio', 12.35, z, y);
+suelo('dormitorio/mesita-noche', 9.48, 0.425, 0, 'mesita-izquierda');
+sobre('iluminacion/lampara-sobremesa', 'mesita-izquierda', 0.5);
+suelo('dormitorio/puf', 9.0, 1.05, 0);
+// Cómoda contra la pared del armario (sur), junto a él, mirando a las mesitas; lámpara en su
+// esquina hacia la balconera y 4 marcos encima (2 columnas, la del armario más alta).
+suelo('dormitorio/comoda-alta', 11.53, 2.72, 180, 'comoda');
+sobre('iluminacion/lampara-sobremesa', 'comoda', 1.15, 180, 11.69, 2.65);
+pared('pared/cuadro-marco-gris', 'fachada-norte', 'dormitorio', 11.4, 0.23, 1.5);
+pared('pared/cuadro-marco-plateado', 'fachada-norte', 'dormitorio', 9.48, 0.23, 1.5);
+for (const [x, y] of [[11.43, 1.42], [11.43, 1.74], [11.63, 1.42], [11.63, 1.68]]) pared('pared/marco-madera', 'dormitorio-sur', 'dormitorio', x, 2.93, y);
 
 // --- Balcón (foto "Terraza") ------------------------------------------------------------
 suelo('exterior/mesa-balcon', 13.035, 1.475, 0, 'mesa-balcon');

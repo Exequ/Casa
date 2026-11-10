@@ -54,7 +54,8 @@ referencia. Maderas con veta y tapicerías con tejido (texturas procedurales).
 <!-- inicio:lote2 -->
 ## Lote 2: dormitorio, balcón y tendedero
 
-Hecho a partir de las fotos del dormitorio y de la terraza. Todas las
+Hecho a partir de las fotos del dormitorio y de la terraza (y, para las
+mesitas, el puf y el cuadro plateado, la foto del lado izquierdo de la cama). Todas las
 medidas son **estimadas**: las exteriores son las del encargo; las interiores
 y los detalles salen de las fotos con la balconera (2,10 m), la puerta (2,05 m)
 y la tarima como referencia.
@@ -62,10 +63,12 @@ y la tarima como referencia.
 | Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
 |---|---|---|---|---|---|---:|
 | Cama con cabecero de cerezo y canapé (`dormitorio/cama`) | 1,58 × 2,08 × 0,95 | colocación: suelo; no admite nada encima | Las del encargo; colchón de 1,50 × 2,00 × 0,24 sobre canapé de 0,36 m. Cabecero: postes de 6 cm con bola, a 0,95 m (más alto que la mesita de 0,50 m, como en la foto). | Postes torneados con remate redondo, panel liso de cerezo, canapé y colchón blancos con ribete gris. | estimada | 2320 |
-| Mesita de noche de cerezo (`dormitorio/mesita-noche`) | 0,45 × 0,38 × 0,5 | colocación: suelo; superficies: 0,11 / 0,5 m | Las del encargo; balda baja a 0,11 m. | Tapa de cerezo claro al sol, cajón de frente liso; en la foto la lámpara ocupa casi media tapa. | estimada | 588 |
+| Mesita de noche de 3 cajones (`dormitorio/mesita-noche`) | 0,45 × 0,38 × 0,5 | colocación: suelo; superficies: 0,5 m | Las del encargo. Hay dos iguales, una a cada lado de la cama (foto del lado izquierdo). | Madera color miel (más clara que el cabecero), tres cajones iguales de frente liso sin tiradores, zócalo retranqueado. | estimada | 396 |
 | Lámpara de sobremesa blanca (`iluminacion/lampara-sobremesa`) | 0,28 × 0,28 × 0,45 | colocación: superficie | Las del encargo (pantalla de 28 cm abajo y 20 arriba). | Pantalla cónica blanca de tela, pie fino plateado y base redonda plana (hay otra igual sobre la cómoda). | estimada | 1296 |
 | Cómoda alta de 6 cajones (`dormitorio/comoda-alta`) | 0,6 × 0,42 × 1,15 | colocación: suelo; superficies: 1,15 m | Las del encargo. En la foto llega casi al alféizar de los cuadros (1,15 m) y es más estrecha que la balconera. | Seis cajones de frente liso sin tiradores visibles separados por juntas finas, zócalo bajo; cerezo algo más rojizo en los frentes. | estimada | 144 |
 | Cuadro de marco gris (`pared/cuadro-marco-gris`) | 0,3 × 0,02 × 0,4 | colocación: pared; centro a 1,55 m | Las del encargo. Mía: centro a 1,55 m (en la foto, junto a la cama, algo por encima del cabecero). | Marco gris fino con paspartú y lámina clara. | estimada | 1248 |
+| Cuadro de marco plateado (`pared/cuadro-marco-plateado`) | 0,5 × 0,02 × 0,42 | colocación: pared; centro a 1,5 m | Mías: algo más ancho que la mesita sobre la que cuelga (0,50 × 0,42); centro a 1,50 m. | Marco plateado fino, paspartú blanco y lámina de una calle con fachadas ocres (foto del lado izquierdo de la cama). | estimada | 1272 |
+| Puf baúl de borreguito (`dormitorio/puf`) | 0,5 × 0,6 × 0,43 | colocación: suelo; superficies: 0,43 m | Mías, con la mesita (0,45) de referencia en la foto: 0,50 × 0,60 × 0,43. | Borreguito blanco roto, esquinas blandas, tapa marcada por una costura, patas ocultas. | estimada | 2404 |
 | Marco pequeño de madera (`pared/marco-madera`) | 0,18 × 0,02 × 0,24 | colocación: pared; centro a 1,5 m | Las del encargo. En la foto hay cuatro sobre la cómoda en dos filas; mía: centro a 1,50 m. | Marco fino de madera media, paspartú blanco y lámina verde. | estimada | 1236 |
 | Mesa redonda plegable de balcón (`exterior/mesa-balcon`) | 0,6 × 0,6 × 0,72 | colocación: suelo; superficies: 0,72 m | Las del encargo (diámetro 0,60, alto 0,72). | Metal blanco, tapa con el borde doblado y patas en tijera que se cruzan. | estimada | 1408 |
 | Silla plegable de balcón (`exterior/silla-balcon`) | 0,4 × 0,45 × 0,85 | colocación: suelo; no admite nada encima | Exteriores: las del encargo. Mías: asiento a 0,44 m con 6 listones, respaldo de 2 listones anchos. | Metal blanco; patas traseras que siguen hasta el respaldo y delanteras cruzadas por debajo del asiento. | estimada | 1088 |

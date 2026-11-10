@@ -110,8 +110,26 @@ export function texturaTela(n = 64, semilla = 11) {
   return { png: pngGris(n, n, valores), media: suma / (n * n) / 255 };
 }
 
+/** Borreguito (bouclé): rizos pequeños y apretados, con relieve irregular. */
+export function texturaBorrego(n = 64, semilla = 23) {
+  const rizo = ruido(20, 20, semilla), fino = ruido(40, 40, semilla + 1), nube = ruido(3, 3, semilla + 2);
+  const valores = new Uint8Array(n * n);
+  let suma = 0;
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const u = x / n, v = y / n;
+      const r = rizo(u, v), f = 0.8 + 0.12 * r * r + 0.06 * fino(u, v) + 0.02 * nube(u, v);
+      const valor = Math.max(0, Math.min(255, Math.round(f * 255)));
+      valores[y * n + x] = valor;
+      suma += valor;
+    }
+  }
+  return { png: pngGris(n, n, valores), media: suma / (n * n) / 255 };
+}
+
 /** Texturas disponibles: generador y metros que ocupa una repetición (a lo largo y a lo ancho de la veta). */
 export const TEXTURAS = {
   madera: { crear: () => texturaMadera(), tamano: [0.9, 0.45] },
   tela: { crear: () => texturaTela(), tamano: [0.12, 0.12] },
+  borrego: { crear: () => texturaBorrego(), tamano: [0.1, 0.1] },
 };
