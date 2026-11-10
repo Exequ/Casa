@@ -1,7 +1,9 @@
 // Construye la vivienda en 3D a partir de data/vivienda.json:
 //   - un suelo por estancia,
-//   - paredes con sus huecos reales de puertas y ventanas,
-//   - pilares y patinillos.
+//   - paredes con sus huecos reales de puertas y ventanas, y pilares (el
+//     "núcleo" macizo),
+//   - por encima, los acabados de cada cara (paredes3d.ts), la carpintería
+//     (carpinteria.ts) y los techos (techos.ts).
 // No usa el DOM, así que también se puede usar en los tests.
 //
 // Convenio de ejes: el punto [x, z] del JSON es (x, 0, z) en 3D; y es la altura.
@@ -9,11 +11,20 @@
 import * as THREE from 'three';
 import type { Estancia, Pared, Pilar, Punto, Vivienda } from '../vivienda/modelo';
 import { altoPared, altoPilar, largoPared } from '../vivienda/modelo';
+import { estanciasPorLado } from '../vivienda/caras';
 import { distanciaASegmento } from '../vivienda/geometria';
+import { crearBarandilla, crearCarpinteria, type PuertaAbatible } from './carpinteria';
+import { construirAcabados, type AcabadosParedes } from './paredes3d';
+import { construirTechos, type Techos3D } from './techos';
 
 /** Un elemento vertical (pared o pilar) que se puede "cortar" para ver el interior. */
 export interface ElementoVertical {
-  objeto: THREE.Object3D;
+  /** Contenedor de todo el elemento (sin transformar). */
+  objeto: THREE.Group;
+  /** Muro macizo. Para cortarlo se aplasta en vertical (scale.y). */
+  nucleo: THREE.Group;
+  /** Revestimientos y carpintería: se ocultan cuando el muro está cortado. */
+  acabados: THREE.Group;
   /** Segmento en planta que representa el elemento (para decidir si tapa la vista). */
   a: Punto;
   b: Punto;
@@ -21,8 +32,6 @@ export interface ElementoVertical {
   alto: number;
   /** Grosor en planta (m). */
   grosor: number;
-  /** Cristales (se ocultan cuando el elemento está cortado). */
-  cristales: THREE.Object3D[];
   /** Antepechos y dinteles (se ocultan en el modo huella para que los huecos se vean). */
   sobreHuecos: THREE.Object3D[];
   /** Solo pilares: paredes que lo tocan. El pilar se corta si se corta alguna de ellas. */
@@ -35,27 +44,50 @@ export interface Vivienda3D {
   suelos: Map<string, THREE.Mesh>;
   /** Paredes y pilares. */
   verticales: ElementoVertical[];
+  /** Acabados de las paredes: pintura por estancia, rodapiés, umbrales… */
+  acabados: AcabadosParedes;
+  /** Puertas que se pueden abrir y cerrar. */
+  puertas: PuertaAbatible[];
+  cortinas: THREE.Object3D[];
+  techos: Techos3D;
 }
 
-// Colores provisionales (los materiales de verdad llegarán en la fase 3).
+// Colores del muro macizo: es lo que se ve en los cantos y en las caras que no dan a ninguna estancia.
 const COLOR_SUELO = 0xd9c3a5;
 const COLOR_SUELO_EXTERIOR = 0xbfc3c7;
-const COLOR_PARED = 0xf2efe9;
-const COLOR_PILAR = 0xe2ddd4;
+const COLOR_PARED = 0xf0eeea;
+const COLOR_PILAR = 0xf0eeea;
 
-const materialPared = new THREE.MeshStandardMaterial({ color: COLOR_PARED, roughness: 0.95 });
-const materialPilar = new THREE.MeshStandardMaterial({ color: COLOR_PILAR, roughness: 0.95 });
-const materialCristal = new THREE.MeshStandardMaterial({
-  color: 0xa9d4f5, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false,
-});
+const materialPared = new THREE.MeshStandardMaterial({ color: COLOR_PARED, roughness: 0.95, name: 'muro' });
+const materialPilar = new THREE.MeshStandardMaterial({ color: COLOR_PILAR, roughness: 0.95, name: 'pilar' });
 
 /**
  * Modo comprobación: pinta paredes y pilares de un color llamativo para que su
  * huella se distinga bien bajo el plano superpuesto.
  */
 export function resaltarMuros(activo: boolean) {
-  materialPared.color.setHex(activo ? 0xe0302a : COLOR_PARED);
-  materialPilar.color.setHex(activo ? 0xb01a8a : COLOR_PILAR);
+  for (const m of [materialPared, ligeros.get(materialPared)]) (m as THREE.MeshStandardMaterial | undefined)?.color.setHex(activo ? 0xe0302a : COLOR_PARED);
+  for (const m of [materialPilar, ligeros.get(materialPilar)]) (m as THREE.MeshStandardMaterial | undefined)?.color.setHex(activo ? 0xb01a8a : COLOR_PILAR);
+}
+
+/** Versión barata (Lambert) de cada material mate ya sustituido, para la calidad ligera. */
+const ligeros = new Map<THREE.Material, THREE.Material>();
+
+/**
+ * Con calidad ligera, los materiales mates y lisos (muros, pintura, techos)
+ * pasan a MeshLambertMaterial, mucho más barato por píxel y casi igual a la vista.
+ */
+function versionLigera(m: THREE.Material): THREE.Material {
+  if (!(m instanceof THREE.MeshStandardMaterial) || m.map || m.transparent || m.metalness > 0 || m.roughness < 0.85) return m;
+  let l = ligeros.get(m);
+  if (!l) {
+    l = new THREE.MeshLambertMaterial({
+      color: m.color, name: m.name, side: m.side,
+      polygonOffset: m.polygonOffset, polygonOffsetFactor: m.polygonOffsetFactor, polygonOffsetUnits: m.polygonOffsetUnits,
+    });
+    ligeros.set(m, l);
+  }
+  return l;
 }
 
 /** Suelo de una estancia: polígono plano a la altura y = 0. */
@@ -84,68 +116,80 @@ function bloque(largo: number, alto: number, grosor: number, x: number, y: numbe
   return m;
 }
 
+/** Grupo vacío para un elemento: contenedor, núcleo y acabados. */
+function contenedor(nombre: string) {
+  const objeto = new THREE.Group();
+  objeto.name = nombre;
+  const nucleo = new THREE.Group();
+  nucleo.name = 'nucleo';
+  const acabados = new THREE.Group();
+  acabados.name = 'acabados';
+  objeto.add(nucleo, acabados);
+  return { objeto, nucleo, acabados };
+}
+
 /**
- * Pared con sus huecos. Se construye en coordenadas locales (x a lo largo de
- * la pared, de -largo/2 a +largo/2; z a lo ancho) y luego se coloca y gira.
+ * Pared con sus huecos. El núcleo se construye en coordenadas locales (x a lo
+ * largo de la pared, de -largo/2 a +largo/2; z a lo ancho) y luego se coloca y gira.
  *
  * Para cada hueco se ponen: un trozo de muro bajo el alféizar (si lo hay) y
  * un dintel encima (si no llega al techo). Entre huecos, muro completo.
+ * Las barandillas no son macizas: son barrotes.
  */
 export function crearPared(p: Pared, v: Vivienda): ElementoVertical {
   const largo = largoPared(p);
   const alto = altoPared(p, v);
-  const grupo = new THREE.Group();
-  grupo.name = `pared:${p.id}`;
-  const cristales: THREE.Object3D[] = [];
+  const { objeto, nucleo, acabados } = contenedor(`pared:${p.id}`);
   const sobreHuecos: THREE.Object3D[] = [];
   const x0 = -largo / 2; // borde "desde" en coordenadas locales
 
-  const huecos = [...(p.huecos ?? [])].sort((a, b) => a.distancia - b.distancia);
-  let cursor = 0; // distancia ya construida desde "desde"
-  for (const h of huecos) {
-    // Muro completo hasta el hueco
-    if (h.distancia > cursor + 1e-6) {
-      const l = h.distancia - cursor;
-      grupo.add(bloque(l, alto, p.grosor, x0 + cursor + l / 2, alto / 2, materialPared));
+  if (p.tipo === 'barandilla') {
+    nucleo.add(crearBarandilla(largo, alto));
+  } else {
+    const huecos = [...(p.huecos ?? [])].sort((a, b) => a.distancia - b.distancia);
+    let cursor = 0; // distancia ya construida desde "desde"
+    for (const h of huecos) {
+      // Muro completo hasta el hueco
+      if (h.distancia > cursor + 1e-6) {
+        const l = h.distancia - cursor;
+        nucleo.add(bloque(l, alto, p.grosor, x0 + cursor + l / 2, alto / 2, materialPared));
+      }
+      const centro = x0 + h.distancia + h.ancho / 2;
+      // Antepecho bajo la ventana
+      if (h.alfeizar > 1e-6) {
+        const antepecho = bloque(h.ancho, h.alfeizar, p.grosor, centro, h.alfeizar / 2, materialPared);
+        antepecho.name = 'antepecho';
+        nucleo.add(antepecho);
+        sobreHuecos.push(antepecho);
+      }
+      // Dintel sobre el hueco
+      const arriba = h.alfeizar + h.alto;
+      if (alto - arriba > 1e-6) {
+        const dintel = bloque(h.ancho, alto - arriba, p.grosor, centro, arriba + (alto - arriba) / 2, materialPared);
+        dintel.name = 'dintel';
+        nucleo.add(dintel);
+        sobreHuecos.push(dintel);
+      }
+      cursor = h.distancia + h.ancho;
     }
-    const centro = x0 + h.distancia + h.ancho / 2;
-    // Antepecho bajo la ventana
-    if (h.alfeizar > 1e-6) {
-      const antepecho = bloque(h.ancho, h.alfeizar, p.grosor, centro, h.alfeizar / 2, materialPared);
-      antepecho.name = 'antepecho';
-      grupo.add(antepecho);
-      sobreHuecos.push(antepecho);
+    if (largo - cursor > 1e-6) {
+      const l = largo - cursor;
+      nucleo.add(bloque(l, alto, p.grosor, x0 + cursor + l / 2, alto / 2, materialPared));
     }
-    // Dintel sobre el hueco
-    const arriba = h.alfeizar + h.alto;
-    if (alto - arriba > 1e-6) {
-      const dintel = bloque(h.ancho, alto - arriba, p.grosor, centro, arriba + (alto - arriba) / 2, materialPared);
-      dintel.name = 'dintel';
-      grupo.add(dintel);
-      sobreHuecos.push(dintel);
-    }
-    // Cristal en las ventanas
-    if (h.tipo === 'ventana') {
-      const cristal = new THREE.Mesh(new THREE.BoxGeometry(h.ancho, h.alto, 0.02), materialCristal);
-      cristal.position.set(centro, h.alfeizar + h.alto / 2, 0);
-      cristal.name = 'cristal';
-      grupo.add(cristal);
-      cristales.push(cristal);
-    }
-    cursor = h.distancia + h.ancho;
-  }
-  if (largo - cursor > 1e-6) {
-    const l = largo - cursor;
-    grupo.add(bloque(l, alto, p.grosor, x0 + cursor + l / 2, alto / 2, materialPared));
   }
 
   // Colocamos la pared: centro en el punto medio y eje local X apuntando de "desde" a "hasta".
+  colocarComoPared(nucleo, p);
+  objeto.userData.pared = p.id;
+  return { objeto, nucleo, acabados, a: p.desde, b: p.hasta, alto, grosor: p.grosor, sobreHuecos };
+}
+
+/** Coloca un grupo en el sitio de una pared: origen en su punto medio y eje X local a lo largo de ella. */
+function colocarComoPared(grupo: THREE.Object3D, p: Pared) {
   const dx = p.hasta[0] - p.desde[0];
   const dz = p.hasta[1] - p.desde[1];
   grupo.position.set((p.desde[0] + p.hasta[0]) / 2, 0, (p.desde[1] + p.hasta[1]) / 2);
   grupo.rotation.y = Math.atan2(-dz, dx);
-  grupo.userData.pared = p.id;
-  return { objeto: grupo, a: p.desde, b: p.hasta, alto, grosor: p.grosor, cristales, sobreHuecos };
 }
 
 /** Pilar: bloque macizo de suelo a techo. */
@@ -153,22 +197,24 @@ export function crearPilar(p: Pilar, v: Vivienda): ElementoVertical {
   const minX = Math.min(p.desde[0], p.hasta[0]), maxX = Math.max(p.desde[0], p.hasta[0]);
   const minZ = Math.min(p.desde[1], p.hasta[1]), maxZ = Math.max(p.desde[1], p.hasta[1]);
   const ancho = maxX - minX, fondo = maxZ - minZ, alto = altoPilar(p, v);
-  // Lo metemos en un grupo con origen en el suelo, para poder "cortarlo" escalando en Y.
-  const grupo = new THREE.Group();
-  grupo.name = `pilar:${p.id}`;
-  grupo.position.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
+  // El núcleo tiene el origen en el suelo, para poder "cortarlo" aplastándolo en vertical.
+  const { objeto, nucleo, acabados } = contenedor(`pilar:${p.id}`);
+  nucleo.position.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
   const m = new THREE.Mesh(new THREE.BoxGeometry(ancho, alto, fondo), materialPilar);
   m.position.y = alto / 2;
   m.castShadow = m.receiveShadow = true;
-  grupo.add(m);
+  nucleo.add(m);
   // Segmento representativo: a lo largo del lado mayor.
   const cz = (minZ + maxZ) / 2, cx = (minX + maxX) / 2;
   const [a, b]: [Punto, Punto] = ancho >= fondo ? [[minX, cz], [maxX, cz]] : [[cx, minZ], [cx, maxZ]];
-  return { objeto: grupo, a, b, alto, grosor: Math.min(ancho, fondo), cristales: [], sobreHuecos: [] };
+  return { objeto, nucleo, acabados, a, b, alto, grosor: Math.min(ancho, fondo), sobreHuecos: [] };
 }
 
-/** Construye toda la vivienda. */
-export function construirVivienda(v: Vivienda): Vivienda3D {
+/**
+ * Construye toda la vivienda. `tamanoTextura` es la resolución de las texturas
+ * de los alicatados (px); `ligera` = materiales mates más baratos (móvil).
+ */
+export function construirVivienda(v: Vivienda, tamanoTextura = 512, ligera = false): Vivienda3D {
   const grupo = new THREE.Group();
   grupo.name = 'vivienda';
   const suelos = new Map<string, THREE.Mesh>();
@@ -185,7 +231,37 @@ export function construirVivienda(v: Vivienda): Vivienda3D {
   });
   const verticales: ElementoVertical[] = [...paredes, ...pilares];
   for (const el of verticales) grupo.add(el.objeto);
-  return { grupo, suelos, verticales };
+
+  // Acabados de cada cara, rodapiés y umbrales
+  const acabados = construirAcabados(v, materialPared, tamanoTextura);
+  for (const el of verticales) for (const malla of acabados.porElemento.get(el.objeto.name) ?? []) el.acabados.add(malla);
+  for (const malla of acabados.sueltas) grupo.add(malla);
+  grupo.add(acabados.rodapies);
+  for (const lista of acabados.umbrales.values()) for (const malla of lista) grupo.add(malla);
+
+  // Carpintería de cada pared (se coloca igual que su núcleo)
+  const lados = estanciasPorLado(v);
+  const puertas: PuertaAbatible[] = [];
+  const cortinas: THREE.Object3D[] = [];
+  v.paredes.forEach((p, i) => {
+    const c = crearCarpinteria(p, v, lados.get(p.id)!);
+    if (!c) return;
+    colocarComoPared(c.grupo, p);
+    paredes[i].acabados.add(c.grupo);
+    puertas.push(...c.puertas);
+    cortinas.push(...c.cortinas);
+  });
+
+  const techos = construirTechos(v);
+  grupo.add(techos.grupo);
+  if (ligera) {
+    grupo.traverse((o) => {
+      const malla = o as THREE.Mesh;
+      if (malla.isMesh && !Array.isArray(malla.material)) malla.material = versionLigera(malla.material);
+    });
+    for (const [id, m] of acabados.pintura) acabados.pintura.set(id, versionLigera(m) as THREE.MeshLambertMaterial);
+  }
+  return { grupo, suelos, verticales, acabados, puertas, cortinas, techos };
 }
 
 /** ¿Toca el pilar a la pared? (con 2 cm de margen) */

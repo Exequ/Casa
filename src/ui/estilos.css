@@ -285,3 +285,24 @@ button:disabled { opacity: 0.5; cursor: default; }
 /* Las barras siempre por encima de las etiquetas de las estancias */
 .capa-etiquetas { z-index: 1; }
 .barra, .barra-objeto { z-index: 2; }
+
+/* --- Fase 3b: acabados -------------------------------------------------------- */
+.seccion-acabados h3 { margin-top: 12px; }
+.rejilla-colores {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.muestra-color {
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  min-width: 0;
+}
+.muestra-color.activo { outline: 2px solid var(--acento); outline-offset: 2px; }
+.muestra-color:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+input[type='color'] { width: 44px; height: 30px; padding: 0 2px; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
+/* Lo oculto con el atributo hidden no se ve aunque su clase tenga display */
+[hidden] { display: none !important; }

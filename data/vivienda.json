@@ -19,9 +19,38 @@
       "superficiePlano": 15.74,
       "suelo": {
         "tipo": "tarima",
-        "color": "#5c3b26",
-        "escala": 2.4
+        "color": "#56301e",
+        "escala": 2.4,
+        "pieza": 0.08,
+        "acabado": "satinado"
       },
+      "acabado": {
+        "pared": {
+          "color": "#eeede9"
+        }
+      },
+      "focos": [
+        [
+          1.5,
+          1
+        ],
+        [
+          1.5,
+          2.4
+        ],
+        [
+          3.4,
+          1.7
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2.3
+        ]
+      ],
       "poligono": [
         [
           0.86,
@@ -108,13 +137,88 @@
     {
       "id": "cocina",
       "nombre": "Cocina",
-      "alturaTecho": 2.5,
+      "alturaTecho": 2.4,
       "superficiePlano": 6.37,
       "suelo": {
-        "tipo": "marmol",
-        "color": "#e9e5df",
-        "escala": 1.2
+        "tipo": "granito",
+        "color": "#121214",
+        "escala": 1.2,
+        "pieza": 0.6,
+        "acabado": "pulido"
       },
+      "acabado": {
+        "pared": {
+          "color": "#eeede9"
+        },
+        "revestimientos": [
+          {
+            "nombre": "Frente de azulejo blanco (pared del fondo)",
+            "material": {
+              "tipo": "azulejo",
+              "color": "#f4f4f2",
+              "pieza": [
+                0.6,
+                0.3
+              ],
+              "acabado": "pulido"
+            },
+            "desde": 0.9,
+            "hasta": 1.45,
+            "zona": [
+              1.8,
+              6.1,
+              4.1,
+              6.2
+            ]
+          },
+          {
+            "nombre": "Frente de azulejo blanco (pared de la derecha)",
+            "material": {
+              "tipo": "azulejo",
+              "color": "#f4f4f2",
+              "pieza": [
+                0.6,
+                0.3
+              ],
+              "acabado": "pulido"
+            },
+            "desde": 0.9,
+            "hasta": 1.45,
+            "zona": [
+              4,
+              4.3,
+              4.1,
+              6.2
+            ]
+          },
+          {
+            "nombre": "Frente de granito negro tras la placa",
+            "material": {
+              "tipo": "granito",
+              "color": "#121214",
+              "acabado": "pulido"
+            },
+            "desde": 0.9,
+            "hasta": 1.45,
+            "zona": [
+              2.15,
+              6.1,
+              2.95,
+              6.2
+            ]
+          }
+        ]
+      },
+      "focos": [
+        [
+          2.9,
+          4.1
+        ],
+        [
+          2.9,
+          5.3
+        ]
+      ],
       "poligono": [
         [
           1.83,
@@ -149,8 +253,19 @@
       "superficiePlano": 3.55,
       "suelo": {
         "tipo": "marmol",
-        "color": "#e9e5df",
-        "escala": 1.2
+        "color": "#5d5750",
+        "escala": 1.2,
+        "pieza": 0.6,
+        "acabado": "mate"
+      },
+      "acabado": {
+        "pared": {
+          "color": "#eeede9"
+        },
+        "rodapie": {
+          "alto": 0.07,
+          "color": "#5d5750"
+        }
       },
       "poligono": [
         [
@@ -186,9 +301,74 @@
       "superficiePlano": 3.34,
       "suelo": {
         "tipo": "marmol",
-        "color": "#e9e5df",
-        "escala": 1.2
+        "color": "#dcdddb",
+        "escala": 0.9,
+        "pieza": 0.45,
+        "acabado": "mate"
       },
+      "acabado": {
+        "pared": {
+          "color": "#f2f2f0"
+        },
+        "rodapie": null,
+        "revestimientos": [
+          {
+            "nombre": "Alicatado hasta 1,10 m",
+            "material": {
+              "tipo": "alicatado",
+              "color": "#d5d6d4",
+              "pieza": [
+                0.6,
+                0.3
+              ],
+              "acabado": "satinado"
+            },
+            "hasta": 1.1
+          },
+          {
+            "nombre": "Alicatado de la ducha, hasta el techo",
+            "material": {
+              "tipo": "alicatado",
+              "color": "#d5d6d4",
+              "pieza": [
+                0.6,
+                0.3
+              ],
+              "acabado": "satinado"
+            },
+            "hasta": "techo",
+            "zona": [
+              6,
+              0.2,
+              7.01,
+              1.7
+            ]
+          }
+        ]
+      },
+      "focos": [
+        [
+          6.55,
+          0.95
+        ],
+        [
+          7.6,
+          1
+        ]
+      ],
+      "apliques": [
+        {
+          "desde": [
+            7.2,
+            0.25
+          ],
+          "hasta": [
+            7.8,
+            0.25
+          ],
+          "altura": 1.95
+        }
+      ],
       "poligono": [
         [
           6.07,
@@ -219,13 +399,30 @@
     {
       "id": "distribuidor",
       "nombre": "Distribuidor",
-      "alturaTecho": 2.5,
+      "alturaTecho": 2.4,
       "superficiePlano": 2.81,
       "suelo": {
         "tipo": "tarima",
-        "color": "#5c3b26",
-        "escala": 2.4
+        "color": "#56301e",
+        "escala": 2.4,
+        "pieza": 0.08,
+        "acabado": "satinado"
       },
+      "acabado": {
+        "pared": {
+          "color": "#eeede9"
+        }
+      },
+      "focos": [
+        [
+          6.8,
+          2.31
+        ],
+        [
+          7.9,
+          2.31
+        ]
+      ],
       "poligono": [
         [
           6.07,
@@ -252,9 +449,34 @@
       "superficiePlano": 10.91,
       "suelo": {
         "tipo": "tarima",
-        "color": "#5c3b26",
-        "escala": 2.4
+        "color": "#56301e",
+        "escala": 2.4,
+        "pieza": 0.08,
+        "acabado": "satinado"
       },
+      "acabado": {
+        "pared": {
+          "color": "#e4e5e4"
+        }
+      },
+      "focos": [
+        [
+          9.7,
+          1
+        ],
+        [
+          9.7,
+          2.2
+        ],
+        [
+          11.4,
+          1
+        ],
+        [
+          11.4,
+          2.2
+        ]
+      ],
       "poligono": [
         [
           9.03,
@@ -319,9 +541,11 @@
       "nombre": "Balcón",
       "exterior": true,
       "suelo": {
-        "tipo": "exterior",
-        "color": "#a9714f",
-        "escala": 1
+        "tipo": "pizarra",
+        "color": "#5a5d5f",
+        "escala": 1.2,
+        "pieza": 0.4,
+        "acabado": "mate"
       },
       "poligono": [
         [
@@ -401,9 +625,13 @@
       "huecos": [
         {
           "tipo": "ventana",
-          "alto": 2.1,
+          "alto": 2.45,
           "alfeizar": 0,
-          "nombre": "Balconera del salón (3 hojas)",
+          "estilo": "ventana",
+          "hojas": 3,
+          "travesano": 1.05,
+          "cortina": true,
+          "nombre": "Mirador del salón (3 paños)",
           "distancia": 0.12,
           "ancho": 2.04
         }
@@ -466,11 +694,12 @@
       "huecos": [
         {
           "tipo": "ventana",
-          "alto": 1.1,
-          "alfeizar": 1,
-          "nombre": "Celosía / ventana del tendedero",
-          "distancia": 0.51,
-          "ancho": 2.68
+          "estilo": "lamas",
+          "alto": 2.45,
+          "alfeizar": 0,
+          "nombre": "Celosía de lamas del tendedero",
+          "distancia": 0.28,
+          "ancho": 2.96
         }
       ]
     },
@@ -503,25 +732,31 @@
       "huecos": [
         {
           "tipo": "ventana",
-          "alto": 1.1,
-          "alfeizar": 1,
-          "nombre": "Fijo acristalado (arriba)",
+          "estilo": "fijo",
+          "alto": 2.1,
+          "alfeizar": 0,
+          "travesano": 1.05,
+          "nombre": "Fijo acristalado (junto al salón)",
           "distancia": 0.78,
           "ancho": 0.68
         },
         {
           "tipo": "puerta",
-          "alto": 2.05,
+          "estilo": "puerta-vidriera",
+          "alto": 2.1,
           "alfeizar": 0,
+          "bisagra": "hasta",
+          "abre": "derecha",
           "nombre": "Puerta cocina-tendedero",
           "distancia": 1.51,
           "ancho": 0.73
         },
         {
           "tipo": "ventana",
+          "estilo": "fijo",
           "alto": 1.1,
           "alfeizar": 1,
-          "nombre": "Fijo acristalado (abajo)",
+          "nombre": "Fijo acristalado (sobre la encimera)",
           "distancia": 2.3,
           "ancho": 0.63
         }
@@ -572,6 +807,9 @@
           "tipo": "puerta",
           "alto": 2.1,
           "alfeizar": 0,
+          "estilo": "puerta-entrada",
+          "bisagra": "hasta",
+          "abre": "izquierda",
           "nombre": "Puerta de entrada",
           "distancia": 3.64,
           "ancho": 0.8
@@ -595,6 +833,9 @@
           "tipo": "puerta",
           "alto": 2.05,
           "alfeizar": 0,
+          "estilo": "puerta-blanca",
+          "bisagra": "hasta",
+          "abre": "izquierda",
           "nombre": "Puerta del salón",
           "distancia": 1.83,
           "ancho": 0.81
@@ -618,6 +859,9 @@
           "tipo": "puerta",
           "alto": 2.05,
           "alfeizar": 0,
+          "estilo": "puerta-blanca",
+          "bisagra": "desde",
+          "abre": "izquierda",
           "nombre": "Puerta del baño",
           "distancia": 0.92,
           "ancho": 0.71
@@ -641,6 +885,9 @@
           "tipo": "puerta",
           "alto": 2.05,
           "alfeizar": 0,
+          "estilo": "puerta-blanca",
+          "bisagra": "hasta",
+          "abre": "izquierda",
           "nombre": "Puerta del dormitorio",
           "distancia": 1.82,
           "ancho": 0.75
@@ -664,6 +911,9 @@
           "tipo": "ventana",
           "alto": 2.1,
           "alfeizar": 0,
+          "estilo": "ventana",
+          "hojas": 2,
+          "cortina": true,
           "nombre": "Balconera del dormitorio (2 hojas)",
           "distancia": 0.72,
           "ancho": 1.48
@@ -739,6 +989,7 @@
       ],
       "grosor": 0.04,
       "alto": 1,
+      "tipo": "barandilla",
       "huecos": []
     },
     {
@@ -754,6 +1005,7 @@
       ],
       "grosor": 0.04,
       "alto": 1,
+      "tipo": "barandilla",
       "huecos": []
     },
     {
@@ -769,6 +1021,7 @@
       ],
       "grosor": 0.04,
       "alto": 1,
+      "tipo": "barandilla",
       "huecos": []
     }
   ],
@@ -898,11 +1151,16 @@
   "suposiciones": [
     "Escala deducida de las superficies útiles del plano (mínimos cuadrados): 134.1 px/m. Comprobación: el círculo de giro de ø1,50 m mide 1.53 m con esta escala.",
     "El plano no tiene cotas de estancias: todas las medidas salen de la imagen (precisión estimada ±3 cm).",
-    "Altura libre de techo: 2,50 m en todas las estancias (el plano no la indica).",
+    "Altura libre de techo: 2,50 m (el plano no la indica). Falso techo de la cocina y del distribuidor: 2,40 m, SUPUESTO (las fotos muestran que es más bajo, pero no hay cotas).",
     "Puertas interiores: 2,05 m de alto. Puerta de entrada: 2,10 m. Anchos medidos en el plano.",
-    "Mirador del salón y salida al balcón del dormitorio: puertas-ventana (balconeras) de suelo a 2,10 m.",
-    "Cerramiento entre cocina y tendedero: puerta de 2,05 m y dos fijos acristalados con alféizar a 1,00 m y 1,10 m de alto.",
-    "Cerramiento exterior del tendedero: se supone celosía/ventana con alféizar a 1,00 m y 1,10 m de alto.",
+    "Mirador del salón: carpintería de madera de suelo a techo (2,45 m), con paños fijos abajo, hojas arriba y travesaño a 1,05 m. Sus dos laterales se suponen macizos.",
+    "Balconera del dormitorio: 2 hojas de madera y vidrio de suelo a 2,10 m.",
+    "Cerramiento entre cocina y tendedero (de la foto): fijo de suelo a 2,10 m partido a 1,05 m, puerta de madera con vidrio de 2,10 m y ventana fija sobre la encimera (alféizar 1,00 m).",
+    "Cerramiento exterior del tendedero: lamas horizontales de aluminio negro de suelo a 2,45 m en todo el largo.",
+    "Acabados (suelos, pintura, alicatados, rodapiés, carpintería) tomados de las fotos del anuncio. Colores aproximados a ojo.",
+    "Alicatado del baño: 1,10 m de alto y hasta el techo en la zona de la ducha (x < 7,0 m). Frente de la cocina: entre 0,90 y 1,45 m en las paredes del fondo y de la derecha, con granito negro tras la placa (posición de la placa tomada del plano).",
+    "Focos empotrados: número de las fotos; posiciones repartidas a ojo. Aplique LED del baño sobre el lavabo, a 1,95 m.",
+    "Sentido de apertura de las puertas: de los arcos del plano.",
     "La cocina está abierta al salón (en el plano no hay muro entre ambas, solo cambio de pavimento).",
     "El hueco del armario empotrado del dormitorio se cuenta dentro del dormitorio (así cuadra su superficie); su frente no se dibuja.",
     "Barandilla del balcón: 1,00 m de alto. El balcón no tiene superficie en el plano.",

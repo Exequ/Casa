@@ -33,28 +33,39 @@ describe('formato del suelo', () => {
     expect(validarVivienda(mala).join()).toMatch(/salon.*color/);
   });
 
-  it('hay entre 6 y 8 suelos para elegir, todos válidos y de tipos distintos entre sí o de color distinto', () => {
+  it('hay entre 6 y 10 suelos para elegir, todos válidos y de tipos distintos entre sí o de color distinto', () => {
     expect(SUELOS.length).toBeGreaterThanOrEqual(6);
-    expect(SUELOS.length).toBeLessThanOrEqual(8);
+    expect(SUELOS.length).toBeLessThanOrEqual(10);
     for (const s of SUELOS) expect(validarSuelo(s), s.nombre).toBeNull();
     expect(new Set(SUELOS.map((s) => s.id)).size).toBe(SUELOS.length);
-    // Se usan todos los tipos que la app sabe dibujar
-    expect(new Set(SUELOS.map((s) => s.tipo))).toEqual(new Set(TIPOS_SUELO));
+    // Todos son de tipos que la app sabe dibujar, y hay al menos 6 tipos distintos
+    for (const s of SUELOS) expect(TIPOS_SUELO, s.id).toContain(s.tipo);
+    expect(new Set(SUELOS.map((s) => s.tipo)).size).toBeGreaterThanOrEqual(6);
   });
 });
 
 describe('suelos por defecto', () => {
-  it('tarima de madera oscura en salón, dormitorio y distribuidor', () => {
+  it('tarima de ipé oscura (listón de 8 cm, satinada) en salón, dormitorio y distribuidor', () => {
     for (const id of ['salon', 'dormitorio', 'distribuidor']) {
       expect(de(id).tipo, id).toBe('tarima');
-      expect(predefinidoDe(de(id))?.id, id).toBe('tarima-nogal');
+      expect(predefinidoDe(de(id))?.id, id).toBe('tarima-ipe');
+      expect(de(id).pieza, id).toBeGreaterThanOrEqual(0.07);
+      expect(de(id).pieza, id).toBeLessThanOrEqual(0.09);
+      expect(de(id).acabado, id).toBe('satinado');
     }
   });
-  it('baldosa de mármol clara en baño, cocina y tendedero', () => {
-    for (const id of ['bano', 'cocina', 'tendedero']) expect(predefinidoDe(de(id))?.id, id).toBe('marmol-blanco');
+  it('granito negro pulido 60×60 en la cocina', () => {
+    expect(predefinidoDe(de('cocina'))?.id).toBe('granito-negro');
+    expect(de('cocina').acabado).toBe('pulido');
+    expect(de('cocina').pieza).toBe(0.6);
   });
-  it('baldosa de exterior en el balcón', () => {
-    expect(predefinidoDe(de('balcon'))?.id).toBe('gres-exterior');
+  it('mármol gris claro mate en el baño y piedra gris oscura mate en el tendedero', () => {
+    expect(predefinidoDe(de('bano'))?.id).toBe('marmol-claro');
+    expect(de('bano').acabado).toBe('mate');
+    expect(predefinidoDe(de('tendedero'))?.id).toBe('piedra-oscura');
+  });
+  it('pizarra gris oscura en el balcón', () => {
+    expect(predefinidoDe(de('balcon'))?.id).toBe('pizarra');
   });
   it('si una estancia no tiene suelo, se elige uno según su tipo', () => {
     expect(mismoSuelo(sueloPorDefecto({ id: 'salon' }), de('salon'))).toBe(true);

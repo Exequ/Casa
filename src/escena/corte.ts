@@ -14,7 +14,9 @@
 //   - Vista de una estancia: se corta si su recta deja a un lado la cámara y al
 //     otro el punto al que mira la cámara, o si su sombra cae sobre el suelo
 //     de esa estancia. Las paredes del fondo de la estancia se quedan en pie.
+//   - Cámara dentro de la vivienda (vista interior): no se corta nada.
 // Los pilares se cortan si se corta alguna pared que tocan o si tapan suelo.
+// Con el muro cortado se ocultan sus acabados (pintura, alicatado, carpintería).
 // Las barandillas y muretes (≤ 1,2 m) solo se bajan en el modo huella o si
 // quedan justo delante de la estancia que se está mirando.
 
@@ -41,24 +43,37 @@ export class CortadorParedes {
   modo: ModoCorte = 'casa';
   /** Polígono de la estancia que se está mirando (modo 'estancia'). */
   estancia: Punto[] | null = null;
+  /** ¿Está la cámara dentro de la vivienda, por debajo del techo? (lo calcula `actualizar`) */
+  interior = false;
   private elementos: ElementoVertical[];
   /** Función que dice si un punto está sobre el suelo de alguna estancia. */
   private dentro: (p: Punto) => boolean;
+  private cerca: (p: Punto) => boolean;
+  private alturaTechos: number;
   /** Muestras a lo largo de cada pared (fracciones del largo). */
   private static MUESTRAS = [0.1, 0.3, 0.5, 0.7, 0.9];
   /** Muestras a lo largo de la sombra (fracciones de su longitud). */
   private static MUESTRAS_SOMBRA = [0.15, 0.4, 0.7, 1];
 
-  constructor(elementos: ElementoVertical[], dentro: (p: Punto) => boolean) {
+  /**
+   * `dentro` dice si un punto está sobre el suelo de alguna estancia; `cerca`,
+   * si está dentro de la vivienda o pegado a ella (para la vista interior);
+   * `alturaTechos` es la altura del techo más alto (m).
+   */
+  constructor(elementos: ElementoVertical[], dentro: (p: Punto) => boolean, cerca: (p: Punto) => boolean = dentro, alturaTechos = 2.5) {
     this.elementos = elementos;
     this.dentro = dentro;
+    this.cerca = cerca;
+    this.alturaTechos = alturaTechos;
   }
 
   /** Decide qué paredes se cortan según la posición de la cámara y su objetivo. */
   actualizar(camara: THREE.Camera, objetivo: THREE.Vector3) {
     const c = camara.position;
-    // Con la cámara casi encima del objetivo (vista en planta) no se corta nada.
-    const vistaCenital = Math.hypot(c.x - objetivo.x, c.z - objetivo.z) < 0.5;
+    // Cámara dentro de la vivienda, por debajo del techo: vista interior, no se corta nada.
+    this.interior = this.modo !== 'huella' && c.y < this.alturaTechos && this.cerca([c.x, c.z]);
+    // Con la cámara casi encima del objetivo (vista en planta) tampoco.
+    const vistaCenital = this.interior || Math.hypot(c.x - objetivo.x, c.z - objetivo.z) < 0.5;
 
     const cortados = new Set<ElementoVertical>();
     // Primero las paredes; después los pilares, que siguen a las paredes que tocan.
@@ -75,12 +90,11 @@ export class CortadorParedes {
         altura = Math.min(el.alto, ALTURA_CORTE);
       }
       if (altura < el.alto) cortados.add(el);
-      el.objeto.scale.y = altura / el.alto;
-      // Cristales: con la pared entera; en el modo huella también (marcan las ventanas en azul).
-      const huella = this.modo === 'huella';
-      for (const cr of el.cristales) cr.visible = huella || altura === el.alto;
+      el.nucleo.scale.y = altura / el.alto;
+      // Revestimientos y carpintería: solo con el muro entero.
+      el.acabados.visible = altura === el.alto;
       // En el modo huella quitamos antepechos y dinteles: los huecos se ven como huecos.
-      for (const s of el.sobreHuecos) s.visible = !huella;
+      for (const s of el.sobreHuecos) s.visible = this.modo !== 'huella';
     }
   }
 

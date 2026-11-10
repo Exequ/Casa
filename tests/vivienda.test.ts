@@ -81,20 +81,20 @@ describe('paredes de la escena 3D', () => {
     return v;
   }
 
-  for (const p of vivienda.paredes) {
+  for (const p of vivienda.paredes.filter((x) => x.tipo !== 'barandilla')) {
     it(`${p.id}: mide lo que dice vivienda.json y tiene sus huecos`, () => {
       const el = casa.verticales.find((x) => x.objeto.name === `pared:${p.id}`)!;
       expect(el).toBeDefined();
       const alto = altoPared(p, vivienda);
       const largo = largoPared(p);
       const huecos = (p.huecos ?? []).reduce((s, h) => s + h.ancho * h.alto, 0);
-      expect(volumen(el.objeto)).toBeCloseTo((largo * alto - huecos) * p.grosor, 6);
+      expect(volumen(el.nucleo)).toBeCloseTo((largo * alto - huecos) * p.grosor, 6);
 
       // La caja de la pared: largo × alto × grosor, centrada en su eje.
       el.objeto.updateMatrixWorld(true);
       const b = new THREE.Box3();
-      el.objeto.traverse((o) => {
-        if ((o as THREE.Mesh).isMesh && o.name !== 'cristal') b.expandByObject(o);
+      el.nucleo.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) b.expandByObject(o);
       });
       expect(b.max.y - b.min.y).toBeCloseTo(alto, 6);
       const horizontal = Math.abs(p.hasta[1] - p.desde[1]) < 1e-9;
