@@ -108,15 +108,32 @@ const BANO = [
 // --- Dormitorio: armario empotrado (foto "Habitación" y plano) -----------------------------
 // En el hueco del armario del plano (x 9,03–11,22 × z 2,93–3,50), de suelo a
 // techo, con el frente hacia la cama. 4 puertas lisas (dos parejas) con juntas
-// horizontales y pomos pequeños; cerradas.
+// horizontales y pomos pequeños; cerradas. Va con la pared del fondo del hueco:
+// en la vista desde fuera, si esa pared se baja, el armario se oculta con ella.
 const ARMARIO = [
   fijo({
     id: 'dormitorio-armario', tipo: 'armario-empotrado', nombre: 'Armario empotrado de 4 puertas', estancia: 'dormitorio',
-    giro: 180, alto: 2.49, puertas: 4, material: 'puertas blancas lisas; pomos plateados',
+    giro: 180, alto: 2.49, puertas: 4, pared: 'armario-fondo', material: 'puertas blancas lisas; pomos plateados',
   }, [9.03, 11.22], [2.93, 3.5]),
 ];
 
-export const FIJOS = [...COCINA, ...BANO, ...ARMARIO];
+// --- Aire acondicionado (fotos "Salón" y "Cocina", del tendedero) -------------------------------
+// Unidad interior en la pared del salón junto al mirador, sobre el mueble de TV
+// (x 0,885–1,785 en la escena inicial), a unos 2,1 m. Unidad exterior en el
+// tendedero, en la pared del fondo sobre la lavadora, sobre soportes, con el
+// ventilador mirando a las lamas.
+const AIRE = [
+  fijo({
+    id: 'salon-split', tipo: 'split-interior', nombre: 'Aire acondicionado (unidad interior)', estancia: 'salon',
+    giro: 180, altura: 2.0, alto: 0.29, pared: 'salon-tendedero', material: 'plástico blanco',
+  }, [0.885, 1.785], [3.03, 3.23]),
+  fijo({
+    id: 'tendedero-split', tipo: 'split-exterior', nombre: 'Aire acondicionado (unidad exterior) sobre soportes', estancia: 'tendedero',
+    giro: 270, altura: 1.8, alto: 0.62, pared: 'salon-tendedero', material: 'chapa blanca; soportes de acero',
+  }, [0.68, 1.02], [3.48, 4.3]),
+];
+
+export const FIJOS = [...COCINA, ...BANO, ...ARMARIO, ...AIRE];
 
 /** Cómo se estimó cada medida (para docs/OBJETOS.md). */
 const NOTAS = {
@@ -135,6 +152,8 @@ const NOTAS = {
   'bano-inodoro': 'Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo.',
   'bano-bide': 'Plano: 0,36 × 0,54, junto a la puerta.',
   'dormitorio-armario': 'Hueco del armario en el plano (2,19 × 0,57); de suelo a techo (2,50 m). Juntas horizontales cada 0,62 m y 4 puertas, como en la foto.',
+  'salon-split': 'Medidas habituales de un split (0,90 × 0,20 × 0,29); centrado sobre el mueble de TV, de 2,00 a 2,29 m (foto del salón hacia la cocina).',
+  'tendedero-split': 'Unidad de 0,80 × 0,30 × 0,55 más los soportes; contra la pared del fondo sobre la lavadora, de 1,80 a 2,42 m (foto del tendedero).',
 };
 
 /** Escribe la sección "Elementos fijos" de docs/OBJETOS.md. */

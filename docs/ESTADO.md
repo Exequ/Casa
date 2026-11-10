@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, durante la fase 3c
-(elementos fijos: cocina, baño, armario empotrado y aire acondicionado). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, tras la fase 3c (elementos
+fijos: cocina, baño, armario empotrado y aire acondicionado). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
@@ -18,7 +18,7 @@ Cada parte se publica con su propio PR.
 | A. Cocina | **Hecho** | En L, según el plano y las fotos: columna con el frigorífico combi (altillo con rejilla), lavavajillas blanco de 45 cm junto a ella, armario y rincón en la pared este; en la del fondo, armario, horno de acero con cristal negro y placa (la del plano) y cajonera de 4. Encimera de granito negro, zócalo blanco, tiradores de barra de acero. Altos lacados hasta el falso techo con campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana. El frente de azulejo ya no queda detrás de la columna; copete de granito de 8 cm y frente de granito sobre el horno. |
 | B. Baño | **Hecho** | Según el plano: plato de ducha extraplano blanco a la izquierda (0,65 × 1,36) con desagüe de rejilla, mampara fija de cristal con perfil cromado en la mitad hacia la puerta y barra de sujeción a la pared, grifería termostática cromada con barra y rociador en la pared del fondo, agarradera de acero junto a la ducha; mueble de lavabo blanco lacado de 3 cajones sobre patas con lavabo integrado y grifo en el centro del fondo, espejo sin marco encima (bajo el aplique LED que ya había); inodoro y bidé de líneas rectas en la pared de la derecha. |
 | C. Armario empotrado | **Hecho** | En el hueco del plano (2,19 × 0,57 m), de suelo a techo, con el frente hacia la cama: 4 puertas blancas lisas (dos parejas), juntas horizontales finas cada 0,62 m y pomos redondos plateados pequeños; cerradas. |
-| D. Aire acondicionado | Pendiente | |
+| D. Aire acondicionado | **Hecho** | Unidad interior split blanca en la pared del salón junto al mirador, centrada sobre el mueble de TV, de 2,00 a 2,29 m. Unidad exterior en el tendedero, en la pared del fondo sobre la lavadora, sobre soportes de acero, de 1,80 a 2,42 m, con el ventilador hacia las lamas. Las dos se ocultan con su pared en la vista desde fuera. |
 
 ### Comprobaciones (parte A)
 
@@ -36,6 +36,20 @@ Cada parte se publica con su propio PR.
 
 - Tests del armario (hueco del plano, de suelo a techo, frente hacia la cama; no se puede meter un mueble dentro).
 - Capturas del dormitorio desde el punto de vista de la foto (escritorio y móvil), comparadas con ella.
+
+### Comprobaciones (parte D)
+
+- Tests del aire acondicionado (posición sobre el mueble de TV y sobre la lavadora sin tocarla; bajo la unidad interior caben el mueble de TV y la librería de 2,00 m, pero no algo más alto).
+- Capturas desde los puntos de vista de la foto del salón hacia la cocina y de la del tendedero (escritorio y móvil), comparadas con ellas.
+- Escena inicial: **ningún objeto chocaba con un fijo**; no hubo que mover nada.
+- **Carga en el móvil con los 17 fijos** (primera visita, media de 3, dos tandas): antes de la fase 3c, casa visible a los 2.247 / 2.193 ms; con todos los fijos, 2.250 / 2.101 ms (+25 KB). No empeora.
+- Las baterías de navegador de las fases 3b, 4 y 5 (lotes 1 a 3) y la de los fijos (ratón y dedo) pasan.
+
+### Decisiones (parte D)
+
+- El **armario empotrado** va unido a la pared del fondo de su hueco: en la vista desde fuera se oculta con ella (si no, un bloque de 2,49 m tapaba la cama).
+- **Unidad exterior** girada con el ventilador hacia las lamas (en la foto se ve de lado, con los tubos a un costado).
+- La unidad interior es un colgado a 2,00 m: los muebles más altos de 2,00 m no caben debajo (la librería sí).
 
 ### Decisiones (parte B)
 

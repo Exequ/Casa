@@ -100,6 +100,8 @@ edita `data/vivienda.json` directamente).
 | Inodoro (`bano-inodoro`) | bano | 0,36 × 0,62 × 0,8 | porcelana blanca | Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo. | estimada |
 | Bidé (`bano-bide`) | bano | 0,36 × 0,54 × 0,52 | porcelana blanca; grifo cromado | Plano: 0,36 × 0,54, junto a la puerta. | estimada |
 | Armario empotrado de 4 puertas (`dormitorio-armario`) | dormitorio | 2,19 × 0,57 × 2,49 | puertas blancas lisas; pomos plateados | Hueco del armario en el plano (2,19 × 0,57); de suelo a techo (2,50 m). Juntas horizontales cada 0,62 m y 4 puertas, como en la foto. | estimada |
+| Aire acondicionado (unidad interior) (`salon-split`) | salon | 0,9 × 0,2 × 0,29 (desde 2 m) | plástico blanco | Medidas habituales de un split (0,90 × 0,20 × 0,29); centrado sobre el mueble de TV, de 2,00 a 2,29 m (foto del salón hacia la cocina). | estimada |
+| Aire acondicionado (unidad exterior) sobre soportes (`tendedero-split`) | tendedero | 0,82 × 0,34 × 0,62 (desde 1,8 m) | chapa blanca; soportes de acero | Unidad de 0,80 × 0,30 × 0,55 más los soportes; contra la pared del fondo sobre la lavadora, de 1,80 a 2,42 m (foto del tendedero). | estimada |
 
 **No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
 (ni en el plano ni en las fotos). La placa sí está en el plano, y la campana

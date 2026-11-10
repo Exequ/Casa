@@ -1523,8 +1523,49 @@
         "fondo": 0.57,
         "alto": 2.49
       },
+      "pared": "armario-fondo",
       "material": "puertas blancas lisas; pomos plateados",
       "puertas": 4,
+      "medidas": "estimadas"
+    },
+    {
+      "id": "salon-split",
+      "tipo": "split-interior",
+      "nombre": "Aire acondicionado (unidad interior)",
+      "estancia": "salon",
+      "posicion": [
+        1.335,
+        3.13
+      ],
+      "altura": 2,
+      "giro": 180,
+      "dimensiones": {
+        "ancho": 0.9,
+        "fondo": 0.2,
+        "alto": 0.29
+      },
+      "pared": "salon-tendedero",
+      "material": "plástico blanco",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "tendedero-split",
+      "tipo": "split-exterior",
+      "nombre": "Aire acondicionado (unidad exterior) sobre soportes",
+      "estancia": "tendedero",
+      "posicion": [
+        0.85,
+        3.89
+      ],
+      "altura": 1.8,
+      "giro": 270,
+      "dimensiones": {
+        "ancho": 0.82,
+        "fondo": 0.34,
+        "alto": 0.62
+      },
+      "pared": "salon-tendedero",
+      "material": "chapa blanca; soportes de acero",
       "medidas": "estimadas"
     }
   ],

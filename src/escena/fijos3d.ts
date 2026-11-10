@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { baseDe, esColgado, type Fijo, type ModuloCocina } from '../vivienda/fijos';
+import { baseDe, type Fijo, type ModuloCocina } from '../vivienda/fijos';
 import { materialPared } from './texturasPared';
 
 // --- Materiales (color y brillo de las fotos) ------------------------------------------
@@ -426,7 +426,7 @@ export interface Fijos3D {
   porId: Map<string, THREE.Group>;
   /** Los del suelo (se añaden a la vivienda). */
   suelo: THREE.Group[];
-  /** Los colgados, por la pared de la que cuelgan ("pared:<id>"; se ocultan con ella). */
+  /** Los que van con una pared ("pared:<id>"): se ocultan con ella cuando se baja. */
   colgados: Map<string, THREE.Group[]>;
 }
 
@@ -437,7 +437,8 @@ export function construirFijos(fijos: Fijo[], tamanoTextura = 512): Fijos3D {
   for (const f of fijos) {
     const g = crearFijo(f, tamanoTextura);
     porId.set(f.id, g);
-    if (esColgado(f) && f.pared) {
+    // Los que tienen `pared` (los colgados y el armario empotrado) se ocultan con ella
+    if (f.pared) {
       const clave = `pared:${f.pared}`;
       if (!colgados.has(clave)) colgados.set(clave, []);
       colgados.get(clave)!.push(g);

@@ -60,7 +60,7 @@ export interface Fijo {
   /** Giro (grados): 0, 90, 180 o 270. Por defecto 0. */
   giro?: number;
   dimensiones: { ancho: number; fondo: number; alto: number };
-  /** Pared de la que cuelga (id de vivienda.json): se oculta con ella si se baja. */
+  /** Pared a la que va unido (id de vivienda.json): se oculta con ella si se baja (colgados, armario empotrado). */
   pared?: string;
   /** Material principal (nombre libre, solo informativo: los colores los pone el código de cada tipo). */
   material?: string;

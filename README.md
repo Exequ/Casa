@@ -432,7 +432,7 @@ atravesarlos. Están en la lista `fijos` de `vivienda.json` (generada desde
   "altura": 0,                        // opcional: altura de la base (m); 0 = en el suelo
   "giro": 180,                        // 0, 90, 180 o 270, como los muebles (0 = frente al sur)
   "dimensiones": { "ancho": 1.63, "fondo": 0.6, "alto": 0.9 },
-  "pared": "cocina-sur",              // opcional: pared de la que cuelga (se oculta con ella)
+  "pared": "cocina-sur",              // opcional: pared a la que va unido (se oculta con ella si se baja)
   "material": "lacado blanco brillo; encimera de granito negro",
   "modulos": [                        // solo muebles de cocina, de izquierda a derecha vistos de frente
     { "tipo": "puertas", "ancho": 0.53 },
@@ -455,8 +455,9 @@ atravesarlos. Están en la lista `fijos` de `vivienda.json` (generada desde
   para todos los muebles; los colgados (base a 0,5 m o más: muebles altos,
   espejo, aire acondicionado) solo para los muebles más altos que su base.
   En la pared donde hay un fijo no se puede colgar ningún cuadro.
-- **Vista desde fuera:** los colgados se ocultan con su `pared` cuando esta
-  se baja, igual que los cuadros.
+- **Vista desde fuera:** los fijos con `pared` (los colgados y el armario
+  empotrado, que está metido en su hueco) se ocultan con ella cuando se baja,
+  igual que los cuadros.
 - Al abrir la app se valida cada fijo (tipo, estancia, giro, medidas, que no
   pase del techo, pared, módulos). Las medidas son estimadas; están en la
   sección "Elementos fijos" de [`docs/OBJETOS.md`](docs/OBJETOS.md).
