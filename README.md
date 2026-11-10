@@ -26,12 +26,15 @@ Todas las medidas están en **metros**, a escala real.
   (sofá, sillón, mesas, librería, mueble y televisión, sillas, lámparas,
   mesitas, espejos, cuadro y perchero), modelados por código, con
   **miniaturas** en el catálogo.
-- **Fase 5, lote 2 (actual):** el lote 1 **ajustado a las fotos** reales
+- **Fase 5, lote 2:** el lote 1 **ajustado a las fotos** reales
   (colores, formas, la celosía de la mesa de centro, la librería...) con
   **veta de madera y tejido** en las tapicerías, y los muebles del
   **dormitorio, el balcón y el tendedero** (cama, mesita, lámpara, cómoda,
   cuadros, mesa y sillas de balcón, planta y lavadora). Medidas estimadas en
   [`docs/OBJETOS.md`](docs/OBJETOS.md).
+- **Fase 5, lote 3 (actual):** la casa viene **amueblada por defecto** como
+  en las fotos (`data/escena-inicial.json`, 39 objetos), todo editable, con
+  el botón *Restaurar disposición original*.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -57,6 +60,7 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run catalogo:ejemplos` | Regenera los objetos de ejemplo del catálogo (mesa, armario y los provisionales de decoración) |
 | `npm run catalogo:lote1` | Regenera los muebles reales del lote 1 (salón y pasillo) y su tabla de `docs/OBJETOS.md`; respeta las medidas corregidas en los `.json` (con `-- --reiniciar`, no) |
 | `npm run catalogo:lote2` | Igual, para el lote 2 (dormitorio, balcón y tendedero) |
+| `npm run escena:inicial` | Regenera `data/escena-inicial.json` (la casa amueblada como en las fotos) desde `scripts/escena-inicial.mjs` |
 | `npm run catalogo:miniaturas` | Dibuja las miniaturas PNG del catálogo (necesita Playwright con Chromium); con `-- sofas/sillon` solo esa, con `-- --vistas carpeta` además 3 vistas grandes de cada objeto para revisarlo |
 
 ## Cómo se usa
@@ -179,15 +183,23 @@ En el móvil, una luz por estancia y solo el sol da sombra.
 2048 px. Se puede forzar con `?calidad=ligera`, `?calidad=normal` o
 `?calidad=alta` (4096 px) al final de la dirección.
 
-**Guardar / Cargar / Vaciar:** descarga la escena como `escena.json` o abre una
+**Casa amueblada:** la primera vez que se abre la app en un navegador (sin
+nada autoguardado), la casa aparece amueblada como en las fotos del piso
+(`data/escena-inicial.json`). Todo se puede mover, girar, borrar, duplicar y
+deshacer. Si ya hay algo autoguardado, se respeta (también una casa vaciada).
+
+**Guardar / Cargar / Vaciar / Restaurar:** descarga la escena como `escena.json` o abre una
 guardada (si el archivo no vale, se explica en el panel y la escena no cambia).
-*Vaciar* pide un segundo toque para confirmar. Además, cada cambio se **autoguarda** en el navegador
+*Vaciar* quita todos los muebles y *Restaurar disposición original* los
+vuelve a poner como en las fotos (sin tocar suelos ni colores); los dos piden
+un segundo toque para confirmar y se pueden deshacer con ↶. Además, cada cambio se **autoguarda** en el navegador
 (`localStorage`) y se recupera al volver a abrir la app.
 
 ## Estructura del proyecto
 
 ```
 data/vivienda.json        La vivienda: estancias, paredes con huecos, pilares
+data/escena-inicial.json  La casa amueblada como en las fotos (la escena por defecto)
 planos/                   Planos originales (plano-original.png) y el recorte que se superpone (plano.jpg)
 catalogo/                 Objetos del catálogo: un .json + un .glb + una miniatura .png por objeto (muebles reales en carpetas por categoría)
 scripts/
@@ -195,6 +207,7 @@ scripts/
   generar-catalogo.mjs    Crea los objetos de ejemplo del catálogo
   catalogo-lote1.mjs      Crea los muebles reales del lote 1 (salón y pasillo) y su tabla en docs/OBJETOS.md
   catalogo-lote2.mjs      Crea los del lote 2 (dormitorio, balcón y tendedero)
+  escena-inicial.mjs      Disposición de los muebles según las fotos → data/escena-inicial.json
   miniaturas.mjs          Dibuja las miniaturas PNG del catálogo (y vistas de comprobación)
   lib/modelo3d.mjs        Librería para modelar objetos con piezas de three.js y guardarlos en .glb
   lib/texturas.mjs        Texturas procedurales (veta de madera y tejido) que van dentro de los .glb
@@ -629,6 +642,12 @@ ignoran (también con aviso).
   silla de balcón no admiten nada encima; y que en la app la tele va sobre su
   mueble, la lámpara foco sobre la mesita de alambre, la lámpara de noche sobre
   la mesita y la planta sobre la mesa del balcón;
+- **la escena inicial** (`tests/escena-inicial.test.ts`): que carga entera y
+  cada objeto queda exactamente donde dice el archivo; que ningún mueble
+  solapa a otro ni atraviesa paredes, puertas o ventanas; que los cuadros no
+  tapan huecos ni se solapan y lo apoyado tiene un soporte válido; que están
+  todos los objetos de los lotes 1 y 2 en las cantidades de las fotos (y
+  ninguno de ejemplo) y cada uno en su estancia;
 - **decorar** (`tests/decorar.test.ts`): los campos nuevos del catálogo; colgar
   en paredes sin tapar puertas (con su tapajuntas) ni ventanas, sin solapes y
   sin salirse; la altura; apoyar en tapas y baldas sin salirse ni solaparse;

@@ -1,14 +1,65 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 2
-(lote 1 ajustado a las fotos; dormitorio, balcón y tendedero). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 3
+(la casa amueblada por defecto como en las fotos). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
 
 ---
 
-## Fase 5, lote 2: fotos reales, texturas y dormitorio, balcón y tendedero
+## Fase 5, lote 3: la casa amueblada por defecto
+
+| # | Requisito | Estado | Detalle |
+|---|---|---|---|
+| 1 | `data/escena-inicial.json` con la disposición de las fotos | **Hecho** | 39 objetos, formato de escena v5, generado por `scripts/escena-inicial.mjs` (`npm run escena:inicial`) con coordenadas de `data/vivienda.json`. Comparado con capturas desde los puntos de vista de las 7 fotos (salón hacia el mirador, hacia el distribuidor y hacia la cocina, pasillo, dormitorio, terraza y tendedero). |
+| 2 | Contenido y disposición | **Hecho** | Ver la tabla de abajo. Ningún objeto de ejemplo de la fase 4. |
+| 3 | Primera visita amueblada; autoguardado respetado; Restaurar; Vaciar | **Hecho** | Sin autoguardado se carga la escena inicial (y queda autoguardada). Con autoguardado se respeta, también si está vacío. *Restaurar disposición original* en el menú (sección Escena): dos toques, solo muebles (no toca suelos, colores ni luces), se deshace con ↶. Guardar y cargar, igual que antes. |
+| 4 | Tests y navegador | **Hecho** | Ver "Comprobaciones". |
+| 5 | Documentación | **Hecho** | Este documento y README. |
+
+### Disposición (según las fotos)
+
+| Estancia | Objetos |
+|---|---|
+| Salón (20) | Sofá contra la pared norte mirando a la tele; librería en la misma pared hacia el comedor; mueble de TV contra la pared sur junto al mirador, con la tele encima; mesa de centro entre ambos; sillón en el mirador mirando al salón con la mesita de bandeja y una planta a su lado; mesita de alambre con el foco junto a la pared sur, entre la cocina y el comedor; lámpara de pie entre la librería y el comedor. |
+| Comedor (dentro del salón) | Mesa de cristal contra la pared del fondo (este), a lo largo, con 4 sillas (2 por lado); espejo de marco negro en la pared norte; 3 marcos blancos en la pared del fondo, sobre la mesa. |
+| Distribuidor (4) | Perchero y espejo plateado en la pared de la puerta de entrada; 2 marcos blancos en la pared del baño, uno a cada lado de su puerta. |
+| Dormitorio (10) | Cama con el cabecero contra la pared norte; mesita de noche con su lámpara entre la cama y la balconera; cómoda en la pared de la balconera mirando a la cama, con otra lámpara; cuadro gris sobre la mesita; 4 marcos de madera sobre la cómoda (en la foto se ven 4; el encargo decía 3). |
+| Balcón (4) | Mesa plegable con una planta encima y las 2 sillas a los lados. |
+| Tendedero (1) | Lavadora contra la pared del fondo, junto a las lamas y bajo el aire acondicionado, mirando a la estancia. |
+
+### Comprobaciones del lote 3
+
+- **`npm test`: 202 tests, todos pasan** (6 nuevos en `tests/escena-inicial.test.ts`).
+- **`npm run build`** sin errores.
+- **Navegador, escritorio (22 comprobaciones):** primera visita amueblada y autoguardada; sin solapes; objetos por estancia; mover, girar (Q), duplicar (D), borrar y deshacer cuatro veces hasta el estado original; Vaciar con doble clic y recarga vacía; Restaurar con doble clic, deshacer y rehacer; Restaurar no toca los colores; recarga; Guardar y Cargar (v4 y la v5 guardada); sin errores.
+- **Navegador, móvil (iPhone 13, toques reales):** primera visita amueblada; arrastrar el sillón con el dedo; Restaurar con dos toques desde el menú; sin errores.
+- **Capturas desde los 7 puntos de vista de las fotos**, en escritorio y móvil, comparadas lado a lado con ellas.
+- **Carga en el móvil** (primera visita, media de 3): con main, casa vacía visible a los 1.922 ms; ahora, casa visible a los 2.146 ms y amueblada a los 2.230 ms (+0,3 s y unos 600 KB más, por los 26 modelos; se descargan en paralelo).
+- Las baterías de las fases 3b, 4 y 5 siguen pasando (empezando desde una casa vacía).
+
+### Problemas y decisiones del lote 3
+
+- **Todo cabe con las medidas estimadas**; no hace falta confirmar ninguna
+  para que encaje. Lo más justo: el comedor (mesa de 0,70 m de fondo junto a
+  la pared del fondo con 2 sillas por lado: las de detrás quedan a 5 mm de la pared) y la
+  lámpara de pie, encajada entre la librería y la silla. Si la mesa de
+  comedor o la librería miden más de lo estimado, habría que moverlas:
+  conviene **confirmar el largo de la mesa de comedor y el ancho de la librería**.
+- **Lámpara de pie:** su sitio en las fotos es ambiguo; la puse entre la
+  librería y el comedor, delante del espejo, como en la foto del comedor.
+- **Marcos de madera:** 4 sobre la cómoda (la foto muestra 4; el encargo decía 3).
+- **Marcos blancos:** 3 sobre la mesa del comedor y 2 en el pasillo (5 en total).
+- **Perchero y espejo plateado:** en la pared de la entrada, pasado el
+  barrido de la puerta del salón; el perchero a 1,85 m y el espejo a 1,38 m (como en la foto).
+- **Aire acondicionado:** no está en el catálogo, así que no se pone (sobre el mueble de TV ni en el tendedero).
+- **Restaurar** solo recoloca los muebles; los suelos, colores y luces se quedan como estén.
+- La primera visita queda autoguardada en seguida (así, recargar no la vuelve a generar).
+
+---
+
+## Fase 5, lote 2 (anterior): fotos reales, texturas y dormitorio, balcón y tendedero
 
 ### Parte A: el lote 1 ajustado a las fotos
 

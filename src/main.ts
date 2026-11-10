@@ -2,6 +2,7 @@
 
 import './ui/estilos.css';
 import datosVivienda from '../data/vivienda.json';
+import datosEscenaInicial from '../data/escena-inicial.json';
 import { leerCatalogo, type ItemCatalogo } from './catalogo/catalogo';
 import { CortadorParedes, type ModoCorte } from './escena/corte';
 import { crearEscena, type Caja2D } from './escena/escena';
@@ -9,7 +10,7 @@ import { crearEtiquetas } from './escena/etiquetas';
 import { activarInteraccion } from './escena/interaccion';
 import { GestorObjetos } from './escena/objetos';
 import {
-  aplicar, autoguardar, descargarArchivo, leerArchivo, leerAutoguardado, serializar, VERSION_ESCENA,
+  aplicar, autoguardar, colocarObjetos, migrar, type EscenaGuardada, descargarArchivo, leerArchivo, leerAutoguardado, serializar, VERSION_ESCENA,
   type EstadoEscena, type ResultadoCarga,
 } from './escena/persistencia';
 import { Historial } from './escena/historial';
@@ -29,6 +30,8 @@ import { puntoDeVista } from './vivienda/vista';
 import { alturaEstancia, validarVivienda, type Vivienda } from './vivienda/modelo';
 
 const vivienda = datosVivienda as Vivienda;
+/** La casa amueblada como en las fotos (fase 5, lote 3). */
+const escenaInicial = datosEscenaInicial as unknown as EscenaGuardada;
 const catalogo = leerCatalogo();
 const visor = document.getElementById('visor')!;
 
@@ -325,6 +328,16 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
     }
   },
   vaciar: () => gestor.vaciar(),
+  async restaurar() {
+    // Solo los muebles: los suelos, colores y ajustes se quedan como estén. Se puede deshacer.
+    gestor.vaciar();
+    const omitidos = await colocarObjetos(gestor, migrar(structuredClone(escenaInicial), centroV1).objetos, catalogo);
+    gestor.notificar();
+    historial.apuntar();
+    panel.avisar(omitidos.length
+      ? `Disposición original restaurada, salvo: ${omitidos.join(', ')}.`
+      : 'Disposición original restaurada. Puedes deshacerlo con ↶.', omitidos.length > 0);
+  },
   duplicar,
   verPlano,
   opacidadPlano(valor) {
@@ -354,15 +367,14 @@ document.getElementById('fondo-panel')!.addEventListener('click', () => panel.ab
 escena.encuadrar(total, false, false, true);
 
 // 5. Recuperar la última escena autoguardada (si la hay)
+// Si no hay nada autoguardado (primera visita o dispositivo nuevo), la casa
+// viene amueblada como en las fotos (data/escena-inicial.json). Si hay
+// autoguardado, se respeta, aunque esté vacío (después de "Vaciar").
 const guardada = leerAutoguardado();
-if (guardada) {
-  aplicar(estado, guardada, catalogo, centroV1)
-    .then((r) => { if (r.omitidos.length) panel.avisar(`Al recuperar la última escena: ${textoCarga(r)}.`, true); })
-    .catch((e) => console.warn('Autoguardado no válido', e))
-    .finally(() => historial.iniciar());
-} else {
-  historial.iniciar();
-}
+aplicar(estado, guardada ?? escenaInicial, catalogo, centroV1)
+  .then((r) => { if (r.omitidos.length) panel.avisar(`Al ${guardada ? 'recuperar la última escena' : 'amueblar la casa'}: ${textoCarga(r)}.`, true); })
+  .catch((e) => console.warn('Escena no válida', e))
+  .finally(() => historial.iniciar());
 
 // Acceso desde la consola del navegador, útil para depurar y para las pruebas automáticas.
 Object.assign(window, {

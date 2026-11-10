@@ -8,6 +8,33 @@ import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
 import { el, m } from './util';
 
+/**
+ * El botón pide un segundo toque para confirmar (antes de 4 s): el primero
+ * cambia su texto a "¿Seguro? Toca otra vez". `hacePregunta` = ¿hace falta confirmar?
+ */
+function confirmarEnElBoton(boton: HTMLButtonElement, hacePregunta: () => boolean, accion: () => void) {
+  const texto = boton.textContent ?? '';
+  let hasta = 0;
+  let temporizador: number | undefined;
+  const volver = () => {
+    hasta = 0;
+    boton.textContent = texto;
+    boton.classList.remove('peligro');
+  };
+  boton.addEventListener('click', () => {
+    clearTimeout(temporizador);
+    if (hacePregunta() && Date.now() > hasta) {
+      hasta = Date.now() + 4000;
+      boton.textContent = '¿Seguro? Toca otra vez';
+      boton.classList.add('peligro');
+      temporizador = window.setTimeout(volver, 4000);
+      return;
+    }
+    volver();
+    accion();
+  });
+}
+
 /** Texto en minúsculas y sin tildes, para buscar sin preocuparse de acentos. */
 const sinAcentos = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -16,6 +43,8 @@ export interface AccionesPanel {
   guardar(): void;
   cargar(archivo: File): void;
   vaciar(): void;
+  /** Vuelve a poner los muebles como en las fotos (data/escena-inicial.json). */
+  restaurar(): void;
   duplicar(): void;
   /** Muestra u oculta el plano superpuesto. */
   verPlano(visible: boolean): void;
@@ -273,7 +302,11 @@ export function crearPanel(
   selectorArchivo.accept = '.json,application/json';
   selectorArchivo.hidden = true;
   filaArchivo.append(btnGuardar, btnCargar, btnVaciar, selectorArchivo);
-  secEscena.append(filaArchivo, el('p', 'nota', 'Los cambios se guardan solos en este navegador.'));
+  const btnRestaurar = el('button', '', 'Restaurar disposición original');
+  btnRestaurar.id = 'restaurar';
+  btnRestaurar.title = 'Vuelve a poner los muebles como en las fotos del piso (se puede deshacer con ↶)';
+  secEscena.append(filaArchivo, btnRestaurar,
+    el('p', 'nota', 'Los cambios se guardan solos en este navegador. "Restaurar" vuelve a colocar los muebles como en las fotos; los suelos y colores no cambian.'));
   panel.append(secEscena);
 
   btnGuardar.addEventListener('click', () => acciones.guardar());
@@ -283,24 +316,9 @@ export function crearPanel(
     if (archivo) acciones.cargar(archivo);
     selectorArchivo.value = ''; // permite volver a cargar el mismo archivo
   });
-  // Vaciar pide confirmación en el propio botón: un segundo toque en 4 s lo confirma.
-  let confirmarHasta = 0;
-  btnVaciar.addEventListener('click', () => {
-    if (gestor.objetos.length > 0 && Date.now() > confirmarHasta) {
-      confirmarHasta = Date.now() + 4000;
-      btnVaciar.textContent = '¿Seguro? Toca otra vez';
-      btnVaciar.classList.add('peligro');
-      setTimeout(() => {
-        btnVaciar.textContent = 'Vaciar';
-        btnVaciar.classList.remove('peligro');
-      }, 4000);
-      return;
-    }
-    confirmarHasta = 0;
-    btnVaciar.textContent = 'Vaciar';
-    btnVaciar.classList.remove('peligro');
-    acciones.vaciar();
-  });
+  // Vaciar y Restaurar piden confirmación en el propio botón: un segundo toque en 4 s lo confirma.
+  confirmarEnElBoton(btnVaciar, () => gestor.objetos.length > 0, () => acciones.vaciar());
+  confirmarEnElBoton(btnRestaurar, () => true, () => acciones.restaurar());
 
   // --- Comprobación con el plano ----------------------------------------------------
   const secPlano = el('section');

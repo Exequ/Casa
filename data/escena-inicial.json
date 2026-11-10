@@ -1,0 +1,447 @@
+{
+  "version": 5,
+  "vivienda": "Vivienda 2ºA",
+  "objetos": [
+    {
+      "catalogo": "sofas/sofa-3-plazas",
+      "posicion": {
+        "x": 1.905,
+        "y": 0,
+        "z": 0.695
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "almacenaje/libreria",
+      "posicion": {
+        "x": 3.505,
+        "y": 0,
+        "z": 0.435
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "almacenaje/mueble-tv",
+      "posicion": {
+        "x": 1.335,
+        "y": 0,
+        "z": 3.035
+      },
+      "rotacion": 180,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "electronica/television",
+      "posicion": {
+        "x": 1.335,
+        "y": 0.55,
+        "z": 3.035
+      },
+      "rotacion": 180,
+      "colocacion": "superficie",
+      "soporte": 2,
+      "nivel": 0.55
+    },
+    {
+      "catalogo": "mesas/mesa-centro",
+      "posicion": {
+        "x": 1.95,
+        "y": 0,
+        "z": 2
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "sofas/sillon",
+      "posicion": {
+        "x": 0.56,
+        "y": 0,
+        "z": 1.6
+      },
+      "rotacion": 90,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "mesas/mesita-bandeja",
+      "posicion": {
+        "x": 0.5,
+        "y": 0,
+        "z": 2.35
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "decoracion/planta-pequena",
+      "posicion": {
+        "x": 0.5,
+        "y": 0.43,
+        "z": 2.35
+      },
+      "rotacion": 0,
+      "colocacion": "superficie",
+      "soporte": 6,
+      "nivel": 0.43
+    },
+    {
+      "catalogo": "mesas/mesita-alambre",
+      "posicion": {
+        "x": 3.62,
+        "y": 0,
+        "z": 2.9
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "iluminacion/lampara-tripode",
+      "posicion": {
+        "x": 3.62,
+        "y": 0.55,
+        "z": 2.9
+      },
+      "rotacion": 315,
+      "colocacion": "superficie",
+      "soporte": 8,
+      "nivel": 0.55
+    },
+    {
+      "catalogo": "iluminacion/lampara-pie-semiesfera",
+      "posicion": {
+        "x": 4.515,
+        "y": 0,
+        "z": 0.385
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "mesas/mesa-comedor-cristal",
+      "posicion": {
+        "x": 5.025,
+        "y": 0,
+        "z": 1.105
+      },
+      "rotacion": 90,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "sillas/silla-comedor",
+      "posicion": {
+        "x": 4.395,
+        "y": 0,
+        "z": 0.85
+      },
+      "rotacion": 90,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "sillas/silla-comedor",
+      "posicion": {
+        "x": 4.395,
+        "y": 0,
+        "z": 1.36
+      },
+      "rotacion": 90,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "sillas/silla-comedor",
+      "posicion": {
+        "x": 5.65,
+        "y": 0,
+        "z": 0.85
+      },
+      "rotacion": 270,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "sillas/silla-comedor",
+      "posicion": {
+        "x": 5.65,
+        "y": 0,
+        "z": 1.36
+      },
+      "rotacion": 270,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "pared/espejo-marco-negro",
+      "posicion": {
+        "x": 5.02,
+        "y": 1.45,
+        "z": 0.23
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-norte",
+      "estancia": "salon",
+      "altura": 1.45
+    },
+    {
+      "catalogo": "pared/cuadro-marco-blanco",
+      "posicion": {
+        "x": 5.93,
+        "y": 1.6,
+        "z": 0.8
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:salon-este",
+      "estancia": "salon",
+      "altura": 1.6
+    },
+    {
+      "catalogo": "pared/cuadro-marco-blanco",
+      "posicion": {
+        "x": 5.93,
+        "y": 1.6,
+        "z": 1.1
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:salon-este",
+      "estancia": "salon",
+      "altura": 1.6
+    },
+    {
+      "catalogo": "pared/cuadro-marco-blanco",
+      "posicion": {
+        "x": 5.93,
+        "y": 1.6,
+        "z": 1.4
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:salon-este",
+      "estancia": "salon",
+      "altura": 1.6
+    },
+    {
+      "catalogo": "pared/perchero-pared",
+      "posicion": {
+        "x": 6.92,
+        "y": 1.85,
+        "z": 2.84
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:rellano",
+      "estancia": "distribuidor",
+      "altura": 1.85
+    },
+    {
+      "catalogo": "pared/espejo-marco-plateado",
+      "posicion": {
+        "x": 7.2,
+        "y": 1.38,
+        "z": 2.84
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:rellano",
+      "estancia": "distribuidor",
+      "altura": 1.38
+    },
+    {
+      "catalogo": "pared/cuadro-marco-blanco",
+      "posicion": {
+        "x": 6.45,
+        "y": 1.6,
+        "z": 1.78
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:bano-distribuidor",
+      "estancia": "distribuidor",
+      "altura": 1.6
+    },
+    {
+      "catalogo": "pared/cuadro-marco-blanco",
+      "posicion": {
+        "x": 8.2,
+        "y": 1.6,
+        "z": 1.78
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:bano-distribuidor",
+      "estancia": "distribuidor",
+      "altura": 1.6
+    },
+    {
+      "catalogo": "dormitorio/cama",
+      "posicion": {
+        "x": 10.935,
+        "y": 0,
+        "z": 1.27
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "dormitorio/mesita-noche",
+      "posicion": {
+        "x": 11.955,
+        "y": 0,
+        "z": 0.425
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "iluminacion/lampara-sobremesa",
+      "posicion": {
+        "x": 11.955,
+        "y": 0.5,
+        "z": 0.425
+      },
+      "rotacion": 0,
+      "colocacion": "superficie",
+      "soporte": 25,
+      "nivel": 0.5
+    },
+    {
+      "catalogo": "dormitorio/comoda-alta",
+      "posicion": {
+        "x": 11.975,
+        "y": 0,
+        "z": 2.6
+      },
+      "rotacion": 270,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "iluminacion/lampara-sobremesa",
+      "posicion": {
+        "x": 11.975,
+        "y": 1.15,
+        "z": 2.6
+      },
+      "rotacion": 270,
+      "colocacion": "superficie",
+      "soporte": 27,
+      "nivel": 1.15
+    },
+    {
+      "catalogo": "pared/cuadro-marco-gris",
+      "posicion": {
+        "x": 11.85,
+        "y": 1.5,
+        "z": 0.23
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-norte",
+      "estancia": "dormitorio",
+      "altura": 1.5
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 12.35,
+        "y": 1.42,
+        "z": 2.4
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-este",
+      "estancia": "dormitorio",
+      "altura": 1.42
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 12.35,
+        "y": 1.68,
+        "z": 2.4
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-este",
+      "estancia": "dormitorio",
+      "altura": 1.68
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 12.35,
+        "y": 1.42,
+        "z": 2.63
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-este",
+      "estancia": "dormitorio",
+      "altura": 1.42
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 12.35,
+        "y": 1.74,
+        "z": 2.63
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-este",
+      "estancia": "dormitorio",
+      "altura": 1.74
+    },
+    {
+      "catalogo": "exterior/mesa-balcon",
+      "posicion": {
+        "x": 13.035,
+        "y": 0,
+        "z": 1.475
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "decoracion/planta-pequena",
+      "posicion": {
+        "x": 13.035,
+        "y": 0.72,
+        "z": 1.475
+      },
+      "rotacion": 0,
+      "colocacion": "superficie",
+      "soporte": 34,
+      "nivel": 0.72
+    },
+    {
+      "catalogo": "exterior/silla-balcon",
+      "posicion": {
+        "x": 13.035,
+        "y": 0,
+        "z": 0.9
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "exterior/silla-balcon",
+      "posicion": {
+        "x": 13.035,
+        "y": 0,
+        "z": 2.05
+      },
+      "rotacion": 180,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "tendedero/lavadora",
+      "posicion": {
+        "x": 0.9,
+        "y": 0,
+        "z": 3.76
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    }
+  ]
+}
