@@ -37,6 +37,7 @@
 
 import type { ItemCatalogo } from '../catalogo/catalogo';
 import { distanciaACara } from '../vivienda/colgar';
+import { crearModelo } from '../catalogo/modelos';
 import type { Suelo } from '../vivienda/suelos';
 import type { EstadoLuces } from './luces';
 import type { EstadoColocacion, GestorObjetos, ObjetoColocado } from './objetos';
@@ -214,6 +215,8 @@ export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuard
     }
     return item;
   });
+  // Los modelos se descargan todos a la vez (y no uno tras otro al colocarlos)
+  await Promise.all([...new Set(items.filter((i): i is ItemCatalogo => !!i))].map((i) => crearModelo(i).catch(() => null)));
   const tipo = (o: ObjetoGuardado, item: ItemCatalogo) =>
     item.colocacion === 'pared' ? 'pared' : o.colocacion === 'superficie' && item.colocacion === 'superficie' ? 'superficie' : 'suelo';
   for (const fase of ['suelo', 'superficie', 'pared'] as const) {
