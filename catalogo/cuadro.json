@@ -1,0 +1,12 @@
+{
+  "nombre": "Cuadro 40 × 30 (provisional)",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.5,
+  "dimensiones": {
+    "ancho": 0.4,
+    "fondo": 0.03,
+    "alto": 0.3
+  },
+  "glb": "cuadro.glb"
+}

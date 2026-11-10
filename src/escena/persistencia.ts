@@ -1,11 +1,15 @@
 // Guardar y cargar la escena.
 //
-// Formato del archivo (JSON), versión 4:
+// Formato del archivo (JSON), versión 5:
 // {
-//   "version": 4,
+//   "version": 5,
 //   "vivienda": "Vivienda 2ºA",
 //   "objetos": [
-//     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
+//     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90, "colocacion": "suelo" },
+//     { "catalogo": "jarron", "posicion": { "x": 3.2, "y": 0.75, "z": 1.7 }, "rotacion": 90,
+//       "colocacion": "superficie", "soporte": 0, "nivel": 0.75 },
+//     { "catalogo": "cuadro", "posicion": { "x": 2.0, "y": 1.35, "z": 0.25 }, "rotacion": 0,
+//       "colocacion": "pared", "pared": "pared:fachada-norte", "estancia": "salon", "altura": 1.5 }
 //   ],
 //   "suelos": { "salon": { "tipo": "tarima", "color": "#a97b4f", "escala": 2.4 } },
 //   "paredes": { "dormitorio": { "color": "#bfccd6" } },
@@ -14,11 +18,17 @@
 //   - "catalogo": id del objeto (nombre del .json del catálogo sin extensión)
 //   - "posicion": centro de la base del objeto, en metros, en coordenadas de vivienda.json
 //   - "rotacion": giro alrededor del eje vertical, en grados
+//   - "colocacion": "suelo", "pared" o "superficie" (apoyado sobre un mueble)
+//   - pared: "pared" = muro o pilar donde cuelga ("pared:<id>" o "pilar:<id>"),
+//     "estancia" = a qué estancia mira, "altura" = altura de su centro (m)
+//   - superficie: "soporte" = posición (desde 0) del mueble en la lista
+//     "objetos", "nivel" = altura de la tapa o balda donde se apoya (m)
 //   - "suelos" y "paredes": solo las estancias cambiadas respecto a vivienda.json
 //   - "ajustes": interruptores de luz, puertas abiertas o cerradas y cortinas visibles
 //
 // Versiones anteriores (se migran solas al cargarlas):
-//   - v3 (fase 3a): sin "paredes" ni "ajustes".
+//   - v4 (fase 3b): objetos sin "colocacion" (todos en el suelo).
+//   - v3 (fase 3a): además, sin "paredes" ni "ajustes".
 //   - v2 (fase 2): además, sin "suelos".
 //   - v1 (fase 1, o sin versión): las posiciones eran relativas al centro de una
 //     habitación de ejemplo; se colocan relativas al centro del salón.
@@ -26,9 +36,10 @@
 // sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa.
 
 import type { ItemCatalogo } from '../catalogo/catalogo';
+import { distanciaACara } from '../vivienda/colgar';
 import type { Suelo } from '../vivienda/suelos';
 import type { EstadoLuces } from './luces';
-import type { GestorObjetos } from './objetos';
+import type { EstadoColocacion, GestorObjetos, ObjetoColocado } from './objetos';
 import type { GestorParedes } from './paredes3d';
 import type { GestorSuelos } from './suelos3d';
 
@@ -36,7 +47,18 @@ export interface ObjetoGuardado {
   catalogo: string;
   posicion: { x: number; y: number; z: number };
   rotacion: number;
+  colocacion?: EstadoColocacion;
+  /** Objetos de pared: muro o pilar, estancia y altura del centro. */
+  pared?: string;
+  estancia?: string;
+  altura?: number;
+  /** Objetos apoyados: índice del mueble en la lista y altura de la tapa o balda. */
+  soporte?: number;
+  nivel?: number;
 }
+
+/** Versión actual del formato de escena. */
+export const VERSION_ESCENA = 5;
 
 /** Interruptores y opciones de vista que se guardan con la escena. */
 export interface AjustesEscena {
@@ -53,7 +75,7 @@ export const AJUSTES_POR_DEFECTO: AjustesEscena = {
 };
 
 export interface EscenaGuardada {
-  version: 1 | 2 | 3 | 4;
+  version: 1 | 2 | 3 | 4 | 5;
   vivienda?: string;
   objetos: ObjetoGuardado[];
   suelos?: Record<string, Suelo>;
@@ -76,20 +98,38 @@ const CLAVE_AUTOGUARDADO = 'casa3d:escena';
 /** Redondea a milímetros/décimas de grado para que el JSON quede legible. */
 const redondear = (n: number, decimales = 3) => Number(n.toFixed(decimales));
 
+/** Un objeto colocado, tal como se guarda. `indices` da la posición de cada mueble en la lista. */
+function guardarObjeto(o: ObjetoColocado, indices: Map<ObjetoColocado, number>): ObjetoGuardado {
+  const g: ObjetoGuardado = {
+    catalogo: o.item.id,
+    posicion: {
+      x: redondear(o.raiz.position.x),
+      y: redondear(o.raiz.position.y),
+      z: redondear(o.raiz.position.z),
+    },
+    rotacion: redondear(o.rotacion, 2),
+    colocacion: o.colocacion,
+  };
+  if (o.colocacion === 'pared' && o.pared) {
+    g.pared = o.pared.cara.elemento;
+    g.estancia = o.pared.cara.estancia;
+    g.altura = redondear(o.pared.y);
+  }
+  if (o.colocacion === 'superficie' && o.apoyo) {
+    g.soporte = indices.get(o.apoyo.soporte);
+    g.nivel = redondear(o.apoyo.nivel);
+  }
+  return g;
+}
+
 /** Convierte el estado actual de la escena en un objeto JSON. */
 export function serializar(estado: EstadoEscena): EscenaGuardada {
+  const lista = estado.objetos.objetos;
+  const indices = new Map(lista.map((o, i) => [o, i]));
   return {
-    version: 4,
+    version: VERSION_ESCENA,
     ...(estado.nombreVivienda ? { vivienda: estado.nombreVivienda } : {}),
-    objetos: estado.objetos.objetos.map((o) => ({
-      catalogo: o.item.id,
-      posicion: {
-        x: redondear(o.raiz.position.x),
-        y: redondear(o.raiz.position.y),
-        z: redondear(o.raiz.position.z),
-      },
-      rotacion: redondear(o.rotacion, 2),
-    })),
+    objetos: lista.map((o) => guardarObjeto(o, indices)),
     suelos: estado.suelos.cambios(),
     paredes: estado.paredes.cambios(),
     ajustes: estado.ajustes.leer(),
@@ -97,22 +137,23 @@ export function serializar(estado: EstadoEscena): EscenaGuardada {
 }
 
 /**
- * Pasa una escena de cualquier versión a la versión 4.
+ * Pasa una escena de cualquier versión a la versión 5.
  * `centroV1` es el punto donde se colocaba el centro de la habitación de la fase 1.
  */
 export function migrar(datos: EscenaGuardada, centroV1: { x: number; z: number }): EscenaGuardada {
   if (!datos || !Array.isArray(datos.objetos)) throw new Error('El archivo no tiene una lista "objetos".');
   const version = datos.version ?? 1;
-  if (![1, 2, 3, 4].includes(version)) throw new Error(`Versión de escena desconocida: ${String(version)}`);
-  const objetos = version === 1
+  if (![1, 2, 3, 4, 5].includes(version)) throw new Error(`Versión de escena desconocida: ${String(version)}`);
+  const objetos: ObjetoGuardado[] = (version === 1
     ? datos.objetos.map((o) => ({
       ...o,
       posicion: { x: (o.posicion?.x ?? 0) + centroV1.x, y: 0, z: (o.posicion?.z ?? 0) + centroV1.z },
     }))
-    : datos.objetos;
+    : datos.objetos
+  ).map((o) => ({ ...o, colocacion: version >= 5 ? o.colocacion ?? 'suelo' : 'suelo' }));
   return {
     ...(version === 1 ? {} : datos),
-    version: 4,
+    version: VERSION_ESCENA,
     objetos,
     suelos: version >= 3 ? datos.suelos ?? {} : {},
     paredes: version >= 4 ? datos.paredes ?? {} : {},
@@ -133,33 +174,76 @@ export interface ResultadoCarga {
   paredesIgnoradas: number;
 }
 
-/** Sustituye la escena actual (muebles, suelos, paredes y ajustes) por la guardada. */
+/**
+ * Sustituye la escena actual (muebles, suelos, paredes y ajustes) por la
+ * guardada. Con `conAjustes = false` no toca luces, puertas ni cortinas
+ * (para deshacer y rehacer).
+ */
 export async function aplicar(
   estado: EstadoEscena,
   datos: EscenaGuardada,
   catalogo: ItemCatalogo[],
   centroV1: { x: number; z: number },
+  conAjustes = true,
 ): Promise<ResultadoCarga> {
   const escena = migrar(datos, centroV1);
   const gestor = estado.objetos;
   gestor.vaciar();
   const suelosIgnorados = estado.suelos.restaurar(escena.suelos);
   const paredesIgnoradas = estado.paredes.restaurar(escena.paredes);
-  estado.ajustes.aplicar(escena.ajustes);
+  if (conAjustes) estado.ajustes.aplicar(escena.ajustes);
+  const omitidos = await colocarObjetos(gestor, escena.objetos, catalogo);
+  gestor.notificar();
+  return { omitidos, suelosIgnorados, paredesIgnoradas };
+}
+
+/**
+ * Coloca los objetos guardados: primero los del suelo (en su orden), luego
+ * los apoyados sobre ellos y por último los colgados. Devuelve los que no se
+ * han podido poner.
+ */
+export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuardado[], catalogo: ItemCatalogo[]): Promise<string[]> {
   const porId = new Map(catalogo.map((item) => [item.id, item]));
   const omitidos: string[] = [];
-  for (const o of escena.objetos) {
+  const colocados = new Map<number, ObjetoColocado>();
+  const items = objetos.map((o) => {
     const item = porId.get(o.catalogo);
     if (!item) {
       console.warn(`Escena: el objeto "${o.catalogo}" no está en el catálogo; se omite.`);
       omitidos.push(o.catalogo);
-      continue;
     }
-    const obj = await gestor.agregar(item, o.posicion?.x ?? 0, o.posicion?.z ?? 0, o.rotacion ?? 0);
-    if (!obj) omitidos.push(item.nombre);
+    return item;
+  });
+  const tipo = (o: ObjetoGuardado, item: ItemCatalogo) =>
+    item.colocacion === 'pared' ? 'pared' : o.colocacion === 'superficie' && item.colocacion === 'superficie' ? 'superficie' : 'suelo';
+  for (const fase of ['suelo', 'superficie', 'pared'] as const) {
+    for (const [i, o] of objetos.entries()) {
+      const item = items[i];
+      if (!item || tipo(o, item) !== fase) continue;
+      const x = o.posicion?.x ?? 0, z = o.posicion?.z ?? 0, rot = o.rotacion ?? 0;
+      let obj: ObjetoColocado | null = null;
+      if (fase === 'suelo') {
+        obj = await gestor.agregar(item, x, z, rot);
+      } else if (fase === 'superficie') {
+        const soporte = o.soporte !== undefined ? colocados.get(o.soporte) : undefined;
+        if (soporte && o.nivel !== undefined) obj = await gestor.agregarSobre(item, soporte, o.nivel, x, z, rot);
+        // Sin su mueble: al mueble libre más cercano o al suelo
+        obj ??= await gestor.agregarSegunTipo(item, x, z, null);
+      } else {
+        // La cara de ese muro en esa estancia más cercana a la posición guardada
+        const caras = gestor.caras.filter((c) => c.elemento === o.pared && (!o.estancia || c.estancia === o.estancia));
+        const cara = caras.map((c) => ({ c, ...distanciaACara(c, x, z) })).sort((p, q) => p.distancia - q.distancia)[0];
+        if (cara) obj = await gestor.agregarEnPared(item, cara.c, cara.u, o.altura);
+        obj ??= await gestor.agregarEnParedCerca(item, x, z, o.estancia ?? null);
+      }
+      if (obj) colocados.set(i, obj);
+      else omitidos.push(item.nombre);
+    }
   }
-  gestor.notificar();
-  return { omitidos, suelosIgnorados, paredesIgnoradas };
+  // Mismo orden que en el archivo (para que guardar y volver a cargar no cambie nada)
+  const orden = new Map([...colocados].map(([i, o]) => [o, i]));
+  gestor.objetos.sort((a, b) => (orden.get(a) ?? Infinity) - (orden.get(b) ?? Infinity));
+  return omitidos;
 }
 
 // --- Autoguardado en localStorage --------------------------------------------

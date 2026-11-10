@@ -6,5 +6,8 @@
     "fondo": 0.8,
     "alto": 0.75
   },
+  "superficies": [
+    0.75
+  ],
   "glb": "mesa.glb"
 }

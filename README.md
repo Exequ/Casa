@@ -12,12 +12,16 @@ Todas las medidas están en **metros**, a escala real.
 - **Fase 2.5 y 3a:** choques entre muebles, altura de paredes según
   las estancias, mejor corte de paredes, calidad gráfica adaptada al móvil y
   **suelos con textura** por estancia, con selector en la interfaz.
-- **Fase 3b (actual):** **acabados reales** sacados de las fotos del piso:
+- **Fase 3b:** **acabados reales** sacados de las fotos del piso:
   suelos (tarima de ipé, granito negro pulido, mármol…), pintura de paredes por
   estancia y por cara, alicatado del baño y frente de la cocina, rodapiés,
   tapajuntas, **carpintería** (ventanas de nogal con cristal, puertas lacadas,
   lamas del tendedero, barandilla, cortinas), **techos** con falso techo y
   focos, **luces** con interruptores y **vista interior** a la altura de los ojos.
+- **Fase 4 (actual):** herramientas para **decorar**: cuadros y espejos
+  colgados en las paredes, objetos apoyados sobre los muebles (jarrones,
+  plantas, la tele), **deshacer y rehacer**, duplicar, buscador y categorías
+  plegables en el catálogo e **imagen PNG** de la vista.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -40,7 +44,7 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run preview` | Sirve la versión de `dist/` para probarla |
 | `npm run comprobar` | Solo comprueba los tipos de TypeScript |
 | `npm run vivienda:generar` | Regenera `data/vivienda.json` a partir de las medidas del plano |
-| `npm run catalogo:ejemplos` | Regenera la mesa y el armario de ejemplo del catálogo |
+| `npm run catalogo:ejemplos` | Regenera los objetos de ejemplo del catálogo (mesa, armario y los provisionales de decoración) |
 
 ## Cómo se usa
 
@@ -60,23 +64,58 @@ Abre <http://localhost:5173> en el navegador.
 
 Los interruptores (luces, puertas, cortinas) se guardan con la escena.
 
+**Herramientas** (abajo a la derecha): **↶ deshacer**, **↷ rehacer** y
+**📷 imagen**, que descarga un PNG de lo que se ve, sin barras, etiquetas ni
+caja de selección.
+
+**Catálogo** (panel; en el móvil, menú ☰): las categorías se pliegan tocando
+su título y el **buscador** filtra por nombre (sin importar tildes ni mayúsculas).
+
 **Ordenador:**
 
 - **Cámara:** arrastrar con el botón izquierdo = girar · rueda = zoom · botón derecho = desplazar.
-- **Añadir:** clic en un objeto del catálogo. Aparece en el sitio libre más
-  cercano al centro de la estancia elegida en la barra superior (o del
-  salón), ya seleccionado. Si no cabe en ninguna parte, se avisa en el panel.
+- **Añadir:** clic en un objeto del catálogo. Aparece en la estancia elegida
+  en la barra superior (o en el salón), ya seleccionado: los muebles en el
+  sitio libre del suelo más cercano al centro; los cuadros y espejos en una
+  pared libre que se vea desde la cámara; los jarrones y plantas sobre un
+  mueble con sitio (o en el suelo si no hay). Si no cabe, se avisa en el panel.
 - **Seleccionar:** clic sobre el objeto. Clic en vacío o `Esc` deselecciona.
-- **Mover:** arrastrar el objeto por el suelo.
+- **Mover:** arrastrar el objeto (ver abajo cómo se mueve cada tipo).
 - **Girar:** `Q` / `E` o los botones ⟲ ⟳ (pasos de 15°). Giro libre con el
   deslizador, escribiendo los grados, o `Mayús + Q/E` (1°).
+- **Altura** (cuadros y espejos): deslizador *Altura en la pared* del panel.
+- **Duplicar:** tecla `D` o botón *Duplicar*.
 - **Borrar:** tecla `Supr` (o el botón *Borrar*).
+- **Deshacer / rehacer:** `Ctrl+Z` / `Ctrl+Mayús+Z` (o `Ctrl+Y`), o los botones ↶ ↷.
 
 **Móvil:**
 
 - **Cámara:** un dedo = girar · dos dedos = zoom y desplazar.
-- **Objetos:** tócalo para seleccionarlo y arrástralo con el dedo. Girar y
-  borrar desde la barra inferior que aparece al seleccionarlo.
+- **Objetos:** tócalo para seleccionarlo y arrástralo con el dedo. Al
+  seleccionarlo aparece abajo una barra con girar (⟲ ⟳; en cuadros y
+  espejos, subir ▲ y bajar ▼ de 5 en 5 cm), duplicar (⧉) y borrar.
+
+**Cuadros y espejos (objetos de pared):**
+
+- Se cuelgan de la pared a la que se apunta con el ratón o el dedo, con el
+  frente hacia la estancia. Si se apunta al suelo, van a la pared más
+  cercana a ese punto. Al arrastrarlos corren a lo largo de la pared o pasan
+  a otra.
+- No pueden tapar puertas (ni su tapajuntas) ni ventanas (ni su marco), ni
+  solaparse con otro objeto de la misma pared, ni salirse de la pared, del
+  suelo o del techo: si se intenta, se quedan en el sitio libre más cercano.
+- La altura se cambia aparte (deslizador o ▲ ▼); empieza en la `alturaCentro` de su ficha.
+- No se giran. Si su muro se baja (vista desde fuera), se ocultan con él.
+
+**Jarrones, plantas, lámparas... (objetos de superficie):**
+
+- Al arrastrarlos sobre un mueble se apoyan en la tapa o balda más cercana
+  al puntero, dentro del mueble y sin solaparse con lo que ya haya. Si no hay
+  mueble debajo (o no caben), van por el suelo como un mueble más.
+- **Se mueven y giran con el mueble.** Si se borra el mueble, pasan a otro
+  mueble libre cercano o, si no hay, al suelo.
+- Los objetos de pared y los apoyados no estorban a los muebles del suelo
+  (un objeto de superficie que esté en el suelo, sí).
 
 **Cómo se comportan los muebles:**
 
@@ -152,6 +191,7 @@ src/vivienda/             Datos y geometría en planta (sin 3D)
   acabados.ts             Formato de los acabados (pintura, revestimientos, rodapié) y colores de pared
   caras.ts                Caras de pared de cada estancia (qué trozo de qué muro ve cada estancia)
   vista.ts                Desde dónde mirar una estancia en la vista interior
+  colgar.ts               Caras de pared donde colgar cuadros y espejos, y sus reglas
 src/escena/               Todo lo 3D
   escena.ts               Renderizador, cámara orbital, luces y encuadres
   vivienda3d.ts           Suelos, paredes con huecos y pilares a partir del JSON
@@ -165,15 +205,16 @@ src/escena/               Todo lo 3D
   carpinteria.ts          Marcos, hojas, cristales, manillas, lamas, cortinas y barandilla
   techos.ts               Techos, tabicas del falso techo y focos
   luces.ts                Focos como luces, interruptores, sol y sombras según la vista
-  objetos.ts              Objetos colocados: añadir, mover, girar, borrar, seleccionar
-  interaccion.ts          Ratón, dedo y teclado sobre la escena 3D
+  objetos.ts              Objetos colocados (suelo, pared, sobre muebles): añadir, mover, girar, duplicar, borrar
+  historial.ts            Deshacer y rehacer
+  interaccion.ts          Ratón, dedo y teclado: arrastrar por el suelo, por la pared o sobre muebles; atajos
   persistencia.ts         Guardar/cargar JSON, autoguardado y migración de escenas
 src/catalogo/
   catalogo.ts             Lee las fichas .json del catálogo
   modelos.ts              Carga los .glb y los ajusta a sus medidas reales
 src/ui/
-  panel.ts                Panel lateral (cajón en el móvil)
-  barra.ts                Barra superior y barra del objeto seleccionado (móvil)
+  panel.ts                Panel lateral (cajón en el móvil): catálogo con buscador, objeto seleccionado, escena
+  barra.ts                Barra superior, herramientas (↶ ↷ 📷) y barra del objeto seleccionado (móvil)
   selectorAcabados.ts     Suelo, color de paredes y luz de cada estancia
   estilos.css             Estilos
 ```
@@ -401,6 +442,29 @@ Si algo no coincide, corrige la medida en píxeles en
    - `dimensiones`: medidas **reales** en metros. `ancho` = eje X,
      `fondo` = eje Z, `alto` = eje Y.
    - `glb`: ruta del modelo, relativa a la carpeta del `.json`.
+   - `colocacion` (opcional): dónde se pone. `"suelo"` (por defecto: muebles),
+     `"pared"` (cuadros, espejos) o `"superficie"` (jarrones, lámparas de mesa,
+     la tele...: sobre un mueble, o en el suelo si no hay sitio).
+   - `alturaCentro` (opcional, solo `"pared"`): altura del centro del objeto
+     sobre el suelo, en metros. Por defecto 1,50.
+   - `superficies` (opcional, solo muebles de suelo: mesas, cómodas,
+     estanterías, mueble de TV): lista de alturas en metros de sus tapas o
+     baldas donde se pueden apoyar objetos. Por defecto, el borde superior del
+     mueble. Se supone que cada tapa o balda ocupa toda la planta del mueble.
+
+   Ejemplos:
+
+   ```jsonc
+   // Cuadro
+   { "nombre": "Cuadro 40 × 30", "categoria": "Decoración de pared", "colocacion": "pared",
+     "alturaCentro": 1.5, "dimensiones": { "ancho": 0.4, "fondo": 0.03, "alto": 0.3 }, "glb": "cuadro.glb" }
+   // Estantería con tres baldas
+   { "nombre": "Estantería", "categoria": "Almacenaje", "superficies": [0.35, 0.75, 1.2],
+     "dimensiones": { "ancho": 0.8, "fondo": 0.35, "alto": 1.2 }, "glb": "estanteria.glb" }
+   ```
+
+   Los `.json` antiguos (sin estos campos) siguen funcionando: son muebles de
+   suelo y se puede apoyar cosas encima de ellos.
 4. Si `npm run dev` está en marcha, la página se recarga sola y el objeto
    aparece en el catálogo. Si no, arráncalo. Al subirlo a `main` se publica solo.
 
@@ -415,24 +479,32 @@ así que **no renombres** un `.json` si ya lo usas en escenas guardadas.
 - Lo **recoloca** para que su origen quede en el centro de la base, apoyado
   en el suelo.
 - El **frente** del objeto debe mirar hacia **+Z** en el modelo (en Blender,
-  hacia *-Y*, porque el exportador convierte los ejes).
+  hacia *-Y*, porque el exportador convierte los ejes). En los objetos de
+  pared, la trasera es la cara -Z, que queda pegada a la pared.
 - Si el `.json` tiene un error o falta el `.glb`, el objeto no aparece y se
   explica el motivo en la consola del navegador (F12).
 
 ### Generar objetos por script
 
-`scripts/generar-catalogo.mjs` construye la mesa y el armario de ejemplo a
-base de cajas. Puedes copiar una de sus funciones (`mesa()` o `armario()`)
-para crear otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
+`scripts/generar-catalogo.mjs` construye los objetos de ejemplo a base de
+cajas y cilindros: la mesa y el armario, y cuatro objetos **provisionales**
+de decoración (se sustituirán por los reales): un cuadro de 40 × 30 cm y un
+espejo de 60 × 90 cm (pared), un jarrón de 25 cm y una planta en maceta de
+45 cm (superficie o suelo). Puedes copiar una de sus funciones para crear
+otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
 
 ## Formato de una escena guardada
 
 ```json
 {
-  "version": 4,
+  "version": 5,
   "vivienda": "Vivienda 2ºA",
   "objetos": [
-    { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
+    { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90, "colocacion": "suelo" },
+    { "catalogo": "jarron", "posicion": { "x": 3.2, "y": 0.75, "z": 1.7 }, "rotacion": 90,
+      "colocacion": "superficie", "soporte": 0, "nivel": 0.75 },
+    { "catalogo": "cuadro", "posicion": { "x": 2.0, "y": 1.35, "z": 0.255 }, "rotacion": 0,
+      "colocacion": "pared", "pared": "pared:fachada-norte", "estancia": "salon", "altura": 1.5 }
   ],
   "suelos": {
     "salon": { "tipo": "microcemento", "color": "#bcb5aa", "escala": 2 }
@@ -448,12 +520,18 @@ para crear otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
 
 `posicion` es el centro de la base del objeto en metros, en las coordenadas de
 `vivienda.json`, y `rotacion` el giro alrededor del eje vertical en grados
-(positivo = antihorario visto desde arriba). `suelos` y `paredes` llevan solo
+(positivo = antihorario visto desde arriba). `colocacion` dice cómo está
+puesto: en el `"suelo"`, en la `"pared"` (con el muro o pilar donde cuelga,
+la estancia a la que mira y la `altura` de su centro) o sobre un mueble
+(`"superficie"`, con `soporte` = posición del mueble en la lista, empezando
+en 0, y `nivel` = altura de la tapa o balda). `suelos` y `paredes` llevan solo
 las estancias cambiadas respecto a `vivienda.json`. `ajustes` guarda los
 interruptores: luces (general y estancias apagadas), puertas y cortinas.
 
 **Escenas antiguas** (se migran solas al cargarlas, también el autoguardado):
 
+- **v4** (fase 3b): objetos sin `colocacion`; se cargan en el suelo (y un
+  objeto de pared, si lo hubiera, se cuelga en la pared más cercana).
 - **v3** (fase 3a): sin `paredes` ni `ajustes`; se cargan con los colores
   originales, luces encendidas, puertas cerradas y cortinas visibles.
 - **v2** (fase 2): además, sin `suelos`; se cargan con los suelos originales.
@@ -488,7 +566,14 @@ ignoran (también con aviso).
   2,40 m en cocina y distribuidor) y que ninguna pared queda más baja que su techo;
 - el número de focos, puertas abatibles y cortinas, los interruptores de luz y
   que nunca hay más de 3 luces con sombra (1 en el móvil);
-- el punto de vista de la vista interior de cada estancia.
+- el punto de vista de la vista interior de cada estancia;
+- **decorar** (`tests/decorar.test.ts`): los campos nuevos del catálogo; colgar
+  en paredes sin tapar puertas (con su tapajuntas) ni ventanas, sin solapes y
+  sin salirse; la altura; apoyar en tapas y baldas sin salirse ni solaparse;
+  que lo apoyado se mueve y gira con el mueble y qué pasa al borrarlo;
+  duplicar; guardar y cargar en v5 (y migrar desde v4); deshacer y rehacer
+  (más de 50 pasos, cambios seguidos juntos y añadir, mover, girar, borrar,
+  colgar y apoyar).
 
 ## Publicación
 

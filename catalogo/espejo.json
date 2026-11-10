@@ -1,0 +1,12 @@
+{
+  "nombre": "Espejo 60 × 90 (provisional)",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.45,
+  "dimensiones": {
+    "ancho": 0.6,
+    "fondo": 0.025,
+    "alto": 0.9
+  },
+  "glb": "espejo.glb"
+}
