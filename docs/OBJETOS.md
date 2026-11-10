@@ -99,6 +99,7 @@ edita `data/vivienda.json` directamente).
 | Espejo sin marco (`bano-espejo`) | bano | 0,7 × 0,01 × 0,8 (desde 1,05 m) | espejo | Foto: algo más estrecho que el mueble, de 1,05 a 1,85 m, bajo el aplique LED (1,95). | estimada |
 | Inodoro (`bano-inodoro`) | bano | 0,36 × 0,62 × 0,8 | porcelana blanca | Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo. | estimada |
 | Bidé (`bano-bide`) | bano | 0,36 × 0,54 × 0,52 | porcelana blanca; grifo cromado | Plano: 0,36 × 0,54, junto a la puerta. | estimada |
+| Armario empotrado de 4 puertas (`dormitorio-armario`) | dormitorio | 2,19 × 0,57 × 2,49 | puertas blancas lisas; pomos plateados | Hueco del armario en el plano (2,19 × 0,57); de suelo a techo (2,50 m). Juntas horizontales cada 0,62 m y 4 puertas, como en la foto. | estimada |
 
 **No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
 (ni en el plano ni en las fotos). La placa sí está en el plano, y la campana

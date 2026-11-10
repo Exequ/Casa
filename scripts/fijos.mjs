@@ -105,7 +105,18 @@ const BANO = [
   }, [8.07, 8.61], [1.22, 1.58]),
 ];
 
-export const FIJOS = [...COCINA, ...BANO];
+// --- Dormitorio: armario empotrado (foto "Habitación" y plano) -----------------------------
+// En el hueco del armario del plano (x 9,03–11,22 × z 2,93–3,50), de suelo a
+// techo, con el frente hacia la cama. 4 puertas lisas (dos parejas) con juntas
+// horizontales y pomos pequeños; cerradas.
+const ARMARIO = [
+  fijo({
+    id: 'dormitorio-armario', tipo: 'armario-empotrado', nombre: 'Armario empotrado de 4 puertas', estancia: 'dormitorio',
+    giro: 180, alto: 2.49, puertas: 4, material: 'puertas blancas lisas; pomos plateados',
+  }, [9.03, 11.22], [2.93, 3.5]),
+];
+
+export const FIJOS = [...COCINA, ...BANO, ...ARMARIO];
 
 /** Cómo se estimó cada medida (para docs/OBJETOS.md). */
 const NOTAS = {
@@ -123,6 +134,7 @@ const NOTAS = {
   'bano-espejo': 'Foto: algo más estrecho que el mueble, de 1,05 a 1,85 m, bajo el aplique LED (1,95).',
   'bano-inodoro': 'Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo.',
   'bano-bide': 'Plano: 0,36 × 0,54, junto a la puerta.',
+  'dormitorio-armario': 'Hueco del armario en el plano (2,19 × 0,57); de suelo a techo (2,50 m). Juntas horizontales cada 0,62 m y 4 puertas, como en la foto.',
 };
 
 /** Escribe la sección "Elementos fijos" de docs/OBJETOS.md. */

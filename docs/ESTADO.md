@@ -17,7 +17,7 @@ Cada parte se publica con su propio PR.
 | Diseño común | **Hecho** | Sección `fijos` en `data/vivienda.json` (desde `scripts/fijos.mjs`), validada al abrir la app y documentada en el README. Huellas para los choques: los fijos del suelo son obstáculo permanente en `EspacioLibre`; los colgados, solo para muebles más altos que su base; ningún cuadro puede colgarse sobre un fijo. Dibujo por código (`src/escena/fijos3d.ts`), con materiales del color y brillo de las fotos y la textura de granito; en el móvil, el modo ligero de siempre. Los colgados van en el grupo de acabados de su pared y se ocultan con ella. |
 | A. Cocina | **Hecho** | En L, según el plano y las fotos: columna con el frigorífico combi (altillo con rejilla), lavavajillas blanco de 45 cm junto a ella, armario y rincón en la pared este; en la del fondo, armario, horno de acero con cristal negro y placa (la del plano) y cajonera de 4. Encimera de granito negro, zócalo blanco, tiradores de barra de acero. Altos lacados hasta el falso techo con campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana. El frente de azulejo ya no queda detrás de la columna; copete de granito de 8 cm y frente de granito sobre el horno. |
 | B. Baño | **Hecho** | Según el plano: plato de ducha extraplano blanco a la izquierda (0,65 × 1,36) con desagüe de rejilla, mampara fija de cristal con perfil cromado en la mitad hacia la puerta y barra de sujeción a la pared, grifería termostática cromada con barra y rociador en la pared del fondo, agarradera de acero junto a la ducha; mueble de lavabo blanco lacado de 3 cajones sobre patas con lavabo integrado y grifo en el centro del fondo, espejo sin marco encima (bajo el aplique LED que ya había); inodoro y bidé de líneas rectas en la pared de la derecha. |
-| C. Armario empotrado | Pendiente | |
+| C. Armario empotrado | **Hecho** | En el hueco del plano (2,19 × 0,57 m), de suelo a techo, con el frente hacia la cama: 4 puertas blancas lisas (dos parejas), juntas horizontales finas cada 0,62 m y pomos redondos plateados pequeños; cerradas. |
 | D. Aire acondicionado | Pendiente | |
 
 ### Comprobaciones (parte A)
@@ -31,6 +31,11 @@ Cada parte se publica con su propio PR.
 
 - Tests del baño (piezas, posiciones del plano, espejo sobre el lavabo y bajo el aplique, mampara sobre el plato y barra hasta la pared).
 - Capturas desde los puntos de vista de las dos fotos del baño (escritorio y móvil), comparadas con ellas. Las baterías anteriores siguen pasando.
+
+### Comprobaciones (parte C)
+
+- Tests del armario (hueco del plano, de suelo a techo, frente hacia la cama; no se puede meter un mueble dentro).
+- Capturas del dormitorio desde el punto de vista de la foto (escritorio y móvil), comparadas con ella.
 
 ### Decisiones (parte B)
 

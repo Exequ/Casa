@@ -31,6 +31,7 @@ const MATERIALES = {
   vidrioNegro: mat('vidrio-negro', { color: 0x0d0e10, roughness: 0.06, metalness: 0.3 }),
   oscuro: mat('oscuro', { color: 0x46494d, roughness: 0.5, metalness: 0.3 }),
   junta: mat('junta', { color: 0xc9cac8, roughness: 0.8 }),
+  juntaArmario: mat('junta-armario', { color: 0xa9aaa8, roughness: 0.8 }),
   cristal: mat('cristal', { color: 0xd6ebe7, roughness: 0.05, transparent: true, opacity: 0.22, depthWrite: false }),
   espejo: mat('espejo', { color: 0xd8e2e8, roughness: 0.1, metalness: 0.6 }),
 };
@@ -350,7 +351,8 @@ function armarioEmpotrado(t: Taller, f: Fijo) {
   for (let i = 0; i < n; i++) {
     const px = -W / 2 + wp / 2 + i * (wp + 0.004);
     t.caja('satinado', [wp, H - 0.004, grosor], [px, (H - 0.004) / 2, zFrente - grosor / 2]);
-    for (const y of juntas) t.caja('junta', [wp, 0.003, 0.002], [px, y, zFrente + 0.0005]);
+    for (const y of juntas) t.caja('juntaArmario', [wp, 0.004, 0.002], [px, y, zFrente + 0.0005]);
+    if (i > 0) t.caja('juntaArmario', [0.004, H - 0.004, 0.002], [px - wp / 2 - 0.002, (H - 0.004) / 2, zFrente + 0.0005]);
     // Pomos en el lado que abre (las puertas van por parejas)
     const lado = i % 2 === 0 ? 1 : -1;
     t.esfera('cromo', 0.011, [px + lado * (wp / 2 - 0.045), 1.05, zFrente + pomo - 0.011]);
