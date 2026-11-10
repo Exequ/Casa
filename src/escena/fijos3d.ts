@@ -34,6 +34,8 @@ const MATERIALES = {
   juntaArmario: mat('junta-armario', { color: 0xa9aaa8, roughness: 0.8 }),
   cristal: mat('cristal', { color: 0xd6ebe7, roughness: 0.05, transparent: true, opacity: 0.22, depthWrite: false }),
   espejo: mat('espejo', { color: 0xd8e2e8, roughness: 0.1, metalness: 0.6 }),
+  /** Dígitos del reloj del horno (azul de la foto; no ilumina). */
+  pantalla: mat('pantalla', { color: 0x3d8fe8, roughness: 0.4 }),
 };
 type NombreMaterial = keyof typeof MATERIALES | 'granito';
 
@@ -92,8 +94,8 @@ class Taller {
   esfera(m: NombreMaterial, r: number, c: V3) {
     this.anadir(m, new THREE.SphereGeometry(r, 14, 10), c);
   }
-  aro(m: NombreMaterial, r: number, tubo: number, c: V3, giro: V3) {
-    this.anadir(m, new THREE.TorusGeometry(r, tubo, 8, 32), c, giro);
+  aro(m: NombreMaterial, r: number, tubo: number, c: V3, giro: V3, arco = Math.PI * 2) {
+    this.anadir(m, new THREE.TorusGeometry(r, tubo, 8, arco < Math.PI * 2 ? 20 : 32, arco), c, giro);
   }
 
   mallas(nombre: string, tamano: number): THREE.Mesh[] {
@@ -122,17 +124,57 @@ function tirador(t: Taller, c: V3, largo: number, vertical = false, material: No
 
 // --- Cocina ---------------------------------------------------------------------------------
 
-/** Muebles bajos: zócalo, cuerpo, frentes por módulos y encimera de granito (y placa si la hay). */
+/** Lado del tirador de una puerta sola (+1 derecha, −1 izquierda, vista de frente). */
+const ladoTirador = (m: ModuloCocina, porDefecto: 1 | -1) => (m.tirador === 'derecha' ? 1 : m.tirador === 'izquierda' ? -1 : porDefecto);
+
+/** Fregadero bajo encimera (cubeta de acero) y grifo de caño alto, en el módulo centrado en cx. */
+const FREGADERO = { ancho: 0.4, fondo: 0.34, hondo: 0.18, delante: 0.07 };
+function fregadero(t: Taller, cx: number, D: number, yTop: number, H: number) {
+  const { ancho: a, fondo: f, hondo } = FREGADERO, cz = D / 2 - FREGADERO.delante - f / 2, e = 0.006, y0 = yTop - hondo;
+  t.caja('acero', [a, e, f], [cx, y0 + e / 2, cz]);
+  for (const s of [-1, 1]) {
+    t.caja('acero', [e, hondo, f], [cx + s * (a / 2 - e / 2), y0 + hondo / 2, cz]);
+    t.caja('acero', [a, hondo, e], [cx, y0 + hondo / 2, cz + s * (f / 2 - e / 2)]);
+  }
+  t.cilindro('oscuro', 0.035, 0.035, 0.004, [cx, y0 + e + 0.002, cz + 0.05], undefined, 20);
+  t.aro('acero', 0.035, 0.004, [cx, y0 + e + 0.003, cz + 0.05], [Math.PI / 2, 0, 0]);
+  // Grifo monomando de caño alto en cuello de cisne, detrás de la cubeta, algo hacia la izquierda
+  const gx = cx - 0.08, gz = -D / 2 + 0.085, r = 0.085, yArco = H + 0.21;
+  t.cilindro('cromo', 0.024, 0.026, 0.05, [gx, H + 0.025, gz]);
+  t.cilindro('cromo', 0.013, 0.013, yArco - H - 0.05, [gx, (H + 0.05 + yArco) / 2, gz]);
+  t.aro('cromo', r, 0.013, [gx, yArco, gz + r], [0, Math.PI / 2, 0], Math.PI);
+  t.cilindro('cromo', 0.014, 0.012, 0.06, [gx, yArco - 0.03, gz + 2 * r]);
+  t.barra('cromo', [gx + 0.02, H + 0.11, gz], [gx + 0.075, H + 0.135, gz + 0.01], 0.006);
+}
+
+/** Muebles bajos: zócalo, cuerpo, frentes por módulos, encimera de granito y, si los hay, placa y fregadero. */
 function cocinaBajo(t: Taller, f: Fijo) {
   const { ancho: W, fondo: D, alto: H } = f.dimensiones;
   const zocalo = 0.1, encimera = 0.03, yTop = H - encimera, frente = 0.018, tirSep = 0.034;
   const zFrente = D / 2 - tirSep; // cara delantera de los frentes (los tiradores sobresalen hasta D/2)
-  t.caja('blanco', [W, yTop - zocalo, D - tirSep - frente - 0.01], [0, (zocalo + yTop) / 2, -(tirSep + frente + 0.01) / 2]);
+  const modulos = f.modulos ?? [{ tipo: 'puertas', ancho: W } as ModuloCocina];
+  const fondoCuerpo = D - tirSep - frente - 0.01, zCuerpo = -(tirSep + frente + 0.01) / 2;
   t.caja('lacado', [W, zocalo - 0.005, 0.016], [0, zocalo / 2, zFrente - 0.06]);
-  t.caja('granito', [W, encimera, D], [0, H - encimera / 2, 0]);
-  let x = -W / 2;
+  // Cuerpo por módulos (bajo el fregadero, solo hasta el fondo de la cubeta) y encimera con su hueco
+  let x = -W / 2, hueco: [number, number] | null = null;
+  for (const m of modulos) {
+    const cx = x + m.ancho / 2, techo = m.fregadero ? yTop - FREGADERO.hondo : yTop;
+    t.caja('blanco', [m.ancho, techo - zocalo, fondoCuerpo], [cx, (zocalo + techo) / 2, zCuerpo]);
+    if (m.fregadero) hueco = [cx - FREGADERO.ancho / 2, cx + FREGADERO.ancho / 2];
+    x += m.ancho;
+  }
+  const yEnc = H - encimera / 2;
+  if (!hueco) t.caja('granito', [W, encimera, D], [0, yEnc, 0]);
+  else {
+    const [x1, x2] = hueco, zf = D / 2 - FREGADERO.delante, zb = zf - FREGADERO.fondo;
+    t.caja('granito', [x1 + W / 2, encimera, D], [(-W / 2 + x1) / 2, yEnc, 0]);
+    t.caja('granito', [W / 2 - x2, encimera, D], [(x2 + W / 2) / 2, yEnc, 0]);
+    t.caja('granito', [x2 - x1, encimera, D / 2 - zf], [(x1 + x2) / 2, yEnc, (zf + D / 2) / 2]);
+    t.caja('granito', [x2 - x1, encimera, zb + D / 2], [(x1 + x2) / 2, yEnc, (zb - D / 2) / 2]);
+  }
+  x = -W / 2;
   const alto = yTop - zocalo - 0.006, yc = zocalo + 0.003 + alto / 2, zc = zFrente - frente / 2;
-  for (const m of f.modulos ?? [{ tipo: 'puertas', ancho: W } as ModuloCocina]) {
+  for (const m of modulos) {
     const cx = x + m.ancho / 2, w = m.ancho - 0.004;
     if (m.tipo === 'cajones') {
       const n = m.n ?? 4, h = (alto - (n - 1) * 0.004) / n;
@@ -142,23 +184,41 @@ function cocinaBajo(t: Taller, f: Fijo) {
         tirador(t, [cx, y + h / 2 - 0.035, zFrente], Math.min(0.32, w * 0.6));
       }
     } else if (m.tipo === 'horno') {
-      // Cajón bajo el horno, horno de acero con cristal negro y mandos
+      // Cajón bajo el horno; horno de acero: panel de mandos arriba (reloj y dos mandos),
+      // puerta de cristal negro con el tirador de barra en lo alto
       const hCajon = 0.15;
       t.caja('lacado', [w, hCajon, frente], [cx, zocalo + 0.003 + hCajon / 2, zc]);
       tirador(t, [cx, zocalo + hCajon - 0.03, zFrente], Math.min(0.32, w * 0.6));
-      const y0 = zocalo + hCajon + 0.01, hHorno = yTop - y0 - 0.005;
+      const y0 = zocalo + hCajon + 0.01, hHorno = yTop - y0 - 0.005, hPanel = 0.1, yPanel = yTop - 0.005 - hPanel / 2;
       t.caja('acero', [w, hHorno, frente], [cx, y0 + hHorno / 2, zc]);
-      t.caja('vidrioNegro', [w - 0.06, hHorno * 0.62, 0.004], [cx, y0 + hHorno * 0.4, zFrente + 0.002]);
-      t.caja('vidrioNegro', [w - 0.06, 0.06, 0.004], [cx, yTop - 0.045, zFrente + 0.002]);
-      tirador(t, [cx, y0 + hHorno * 0.78, zFrente], w * 0.75);
-      for (const s of [-1, 1]) t.cilindro('acero', 0.016, 0.016, 0.012, [cx + s * (w / 2 - 0.07), yTop - 0.045, zFrente + 0.006], [Math.PI / 2, 0, 0], 16);
-      if (m.placa) t.caja('vidrioNegro', [Math.min(0.58, w), 0.006, Math.min(0.51, D - 0.06)], [cx, H - 0.003 + 0.0005, -0.01]);
+      const hPuerta = hHorno - hPanel - 0.012;
+      t.caja('vidrioNegro', [w - 0.03, hPuerta, 0.006], [cx, y0 + 0.006 + hPuerta / 2, zFrente + 0.003]);
+      tirador(t, [cx, y0 + hPuerta - 0.035, zFrente + 0.006], w * 0.85);
+      t.caja('vidrioNegro', [0.1, 0.045, 0.004], [cx, yPanel, zFrente + 0.002]);
+      t.caja('pantalla', [0.045, 0.016, 0.002], [cx, yPanel + 0.004, zFrente + 0.0045]);
+      for (const s of [-1, 1]) {
+        t.cilindro('oscuro', 0.024, 0.024, 0.004, [cx + s * 0.17, yPanel, zFrente + 0.002], [Math.PI / 2, 0, 0], 20);
+        t.cilindro('acero', 0.019, 0.02, 0.022, [cx + s * 0.17, yPanel, zFrente + 0.013], [Math.PI / 2, 0, 0], 20);
+      }
+      if (m.placa) {
+        // Vitrocerámica: cristal negro con canto biselado y zonas de cocción apenas marcadas
+        const pw = Math.min(0.58, w), pd = Math.min(0.51, D - 0.06), pz = -0.01;
+        t.caja('vidrioNegro', [pw, 0.006, pd], [cx, H - 0.0015, pz]);
+        // Canto biselado algo más claro (se distingue del granito, también en el móvil)
+        for (const s of [-1, 1]) {
+          t.caja('acero', [pw + 0.012, 0.006, 0.006], [cx, H - 0.0015, pz + s * (pd / 2 + 0.003)]);
+          t.caja('acero', [0.006, 0.006, pd], [cx + s * (pw / 2 + 0.003), H - 0.0015, pz]);
+        }
+        for (const [dx, dz, r] of [[-0.14, 0.1, 0.09], [0.14, 0.1, 0.075], [-0.14, -0.12, 0.075], [0.13, -0.11, 0.1]] as const) {
+          t.aro('oscuro', r, 0.0012, [cx + dx, H + 0.0004, pz + dz], [Math.PI / 2, 0, 0]);
+        }
+      }
     } else if (m.tipo === 'lavavajillas') {
       // Lavavajillas blanco de libre instalación bajo la encimera: panel de mandos arriba
       const h = yTop - 0.02;
       t.caja('chapa', [w - 0.006, h - 0.08, frente], [cx, 0.02 + (h - 0.08) / 2, zc]);
       t.caja('chapa', [w - 0.006, 0.075, frente], [cx, h - 0.02, zc]);
-      t.caja('oscuro', [w * 0.3, 0.02, 0.003], [cx + w * 0.2, h - 0.02, zFrente + 0.0015]);
+      t.caja('oscuro', [w * 0.5, 0.022, 0.003], [cx + w * 0.12, h - 0.02, zFrente + 0.0015]);
       t.caja('junta', [w - 0.006, 0.004, 0.004], [cx, h - 0.06, zFrente]);
       tirador(t, [cx, h - 0.1, zFrente], w * 0.5, false, 'chapa');
       t.caja('oscuro', [w - 0.03, 0.02, 0.02], [cx, 0.01, zc]);
@@ -170,9 +230,10 @@ function cocinaBajo(t: Taller, f: Fijo) {
       for (let i = 0; i < n; i++) {
         const px = cx - w / 2 + wp / 2 + i * (wp + 0.004);
         t.caja('lacado', [wp, alto, frente], [px, yc, zc]);
-        const lado = n === 2 ? (i === 0 ? 1 : -1) : -1;
+        const lado = n === 2 ? (i === 0 ? 1 : -1) : ladoTirador(m, -1);
         tirador(t, [px + lado * (wp / 2 - 0.04), yTop - 0.12, zFrente], 0.14, true);
       }
+      if (m.fregadero) fregadero(t, cx, D, yTop, H);
     }
     x += m.ancho;
   }
@@ -198,16 +259,19 @@ function cocinaAlto(t: Taller, f: Fijo) {
       t.caja('blanco', [w, H, fondoCuerpo], [cx, H / 2, -D / 2 + fondoCuerpo / 2]);
       let y0 = 0;
       if (m.tipo === 'campana') {
-        // Campana extraíble bajo el armario: frente de acero y filtro gris
-        t.caja('acero', [w, 0.05, frente + 0.02], [cx, 0.025, zc - 0.01]);
+        // Campana extraíble: frente lacado abajo con tirador horizontal (foto), filtro gris debajo
+        const hc = 0.28;
         t.caja('oscuro', [w - 0.04, 0.004, fondoCuerpo - 0.02], [cx, 0.002, -D / 2 + fondoCuerpo / 2]);
-        y0 = 0.06;
+        t.caja('acero', [w - 0.03, 0.01, fondoCuerpo - 0.01], [cx, 0.006, -D / 2 + fondoCuerpo / 2 + 0.005]);
+        t.caja('lacado', [w - 0.02, hc, frente], [cx, hc / 2, zc]);
+        tirador(t, [cx, 0.06, zFrente], Math.min(0.32, w * 0.55));
+        y0 = hc + 0.004;
       }
       const n = m.n ?? (m.ancho > 0.65 ? 2 : 1), wp = (w - (n - 1) * 0.004) / n, h = H - y0 - 0.004;
       for (let i = 0; i < n; i++) {
         const px = cx - w / 2 + wp / 2 + i * (wp + 0.004);
         t.caja('lacado', [wp, h, frente], [px, y0 + h / 2, zc]);
-        const lado = n === 2 ? (i === 0 ? 1 : -1) : 1;
+        const lado = n === 2 ? (i === 0 ? 1 : -1) : ladoTirador(m, 1);
         tirador(t, [px + lado * (wp / 2 - 0.04), y0 + 0.12, zFrente], 0.14, true);
       }
     }

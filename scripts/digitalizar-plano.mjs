@@ -166,7 +166,6 @@ const PIZARRA = { tipo: 'pizarra', color: '#5a5d5f', escala: 1.2, pieza: 0.4, ac
 
 // Revestimientos de pared
 const ALICATADO_BANO = { tipo: 'alicatado', color: '#d5d6d4', pieza: [0.6, 0.3], acabado: 'satinado' };
-const AZULEJO_BLANCO = { tipo: 'azulejo', color: '#f4f4f2', pieza: [0.6, 0.3], acabado: 'pulido' };
 const FRENTE_GRANITO = { tipo: 'granito', color: '#121214', acabado: 'pulido' };
 
 /** Falso techo de la cocina y del distribuidor: SUPOSICIÓN (no hay cotas). Cámbialo aquí. */
@@ -183,13 +182,12 @@ const ACABADOS = {
     suelo: GRANITO_NEGRO,
     acabado: {
       pared: { color: '#eeede9' },
-      // Frente entre muebles bajos y altos (0,90 a 1,45 m): azulejo blanco y granito negro tras la placa.
+      // Frente entre muebles bajos y altos (fotos de cerca): pared lisa pintada, copete de
+      // granito negro sobre la encimera y un panel de granito tras la placa.
       revestimientos: [
-        { nombre: 'Frente de azulejo blanco (pared del fondo)', material: AZULEJO_BLANCO, desde: 0.9, hasta: 1.45, zona: [1.8, 6.1, 4.1, 6.2] },
-        { nombre: 'Frente de azulejo blanco (pared de la derecha, desde la columna del frigorífico)', material: AZULEJO_BLANCO, desde: 0.9, hasta: 1.45, zona: [4.0, 4.42, 4.1, 6.2] },
-        { nombre: 'Copete de granito negro sobre la encimera (fondo)', material: FRENTE_GRANITO, desde: 0.9, hasta: 0.98, zona: [1.8, 6.1, 4.1, 6.2] },
-        { nombre: 'Copete de granito negro sobre la encimera (derecha)', material: FRENTE_GRANITO, desde: 0.9, hasta: 0.98, zona: [4.0, 4.42, 4.1, 6.2] },
-        { nombre: 'Frente de granito negro tras la placa', material: FRENTE_GRANITO, desde: 0.9, hasta: 1.45, zona: [2.33, 6.1, 2.93, 6.2] },
+        { nombre: 'Copete de granito negro sobre la encimera (fondo)', material: FRENTE_GRANITO, desde: 0.9, hasta: 1.0, zona: [1.8, 6.1, 4.1, 6.2] },
+        { nombre: 'Copete de granito negro sobre la encimera (derecha)', material: FRENTE_GRANITO, desde: 0.9, hasta: 1.0, zona: [4.0, 4.42, 4.1, 6.2] },
+        { nombre: 'Panel de granito negro tras la placa', material: FRENTE_GRANITO, desde: 0.9, hasta: 1.4, zona: [2.46, 6.1, 3.06, 6.2] },
       ],
     },
     focos: [[2.9, 4.1], [2.9, 5.3]],
@@ -314,7 +312,7 @@ const vivienda = {
     'Cerramiento entre cocina y tendedero (de la foto): fijo de suelo a 2,10 m partido a 1,05 m, puerta de madera con vidrio de 2,10 m y ventana fija sobre la encimera (alféizar 1,00 m).',
     'Cerramiento exterior del tendedero: lamas horizontales de aluminio negro de suelo a 2,45 m en todo el largo.',
     'Acabados (suelos, pintura, alicatados, rodapiés, carpintería) tomados de las fotos del anuncio. Colores aproximados a ojo.',
-    'Alicatado del baño: 1,10 m de alto y hasta el techo en la zona de la ducha (x < 7,0 m). Frente de la cocina: entre 0,90 y 1,45 m en las paredes del fondo y de la derecha (desde la columna del frigorífico), con un copete de granito negro de 8 cm sobre la encimera y granito negro tras la placa (sobre el horno, x 2,33–2,93).',
+    'Alicatado del baño: 1,10 m de alto y hasta el techo en la zona de la ducha (x < 7,0 m). Frente de la cocina (fotos de cerca): pared lisa pintada, copete de granito negro de 10 cm sobre la encimera y panel de granito negro tras la placa hasta 1,40 m (sobre el horno, x 2,46–3,06).',
     'Focos empotrados: número de las fotos; posiciones repartidas a ojo. Aplique LED del baño sobre el lavabo, a 1,95 m.',
     'Sentido de apertura de las puertas: de los arcos del plano.',
     'La cocina está abierta al salón (en el plano no hay muro entre ambas, solo cambio de pavimento).',

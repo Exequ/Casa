@@ -1,10 +1,33 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 3c (elementos
-fijos: cocina, baño, armario empotrado y aire acondicionado). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, tras los ajustes con las
+fotos de cerca de la cocina y del dormitorio (después de la fase 3c). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
+
+---
+
+## Ajustes con fotos de cerca (cocina y dormitorio)
+
+Tres fotos nuevas: la cocina de frente y desde el frigorífico, y el lado
+izquierdo del dormitorio. Un PR por parte.
+
+| Parte | Estado | Detalle |
+|---|---|---|
+| Cocina | **Hecho** | **Fregadero** de acero bajo encimera (cubeta de 0,40 × 0,34) con grifo cromado de caño alto, en el armario de 0,60 junto a la columna del frigorífico; **lavavajillas** blanco de 45 cm a su derecha y luego el rincón. Pared del fondo con las medidas de la foto frontal: armario de 0,40, horno de 0,60 y cajonera de 0,60 hasta la ventana; los altos, alineados encima (puerta de 0,40 sobre el armario, **campana** sobre la placa, puerta y estantes sobre la cajonera). Campana con frente **lacado** y tirador horizontal (no de acero). Horno con el panel de mandos arriba (reloj azul y dos mandos) y el tirador en lo alto de la puerta negra; vitrocerámica con canto claro y zonas marcadas. Tiradores de las puertas sueltas en el lado de la foto. Entre encimera y muebles altos, **pared lisa** pintada (sin azulejo), copete de granito de 10 cm y panel de granito tras la placa hasta 1,40 m. |
+
+### Comprobaciones (cocina)
+
+- `npm test`: 227 tests en verde; nuevos: fregadero junto a la columna y lavavajillas de 45 cm a continuación, hueco de la encimera con la cubeta debajo, grifo dentro de la caja del mueble (y por debajo de los altos), campana centrada sobre el horno y altos alineados con los bajos, panel de granito justo tras la placa y sin azulejo.
+- Capturas desde los puntos de vista de las dos fotos de la cocina (escritorio y móvil), comparadas con ellas; vistas de cerca del fregadero y de la placa.
+- Batería de los fijos en el navegador (ratón y dedo): los 17 fijos, no se seleccionan, una mesa arrastrada se para delante de la cocina, no se cuelga un cuadro sobre los altos; sin errores.
+
+### Decisiones (cocina)
+
+- **Medidas de la pared del fondo** sacadas de la foto frontal (0,40 / 0,60 / 0,60): el horno y la placa quedan en x 2,46–3,06, unos 13 cm más hacia el armario que antes y algo más que en el plano; manda la foto.
+- La **pared** entre la encimera y los muebles altos se ve lisa en las fotos de cerca: se quita el azulejo (queda la pintura de la cocina).
+- El **grifo** sobresale de la caja del mueble: el fijo cuenta su altura (0,31 m) para los choques y para no colgar nada encima.
 
 ---
 
@@ -59,7 +82,7 @@ Cada parte se publica con su propio PR.
 
 ### Decisiones (parte A)
 
-- **Fregadero:** no se dibuja (no se ve ni en las fotos ni en el plano). La **placa** sí (está en el plano) y la **campana** extraíble también (se ve en la foto bajo los muebles altos).
+- **Fregadero:** no se dibujaba (no se veía ni en las fotos ni en el plano); añadido después con las fotos de cerca (ver arriba). La **placa** sí (está en el plano) y la **campana** extraíble también (se ve en la foto bajo los muebles altos).
 - **Posición del horno:** x 2,33–2,93, con la cajonera de 0,50 m a su derecha, junto a la ventana, como en las fotos. En el plano la placa está unos 10 cm más a la izquierda.
 - **Lavavajillas:** de 45 cm junto a la columna, en el módulo de 0,51 del plano.
 - **Muebles altos del fondo:** empiezan a 5 cm de la ventana sobre la encimera para no taparla.
@@ -349,8 +372,7 @@ planta (no 0,45 × 0,45): con tres patas abiertas la planta no es cuadrada.
 1. Más decoración y alfombras; decidir cuándo quitar los 4 objetos
    provisionales de la fase 4.
 2. Confirmar las medidas de `docs/OBJETOS.md` (muebles y elementos fijos) y, si hace falta, ajustarlas.
-3. Posibles mejoras: que las lámparas den luz, fregadero si se confirma dónde está,
-   reparto automático de lo apoyado, historial que sobreviva a recargar,
+3. Posibles mejoras: que las lámparas den luz, reparto automático de lo apoyado, historial que sobreviva a recargar,
    vista de paseo en primera persona.
 
 ---

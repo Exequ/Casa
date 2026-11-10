@@ -86,10 +86,10 @@ edita `data/vivienda.json` directamente).
 | Elemento | Estancia | Medidas (ancho × fondo × alto, m) | Material | De dónde salen las medidas | Estado |
 |---|---|---|---|---|---|
 | Columna con frigorífico combi (`cocina-columna`) | cocina | 0,6 × 0,6 × 2,39 | lacado blanco brillo; frigorífico blanco | Módulo de 0,60 del plano junto al patinillo; alto hasta el falso techo (2,40 m). | estimada |
-| Muebles bajos (pared este): lavavajillas y armario (`cocina-bajo-este`) | cocina | 1,75 × 0,6 × 0,9 | lacado blanco brillo; encimera de granito negro | Módulos del plano: 0,51 (lavavajillas de 45 cm de libre instalación) y 0,61; el rincón queda tras los muebles del fondo. Fondo 0,60, encimera a 0,90. | estimada |
-| Muebles bajos (pared del fondo): armario, horno con placa y cajonera (`cocina-bajo-sur`) | cocina | 1,63 × 0,6 × 0,9 | lacado blanco brillo; horno de acero; encimera de granito negro | Fondo de la L en el plano (0,57–0,60). Horno de 0,60 bajo la placa del plano; cajonera de 0,50 junto a la ventana (fotos). | estimada |
-| Muebles altos (pared este) (`cocina-alto-este`) | cocina | 1,75 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo | Fondo 0,33, de 1,45 m al falso techo; sobre el lavavajillas y el armario (foto). | estimada |
-| Muebles altos (pared del fondo) con campana y estantes abiertos (`cocina-alto-sur`) | cocina | 1,85 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo; campana de acero | Igual; campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana (fotos). Empieza a 5 cm de la ventana para no taparla. | estimada |
+| Muebles bajos (pared este): fregadero y lavavajillas (`cocina-bajo-este`) | cocina | 1,75 × 0,6 × 0,9 | lacado blanco brillo; encimera de granito negro; fregadero de acero; grifo cromado | Fotos de cerca: armario de 0,60 con fregadero bajo encimera y grifo de caño alto junto a la columna, lavavajillas blanco de 45 cm y el rincón (tras los muebles del fondo). Fondo 0,60, encimera a 0,90. | estimada |
+| Muebles bajos (pared del fondo): armario, horno con placa y cajonera (`cocina-bajo-sur`) | cocina | 1,63 × 0,6 × 0,9 | lacado blanco brillo; horno de acero; encimera de granito negro | Fondo de la L en el plano (0,57–0,60). Foto frontal: armario de 0,40, horno de 0,60 con la vitrocerámica encima y cajonera de 0,60 hasta la ventana. | estimada |
+| Muebles altos (pared este) (`cocina-alto-este`) | cocina | 1,75 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo | Fondo 0,33, de 1,45 m al falso techo; tres puertas sobre el fregadero, el lavavajillas y el rincón (foto de cerca). | estimada |
+| Muebles altos (pared del fondo) con campana y estantes abiertos (`cocina-alto-sur`) | cocina | 1,85 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo; campana extraíble con frente lacado | Igual; alineados con los bajos (foto frontal): campana extraíble con frente lacado sobre la placa y estantes abiertos al final, junto a la ventana. Empieza a 5 cm de la ventana para no taparla. | estimada |
 | Plato de ducha extraplano (`bano-plato`) | bano | 0,65 × 1,36 × 0,035 | resina blanca; desagüe de rejilla de acero | Ancho de la ducha en el plano (0,65) por toda la profundidad del baño (1,36). | estimada |
 | Mampara fija de cristal (`bano-mampara`) | bano | 0,66 × 0,03 × 1,965 (desde 0,035 m) | cristal transparente; perfil cromado | Línea gruesa del plano: la mitad de la ducha hacia la puerta (0,66), sobre el plato; hasta 2,00 m. | estimada |
 | Barra de sujeción de la mampara (`bano-barra-mampara`) | bano | 0,635 × 0,03 × 0,03 (desde 1,95 m) | acero cromado | Del extremo libre del cristal a la pared, arriba (foto). | estimada |
@@ -103,8 +103,8 @@ edita `data/vivienda.json` directamente).
 | Aire acondicionado (unidad interior) (`salon-split`) | salon | 0,9 × 0,2 × 0,29 (desde 2 m) | plástico blanco | Medidas habituales de un split (0,90 × 0,20 × 0,29); centrado sobre el mueble de TV, de 2,00 a 2,29 m (foto del salón hacia la cocina). | estimada |
 | Aire acondicionado (unidad exterior) sobre soportes (`tendedero-split`) | tendedero | 0,82 × 0,34 × 0,62 (desde 1,8 m) | chapa blanca; soportes de acero | Unidad de 0,80 × 0,30 × 0,55 más los soportes; contra la pared del fondo sobre la lavadora, de 1,80 a 2,42 m (foto del tendedero). | estimada |
 
-**No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
-(ni en el plano ni en las fotos). La placa sí está en el plano, y la campana
-extraíble se ve en la foto de la cocina bajo los muebles altos. En el baño, el
-aplique LED sobre el espejo es el que ya había (luz de la estancia).
+La cocina sigue las fotos de cerca: fregadero junto a la columna del
+frigorífico, lavavajillas a su derecha, vitrocerámica sobre el horno y campana
+extraíble (frente lacado) encima. En el baño, el aplique LED sobre el espejo es
+el que ya había (luz de la estancia).
 <!-- fin:z-fijos -->

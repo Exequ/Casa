@@ -152,46 +152,6 @@
         },
         "revestimientos": [
           {
-            "nombre": "Frente de azulejo blanco (pared del fondo)",
-            "material": {
-              "tipo": "azulejo",
-              "color": "#f4f4f2",
-              "pieza": [
-                0.6,
-                0.3
-              ],
-              "acabado": "pulido"
-            },
-            "desde": 0.9,
-            "hasta": 1.45,
-            "zona": [
-              1.8,
-              6.1,
-              4.1,
-              6.2
-            ]
-          },
-          {
-            "nombre": "Frente de azulejo blanco (pared de la derecha, desde la columna del frigorífico)",
-            "material": {
-              "tipo": "azulejo",
-              "color": "#f4f4f2",
-              "pieza": [
-                0.6,
-                0.3
-              ],
-              "acabado": "pulido"
-            },
-            "desde": 0.9,
-            "hasta": 1.45,
-            "zona": [
-              4,
-              4.42,
-              4.1,
-              6.2
-            ]
-          },
-          {
             "nombre": "Copete de granito negro sobre la encimera (fondo)",
             "material": {
               "tipo": "granito",
@@ -199,7 +159,7 @@
               "acabado": "pulido"
             },
             "desde": 0.9,
-            "hasta": 0.98,
+            "hasta": 1,
             "zona": [
               1.8,
               6.1,
@@ -215,7 +175,7 @@
               "acabado": "pulido"
             },
             "desde": 0.9,
-            "hasta": 0.98,
+            "hasta": 1,
             "zona": [
               4,
               4.42,
@@ -224,18 +184,18 @@
             ]
           },
           {
-            "nombre": "Frente de granito negro tras la placa",
+            "nombre": "Panel de granito negro tras la placa",
             "material": {
               "tipo": "granito",
               "color": "#121214",
               "acabado": "pulido"
             },
             "desde": 0.9,
-            "hasta": 1.45,
+            "hasta": 1.4,
             "zona": [
-              2.33,
+              2.46,
               6.1,
-              2.93,
+              3.06,
               6.2
             ]
           }
@@ -1202,7 +1162,7 @@
     {
       "id": "cocina-bajo-este",
       "tipo": "cocina-bajo",
-      "nombre": "Muebles bajos (pared este): lavavajillas y armario",
+      "nombre": "Muebles bajos (pared este): fregadero y lavavajillas",
       "estancia": "cocina",
       "posicion": [
         3.76,
@@ -1214,19 +1174,21 @@
         "fondo": 0.6,
         "alto": 0.9
       },
-      "material": "lacado blanco brillo; encimera de granito negro",
+      "material": "lacado blanco brillo; encimera de granito negro; fregadero de acero; grifo cromado",
       "modulos": [
         {
-          "tipo": "lavavajillas",
-          "ancho": 0.5
+          "tipo": "puertas",
+          "ancho": 0.6,
+          "fregadero": true,
+          "tirador": "derecha"
         },
         {
-          "tipo": "puertas",
-          "ancho": 0.61
+          "tipo": "lavavajillas",
+          "ancho": 0.45
         },
         {
           "tipo": "relleno",
-          "ancho": 0.64
+          "ancho": 0.7
         }
       ],
       "medidas": "estimadas"
@@ -1250,7 +1212,8 @@
       "modulos": [
         {
           "tipo": "puertas",
-          "ancho": 0.53
+          "ancho": 0.4,
+          "tirador": "derecha"
         },
         {
           "tipo": "horno",
@@ -1259,8 +1222,12 @@
         },
         {
           "tipo": "cajones",
-          "ancho": 0.5,
+          "ancho": 0.6,
           "n": 4
+        },
+        {
+          "tipo": "relleno",
+          "ancho": 0.03
         }
       ],
       "medidas": "estimadas"
@@ -1286,15 +1253,19 @@
       "modulos": [
         {
           "tipo": "puertas",
-          "ancho": 0.5
+          "ancho": 0.6,
+          "tirador": "derecha"
         },
         {
           "tipo": "puertas",
-          "ancho": 0.61
+          "ancho": 0.45,
+          "tirador": "derecha"
         },
         {
           "tipo": "puertas",
-          "ancho": 0.64
+          "ancho": 0.7,
+          "n": 1,
+          "tirador": "izquierda"
         }
       ],
       "medidas": "estimadas"
@@ -1316,11 +1287,17 @@
         "alto": 0.94
       },
       "pared": "cocina-sur",
-      "material": "lacado blanco brillo; campana de acero",
+      "material": "lacado blanco brillo; campana extraíble con frente lacado",
       "modulos": [
         {
           "tipo": "puertas",
-          "ancho": 0.8
+          "ancho": 0.27,
+          "tirador": "derecha"
+        },
+        {
+          "tipo": "puertas",
+          "ancho": 0.4,
+          "tirador": "derecha"
         },
         {
           "tipo": "campana",
@@ -1328,11 +1305,12 @@
         },
         {
           "tipo": "puertas",
-          "ancho": 0.25
+          "ancho": 0.4,
+          "tirador": "izquierda"
         },
         {
           "tipo": "estantes",
-          "ancho": 0.2
+          "ancho": 0.18
         }
       ],
       "medidas": "estimadas"
@@ -1579,7 +1557,7 @@
     "Cerramiento entre cocina y tendedero (de la foto): fijo de suelo a 2,10 m partido a 1,05 m, puerta de madera con vidrio de 2,10 m y ventana fija sobre la encimera (alféizar 1,00 m).",
     "Cerramiento exterior del tendedero: lamas horizontales de aluminio negro de suelo a 2,45 m en todo el largo.",
     "Acabados (suelos, pintura, alicatados, rodapiés, carpintería) tomados de las fotos del anuncio. Colores aproximados a ojo.",
-    "Alicatado del baño: 1,10 m de alto y hasta el techo en la zona de la ducha (x < 7,0 m). Frente de la cocina: entre 0,90 y 1,45 m en las paredes del fondo y de la derecha (desde la columna del frigorífico), con un copete de granito negro de 8 cm sobre la encimera y granito negro tras la placa (sobre el horno, x 2,33–2,93).",
+    "Alicatado del baño: 1,10 m de alto y hasta el techo en la zona de la ducha (x < 7,0 m). Frente de la cocina (fotos de cerca): pared lisa pintada, copete de granito negro de 10 cm sobre la encimera y panel de granito negro tras la placa hasta 1,40 m (sobre el horno, x 2,46–3,06).",
     "Focos empotrados: número de las fotos; posiciones repartidas a ojo. Aplique LED del baño sobre el lavabo, a 1,95 m.",
     "Sentido de apertura de las puertas: de los arcos del plano.",
     "La cocina está abierta al salón (en el plano no hay muro entre ambas, solo cambio de pavimento).",
