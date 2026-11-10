@@ -152,6 +152,22 @@ describe('choques entre muebles', () => {
     expect(p.x + 0.6).toBeCloseTo(3.5 - 0.6, 2);
   });
 
+  it('tras arrastrar uno contra otro de distinta forma, los dos siguen bien colocados', () => {
+    // Un puf de 0,50 × 0,60 empujado contra una cama de 1,58 × 2,08 (o al revés, o girados)
+    const casos: [number, number, number, number, number][] = [[0.5, 0.6, 1.58, 2.08, 0], [1.58, 2.08, 0.5, 0.6, 0], [0.5, 0.6, 1.58, 2.08, Math.PI / 2], [0.3, 1.2, 0.9, 0.4, 0]];
+    for (const [a1, f1, a2, f2, g] of casos) {
+      const fija = { ancho: a2, fondo: f2, giro: g, x: 4.2, z: 1.5 };
+      const huellaFija = huellaRectangulo(fija.x, fija.z, a2, f2, g);
+      const movil = { ancho: a1, fondo: f1, giro: g, x: 2.0, z: 1.45 };
+      expect(espacio.esValida(movil, true, [huellaFija])).toBe(true);
+      const p = espacio.mover(movil, 5.2, 1.6, [huellaFija]);
+      const movida = { ...movil, ...p };
+      expect(espacio.esValida(movida, true, [huellaFija]), `movido ${a1}×${f1}`).toBe(true);
+      expect(espacio.esValida(fija, true, [huellaRectangulo(movida.x, movida.z, a1, f1, g)]), `el otro, ${a2}×${f2}`).toBe(true);
+      expect(Math.abs(p.x - 2.0)).toBeGreaterThan(0.1);
+    }
+  });
+
   it('girar dentro de otro mueble no vale', () => {
     const otros = [mesaEn(3, 2.2)];
     expect(espacio.esValida({ ...mesa, x: 3, z: 1.4 }, false, otros)).toBe(true);

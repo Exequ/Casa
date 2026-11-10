@@ -275,7 +275,7 @@
     {
       "catalogo": "dormitorio/cama",
       "posicion": {
-        "x": 10.935,
+        "x": 10.5,
         "y": 0,
         "z": 1.27
       },
@@ -285,7 +285,7 @@
     {
       "catalogo": "dormitorio/mesita-noche",
       "posicion": {
-        "x": 11.955,
+        "x": 11.52,
         "y": 0,
         "z": 0.425
       },
@@ -295,7 +295,7 @@
     {
       "catalogo": "iluminacion/lampara-sobremesa",
       "posicion": {
-        "x": 11.955,
+        "x": 11.52,
         "y": 0.5,
         "z": 0.425
       },
@@ -305,31 +305,76 @@
       "nivel": 0.5
     },
     {
-      "catalogo": "dormitorio/comoda-alta",
+      "catalogo": "dormitorio/mesita-noche",
       "posicion": {
-        "x": 11.975,
+        "x": 9.48,
         "y": 0,
-        "z": 2.6
+        "z": 0.425
       },
-      "rotacion": 270,
+      "rotacion": 0,
       "colocacion": "suelo"
     },
     {
       "catalogo": "iluminacion/lampara-sobremesa",
       "posicion": {
-        "x": 11.975,
-        "y": 1.15,
-        "z": 2.6
+        "x": 9.48,
+        "y": 0.5,
+        "z": 0.425
       },
-      "rotacion": 270,
+      "rotacion": 0,
       "colocacion": "superficie",
       "soporte": 27,
+      "nivel": 0.5
+    },
+    {
+      "catalogo": "dormitorio/puf",
+      "posicion": {
+        "x": 9,
+        "y": 0,
+        "z": 1.05
+      },
+      "rotacion": 0,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "dormitorio/comoda-alta",
+      "posicion": {
+        "x": 11.53,
+        "y": 0,
+        "z": 2.72
+      },
+      "rotacion": 180,
+      "colocacion": "suelo"
+    },
+    {
+      "catalogo": "iluminacion/lampara-sobremesa",
+      "posicion": {
+        "x": 11.69,
+        "y": 1.15,
+        "z": 2.65
+      },
+      "rotacion": 180,
+      "colocacion": "superficie",
+      "soporte": 30,
       "nivel": 1.15
     },
     {
       "catalogo": "pared/cuadro-marco-gris",
       "posicion": {
-        "x": 11.85,
+        "x": 11.4,
+        "y": 1.5,
+        "z": 0.23
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:fachada-norte",
+      "estancia": "dormitorio",
+      "altura": 1.5
+    },
+    {
+      "catalogo": "pared/cuadro-marco-plateado",
+      "posicion": {
+        "x": 9.48,
         "y": 1.5,
         "z": 0.23
       },
@@ -342,54 +387,54 @@
     {
       "catalogo": "pared/marco-madera",
       "posicion": {
-        "x": 12.35,
+        "x": 11.43,
         "y": 1.42,
-        "z": 2.4
+        "z": 2.93
       },
       "rotacion": 0,
       "colocacion": "pared",
-      "pared": "pared:fachada-este",
+      "pared": "pared:dormitorio-sur",
       "estancia": "dormitorio",
       "altura": 1.42
     },
     {
       "catalogo": "pared/marco-madera",
       "posicion": {
-        "x": 12.35,
-        "y": 1.68,
-        "z": 2.4
-      },
-      "rotacion": 0,
-      "colocacion": "pared",
-      "pared": "pared:fachada-este",
-      "estancia": "dormitorio",
-      "altura": 1.68
-    },
-    {
-      "catalogo": "pared/marco-madera",
-      "posicion": {
-        "x": 12.35,
-        "y": 1.42,
-        "z": 2.63
-      },
-      "rotacion": 0,
-      "colocacion": "pared",
-      "pared": "pared:fachada-este",
-      "estancia": "dormitorio",
-      "altura": 1.42
-    },
-    {
-      "catalogo": "pared/marco-madera",
-      "posicion": {
-        "x": 12.35,
+        "x": 11.43,
         "y": 1.74,
-        "z": 2.63
+        "z": 2.93
       },
       "rotacion": 0,
       "colocacion": "pared",
-      "pared": "pared:fachada-este",
+      "pared": "pared:dormitorio-sur",
       "estancia": "dormitorio",
       "altura": 1.74
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 11.63,
+        "y": 1.42,
+        "z": 2.93
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:dormitorio-sur",
+      "estancia": "dormitorio",
+      "altura": 1.42
+    },
+    {
+      "catalogo": "pared/marco-madera",
+      "posicion": {
+        "x": 11.63,
+        "y": 1.68,
+        "z": 2.93
+      },
+      "rotacion": 0,
+      "colocacion": "pared",
+      "pared": "pared:dormitorio-sur",
+      "estancia": "dormitorio",
+      "altura": 1.68
     },
     {
       "catalogo": "exterior/mesa-balcon",
@@ -410,7 +455,7 @@
       },
       "rotacion": 0,
       "colocacion": "superficie",
-      "soporte": 34,
+      "soporte": 38,
       "nivel": 0.72
     },
     {

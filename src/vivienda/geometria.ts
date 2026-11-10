@@ -154,13 +154,28 @@ export function segmentoTocaConvexo(a: Punto, b: Punto, poli: Punto[]): boolean 
   return false;
 }
 
-/** Encoge un polígono convexo hacia su centro una distancia aproximada `d`. */
+/**
+ * Encoge un polígono convexo: cada lado se mete `d` hacia dentro (en un
+ * rectángulo, `d` por cada lado, sea cual sea su forma). Así, dos huellas que
+ * se tocan siguen sin solaparse vistas desde cualquiera de las dos.
+ */
 export function encoger(poli: Punto[], d: number): Punto[] {
-  const c = caja(poli).centro;
-  return poli.map(([x, z]) => {
-    const dx = x - c[0], dz = z - c[1];
-    const l = Math.hypot(dx, dz) || 1;
-    return [x - (dx / l) * d, z - (dz / l) * d];
+  const n = poli.length;
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const [x1, z1] = poli[i], [x2, z2] = poli[(i + 1) % n];
+    area += x1 * z2 - x2 * z1;
+  }
+  const s = area >= 0 ? 1 : -1;
+  /** Normal hacia dentro del lado que va de a a b. */
+  const normal = (a: Punto, b: Punto): Punto => {
+    const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1;
+    return [(-dz / l) * s, (dx / l) * s];
+  };
+  return poli.map((p, i) => {
+    const n1 = normal(poli[(i - 1 + n) % n], p), n2 = normal(p, poli[(i + 1) % n]);
+    const k = d / Math.max(0.1, 1 + n1[0] * n2[0] + n1[1] * n2[1]);
+    return [p[0] + (n1[0] + n2[0]) * k, p[1] + (n1[1] + n2[1]) * k];
   });
 }
 

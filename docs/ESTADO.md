@@ -11,17 +11,35 @@ comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 ## Ajustes con fotos de cerca (cocina y dormitorio)
 
 Tres fotos nuevas: la cocina de frente y desde el frigorífico, y el lado
-izquierdo del dormitorio. Un PR por parte.
+izquierdo del dormitorio. Un PR por parte (cocina: #16; dormitorio: el siguiente).
 
 | Parte | Estado | Detalle |
 |---|---|---|
 | Cocina | **Hecho** | **Fregadero** de acero bajo encimera (cubeta de 0,40 × 0,34) con grifo cromado de caño alto, en el armario de 0,60 junto a la columna del frigorífico; **lavavajillas** blanco de 45 cm a su derecha y luego el rincón. Pared del fondo con las medidas de la foto frontal: armario de 0,40, horno de 0,60 y cajonera de 0,60 hasta la ventana; los altos, alineados encima (puerta de 0,40 sobre el armario, **campana** sobre la placa, puerta y estantes sobre la cajonera). Campana con frente **lacado** y tirador horizontal (no de acero). Horno con el panel de mandos arriba (reloj azul y dos mandos) y el tirador en lo alto de la puerta negra; vitrocerámica con canto claro y zonas marcadas. Tiradores de las puertas sueltas en el lado de la foto. Entre encimera y muebles altos, **pared lisa** pintada (sin azulejo), copete de granito de 10 cm y panel de granito tras la placa hasta 1,40 m. |
+
+| Dormitorio | **Hecho** | Con la foto del lado izquierdo de la cama: **segunda mesita** de noche con su **lámpara** y un **cuadro de marco plateado** nuevo encima; **puf baúl de borreguito** blanco contra la pared de la puerta, delante del pilar. Las mesitas pasan a ser de **3 cajones** color miel, como en la foto (las dos iguales). La cama, casi centrada, con una mesita pegada a cada lado (la izquierda a 22 cm del pilar). La **cómoda** y sus **4 marcos**, en la pared del armario **mirando hacia las mesitas** (antes miraban hacia la puerta), con la lámpara en la esquina hacia la balconera. Escena inicial: 43 objetos. |
+| Choques (arreglo) | **Hecho** | Al arrastrar un mueble contra otro de distinta forma (p. ej. el puf contra la cama), el otro quedaba "mal colocado" por una fracción de milímetro y en el siguiente arrastre podía atravesarlo todo. Ahora la holgura de 1 mm se aplica por cada lado de la huella (`encoger`), y los dos quedan bien. |
 
 ### Comprobaciones (cocina)
 
 - `npm test`: 227 tests en verde; nuevos: fregadero junto a la columna y lavavajillas de 45 cm a continuación, hueco de la encimera con la cubeta debajo, grifo dentro de la caja del mueble (y por debajo de los altos), campana centrada sobre el horno y altos alineados con los bajos, panel de granito justo tras la placa y sin azulejo.
 - Capturas desde los puntos de vista de las dos fotos de la cocina (escritorio y móvil), comparadas con ellas; vistas de cerca del fregadero y de la placa.
 - Batería de los fijos en el navegador (ratón y dedo): los 17 fijos, no se seleccionan, una mesa arrastrada se para delante de la cocina, no se cuelga un cuadro sobre los altos; sin errores.
+
+### Comprobaciones (dormitorio)
+
+- `npm test`: 233 tests en verde; nuevos: cantidades de la escena (2 mesitas, 3 lámparas, puf, cuadro plateado), una mesita pegada a cada lado de la cama con su cuadro encima, cómoda con giro 180 contra la pared del armario y los 4 marcos en esa pared mirando al norte, puf contra la pared de la puerta sin taparla, y el arreglo de choques (puf contra cama y otras formas, girados o no; sin el arreglo, el test falla).
+- Capturas desde el punto de vista de la foto nueva y de la foto antigua del dormitorio (escritorio y móvil), comparadas con ellas.
+- Navegador, batería nueva del dormitorio (ratón y dedo): mesitas con lámpara, puf que admite cosas encima, cómoda y marcos mirando a las mesitas, un cuadro sobre cada mesita, el buscador encuentra el puf y el cuadro plateado con su miniatura, el puf arrastrado contra la cama se para sin solaparla y Ctrl+Z lo devuelve; sin errores. Las baterías de la escena inicial (43 objetos), de los fijos y de las fases 3b, 4 y 5 pasan.
+- **Carga en el móvil** (primera visita, 6 tandas de 4, alternando el orden): casa visible a los 2.159 ms de media con main y 2.253 ms con el dormitorio completo (+90 ms, unos 5 KB más por la mesita, el puf y el cuadro). No empeora de forma apreciable.
+
+### Decisiones (dormitorio)
+
+- **Cama desplazada 43 cm hacia la puerta** (x 10,50, casi centrada): en la foto nueva la mesita izquierda queda muy cerca del pilar y pegada a la cama; con la cama donde estaba no cabía así.
+- La **mesita** nueva es igual que la otra; como en la foto se ven bien, las dos pasan a ser de 3 cajones sin tiradores (las medidas del encargo no cambian).
+- **Cuadro plateado** nuevo (0,50 × 0,42), distinto del gris que ya había sobre la otra mesita.
+- **Puf**: 0,50 × 0,60 × 0,43, estimado con la mesita como referencia; admite cosas encima.
+- Si ya tenías la casa guardada en el navegador, verás la disposición antigua del dormitorio hasta que pulses *Restaurar disposición original*.
 
 ### Decisiones (cocina)
 
@@ -94,7 +112,7 @@ Cada parte se publica con su propio PR.
 
 | # | Requisito | Estado | Detalle |
 |---|---|---|---|
-| 1 | `data/escena-inicial.json` con la disposición de las fotos | **Hecho** | 39 objetos, formato de escena v5, generado por `scripts/escena-inicial.mjs` (`npm run escena:inicial`) con coordenadas de `data/vivienda.json`. Comparado con capturas desde los puntos de vista de las 7 fotos (salón hacia el mirador, hacia el distribuidor y hacia la cocina, pasillo, dormitorio, terraza y tendedero). |
+| 1 | `data/escena-inicial.json` con la disposición de las fotos | **Hecho** | 39 objetos (43 tras los ajustes del dormitorio), formato de escena v5, generado por `scripts/escena-inicial.mjs` (`npm run escena:inicial`) con coordenadas de `data/vivienda.json`. Comparado con capturas desde los puntos de vista de las 7 fotos (salón hacia el mirador, hacia el distribuidor y hacia la cocina, pasillo, dormitorio, terraza y tendedero). |
 | 2 | Contenido y disposición | **Hecho** | Ver la tabla de abajo. Ningún objeto de ejemplo de la fase 4. |
 | 3 | Primera visita amueblada; autoguardado respetado; Restaurar; Vaciar | **Hecho** | Sin autoguardado se carga la escena inicial (y queda autoguardada). Con autoguardado se respeta, también si está vacío. *Restaurar disposición original* en el menú (sección Escena): dos toques, solo muebles (no toca suelos, colores ni luces), se deshace con ↶. Guardar y cargar, igual que antes. |
 | 4 | Tests y navegador | **Hecho** | Ver "Comprobaciones". |

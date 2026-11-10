@@ -1,0 +1,13 @@
+{
+  "nombre": "Cuadro de marco plateado",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.5,
+  "dimensiones": {
+    "ancho": 0.5,
+    "fondo": 0.02,
+    "alto": 0.42
+  },
+  "medidas": "estimadas",
+  "glb": "cuadro-marco-plateado.glb"
+}

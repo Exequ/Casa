@@ -36,15 +36,15 @@ async function cargar() {
   return { gestor, omitidos };
 }
 
-/** Cantidades de las fotos (lotes 1 y 2). */
+/** Cantidades de las fotos (lotes 1 y 2 y la del lado izquierdo de la cama). */
 const ESPERADOS: Record<string, number> = {
   'sofas/sofa-3-plazas': 1, 'sofas/sillon': 1, 'mesas/mesa-centro': 1, 'almacenaje/libreria': 1,
   'almacenaje/mueble-tv': 1, 'electronica/television': 1, 'mesas/mesa-comedor-cristal': 1, 'sillas/silla-comedor': 4,
   'iluminacion/lampara-pie-semiesfera': 1, 'iluminacion/lampara-tripode': 1, 'mesas/mesita-alambre': 1,
   'mesas/mesita-bandeja': 1, 'pared/espejo-marco-negro': 1, 'pared/cuadro-marco-blanco': 5, 'pared/perchero-pared': 1,
   'pared/espejo-marco-plateado': 1,
-  'dormitorio/cama': 1, 'dormitorio/mesita-noche': 1, 'iluminacion/lampara-sobremesa': 2, 'dormitorio/comoda-alta': 1,
-  'pared/cuadro-marco-gris': 1, 'pared/marco-madera': 4, 'exterior/mesa-balcon': 1, 'exterior/silla-balcon': 2,
+  'dormitorio/cama': 1, 'dormitorio/mesita-noche': 2, 'iluminacion/lampara-sobremesa': 3, 'dormitorio/comoda-alta': 1,
+  'pared/cuadro-marco-gris': 1, 'pared/cuadro-marco-plateado': 1, 'dormitorio/puf': 1, 'pared/marco-madera': 4, 'exterior/mesa-balcon': 1, 'exterior/silla-balcon': 2,
   'decoracion/planta-pequena': 2, 'tendedero/lavadora': 1,
 };
 
@@ -58,7 +58,7 @@ describe('escena inicial (la casa amueblada como en las fotos)', () => {
     }
   });
 
-  it('están todos los objetos de los lotes 1 y 2 en las cantidades de las fotos', () => {
+  it('están todos los objetos de las fotos en sus cantidades', () => {
     const cuenta: Record<string, number> = {};
     for (const o of escena.objetos) cuenta[o.catalogo] = (cuenta[o.catalogo] ?? 0) + 1;
     expect(cuenta).toEqual(ESPERADOS);
@@ -132,7 +132,58 @@ describe('escena inicial (la casa amueblada como en las fotos)', () => {
     const sobre = (id: string) => gestor.objetos.filter((o) => o.item.id === id).map((o) => o.apoyo?.soporte.item.id);
     expect(sobre('electronica/television')).toEqual(['almacenaje/mueble-tv']);
     expect(sobre('iluminacion/lampara-tripode')).toEqual(['mesas/mesita-alambre']);
-    expect(sobre('iluminacion/lampara-sobremesa').sort()).toEqual(['dormitorio/comoda-alta', 'dormitorio/mesita-noche']);
+    expect(sobre('iluminacion/lampara-sobremesa').sort()).toEqual(['dormitorio/comoda-alta', 'dormitorio/mesita-noche', 'dormitorio/mesita-noche']);
+    expect(estancia('dormitorio/puf')).toEqual(['dormitorio']);
+    expect(estancia('pared/cuadro-marco-plateado')).toEqual(['dormitorio']);
     expect(sobre('decoracion/planta-pequena').sort()).toEqual(['exterior/mesa-balcon', 'mesas/mesita-bandeja']);
+  });
+
+  it('dormitorio: una mesita a cada lado de la cama, pegadas a ella, con un cuadro encima de cada una', async () => {
+    const { gestor } = await cargar();
+    const de = (id: string) => gestor.objetos.filter((o) => o.item.id === id);
+    const cama = de('dormitorio/cama')[0];
+    const bc = new THREE.Box3().setFromObject(cama.raiz);
+    const mesitas = de('dormitorio/mesita-noche').map((o) => new THREE.Box3().setFromObject(o.raiz)).sort((a, b) => a.min.x - b.min.x);
+    expect(mesitas).toHaveLength(2);
+    expect(bc.min.x - mesitas[0].max.x).toBeGreaterThanOrEqual(0);
+    expect(bc.min.x - mesitas[0].max.x).toBeLessThan(0.02);
+    expect(mesitas[1].min.x - bc.max.x).toBeGreaterThanOrEqual(0);
+    expect(mesitas[1].min.x - bc.max.x).toBeLessThan(0.02);
+    // Mesitas y cabecero contra la pared norte
+    for (const b of [bc, ...mesitas]) expect(b.min.z).toBeCloseTo(0.23, 1);
+    // Cada cuadro (gris y plateado) cuelga en la pared norte sobre una de las mesitas
+    for (const id of ['pared/cuadro-marco-gris', 'pared/cuadro-marco-plateado']) {
+      const c = de(id)[0];
+      expect(c.pared!.cara.elemento, id).toBe('pared:fachada-norte');
+      const x = c.raiz.position.x;
+      expect(mesitas.some((m) => x > m.min.x - 0.15 && x < m.max.x + 0.15), id).toBe(true);
+    }
+  });
+
+  it('dormitorio: la cómoda y los 4 marcos miran hacia las mesitas (norte), no hacia la puerta', async () => {
+    const { gestor } = await cargar();
+    const comoda = gestor.objetos.find((o) => o.item.id === 'dormitorio/comoda-alta')!;
+    // Giro 180: el frente mira al norte, con la espalda contra la pared del armario (sur, z = 2,93)
+    expect(Math.round(THREE.MathUtils.radToDeg(comoda.raiz.rotation.y) + 360) % 360).toBe(180);
+    expect(new THREE.Box3().setFromObject(comoda.raiz).max.z).toBeCloseTo(2.93, 2);
+    const marcos = gestor.objetos.filter((o) => o.item.id === 'pared/marco-madera');
+    expect(marcos).toHaveLength(4);
+    for (const m of marcos) {
+      expect(m.pared!.cara.elemento).toBe('pared:dormitorio-sur');
+      expect(m.pared!.cara.n[1]).toBeLessThan(0); // la cara mira hacia −z (norte)
+      // Encima de la cómoda
+      expect(Math.abs(m.raiz.position.x - comoda.raiz.position.x)).toBeLessThan(0.3);
+      expect(m.pared!.y - m.item.dimensiones.alto / 2).toBeGreaterThan(1.15);
+    }
+  });
+
+  it('dormitorio: el puf, contra la pared de la puerta, sin tapar la puerta', async () => {
+    const { gestor } = await cargar();
+    const puf = new THREE.Box3().setFromObject(gestor.objetos.find((o) => o.item.id === 'dormitorio/puf')!.raiz);
+    expect(puf.min.x).toBeCloseTo(8.75, 2);
+    const pared = vivienda.paredes.find((p) => p.id === 'dormitorio-oeste')!;
+    const puerta = pared.huecos!.find((h) => h.tipo === 'puerta')!;
+    // La puerta va de z = desde + distancia a desde + distancia + ancho (y su hoja barre otro tanto)
+    expect(puf.max.z).toBeLessThan(pared.desde[1] + puerta.distancia - 0.3);
   });
 });
