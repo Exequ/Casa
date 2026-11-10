@@ -90,8 +90,18 @@ edita `data/vivienda.json` directamente).
 | Muebles bajos (pared del fondo): armario, horno con placa y cajonera (`cocina-bajo-sur`) | cocina | 1,63 × 0,6 × 0,9 | lacado blanco brillo; horno de acero; encimera de granito negro | Fondo de la L en el plano (0,57–0,60). Horno de 0,60 bajo la placa del plano; cajonera de 0,50 junto a la ventana (fotos). | estimada |
 | Muebles altos (pared este) (`cocina-alto-este`) | cocina | 1,75 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo | Fondo 0,33, de 1,45 m al falso techo; sobre el lavavajillas y el armario (foto). | estimada |
 | Muebles altos (pared del fondo) con campana y estantes abiertos (`cocina-alto-sur`) | cocina | 1,85 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo; campana de acero | Igual; campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana (fotos). Empieza a 5 cm de la ventana para no taparla. | estimada |
+| Plato de ducha extraplano (`bano-plato`) | bano | 0,65 × 1,36 × 0,035 | resina blanca; desagüe de rejilla de acero | Ancho de la ducha en el plano (0,65) por toda la profundidad del baño (1,36). | estimada |
+| Mampara fija de cristal (`bano-mampara`) | bano | 0,66 × 0,03 × 1,965 (desde 0,035 m) | cristal transparente; perfil cromado | Línea gruesa del plano: la mitad de la ducha hacia la puerta (0,66), sobre el plato; hasta 2,00 m. | estimada |
+| Barra de sujeción de la mampara (`bano-barra-mampara`) | bano | 0,635 × 0,03 × 0,03 (desde 1,95 m) | acero cromado | Del extremo libre del cristal a la pared, arriba (foto). | estimada |
+| Grifería termostática con barra de ducha (`bano-griferia`) | bano | 0,3 × 0,12 × 1,05 (desde 0,95 m) | cromo | Posición de la grifería en el plano; termostático a 1,00 m y barra hasta 2,00 m (foto). | estimada |
+| Agarradera de acero (`bano-agarradera`) | bano | 0,4 × 0,08 × 0,06 (desde 0,92 m) | acero cromado | Foto: barra horizontal en la pared junto a la ducha, a 0,95 m; 40 cm. | estimada |
+| Mueble de lavabo de 3 cajones con lavabo integrado (`bano-lavabo`) | bano | 0,8 × 0,46 × 0,98 | lacado blanco; lavabo cerámico; grifo cromado | Plano: 0,80 × 0,47 en el centro de la pared del fondo; encimera a 0,85, sobre patas. | estimada |
+| Espejo sin marco (`bano-espejo`) | bano | 0,7 × 0,01 × 0,8 (desde 1,05 m) | espejo | Foto: algo más estrecho que el mueble, de 1,05 a 1,85 m, bajo el aplique LED (1,95). | estimada |
+| Inodoro (`bano-inodoro`) | bano | 0,36 × 0,62 × 0,8 | porcelana blanca | Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo. | estimada |
+| Bidé (`bano-bide`) | bano | 0,36 × 0,54 × 0,52 | porcelana blanca; grifo cromado | Plano: 0,36 × 0,54, junto a la puerta. | estimada |
 
 **No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
 (ni en el plano ni en las fotos). La placa sí está en el plano, y la campana
-extraíble se ve en la foto de la cocina bajo los muebles altos.
+extraíble se ve en la foto de la cocina bajo los muebles altos. En el baño, el
+aplique LED sobre el espejo es el que ya había (luz de la estancia).
 <!-- fin:z-fijos -->

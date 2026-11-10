@@ -16,7 +16,7 @@ Cada parte se publica con su propio PR.
 |---|---|---|
 | Diseño común | **Hecho** | Sección `fijos` en `data/vivienda.json` (desde `scripts/fijos.mjs`), validada al abrir la app y documentada en el README. Huellas para los choques: los fijos del suelo son obstáculo permanente en `EspacioLibre`; los colgados, solo para muebles más altos que su base; ningún cuadro puede colgarse sobre un fijo. Dibujo por código (`src/escena/fijos3d.ts`), con materiales del color y brillo de las fotos y la textura de granito; en el móvil, el modo ligero de siempre. Los colgados van en el grupo de acabados de su pared y se ocultan con ella. |
 | A. Cocina | **Hecho** | En L, según el plano y las fotos: columna con el frigorífico combi (altillo con rejilla), lavavajillas blanco de 45 cm junto a ella, armario y rincón en la pared este; en la del fondo, armario, horno de acero con cristal negro y placa (la del plano) y cajonera de 4. Encimera de granito negro, zócalo blanco, tiradores de barra de acero. Altos lacados hasta el falso techo con campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana. El frente de azulejo ya no queda detrás de la columna; copete de granito de 8 cm y frente de granito sobre el horno. |
-| B. Baño | Pendiente | |
+| B. Baño | **Hecho** | Según el plano: plato de ducha extraplano blanco a la izquierda (0,65 × 1,36) con desagüe de rejilla, mampara fija de cristal con perfil cromado en la mitad hacia la puerta y barra de sujeción a la pared, grifería termostática cromada con barra y rociador en la pared del fondo, agarradera de acero junto a la ducha; mueble de lavabo blanco lacado de 3 cajones sobre patas con lavabo integrado y grifo en el centro del fondo, espejo sin marco encima (bajo el aplique LED que ya había); inodoro y bidé de líneas rectas en la pared de la derecha. |
 | C. Armario empotrado | Pendiente | |
 | D. Aire acondicionado | Pendiente | |
 
@@ -26,6 +26,17 @@ Cada parte se publica con su propio PR.
 - Capturas desde los puntos de vista de las dos fotos de la cocina, en escritorio y móvil, comparadas con ellas.
 - Navegador (escritorio con ratón y móvil con el dedo): los fijos están en la escena y no se seleccionan; una mesa arrastrada hacia los muebles de la cocina se para delante; no se puede colgar un cuadro sobre los muebles altos. Las baterías anteriores siguen pasando.
 - Carga en el móvil (primera visita, media de 3, tres tandas): casa visible a los 2.020–2.230 ms en main y 2.040–2.250 ms con la cocina (unos +20 ms: no empeora de forma apreciable; +30 KB).
+
+### Comprobaciones (parte B)
+
+- Tests del baño (piezas, posiciones del plano, espejo sobre el lavabo y bajo el aplique, mampara sobre el plato y barra hasta la pared).
+- Capturas desde los puntos de vista de las dos fotos del baño (escritorio y móvil), comparadas con ellas. Las baterías anteriores siguen pasando.
+
+### Decisiones (parte B)
+
+- **Mampara** en la mitad de la ducha hacia la puerta (como la línea gruesa del plano), entrando por el lado del lavabo; la barra de sujeción va de su extremo libre a la pared izquierda.
+- **Agarradera** en la pared izquierda de la ducha, a 0,95 m (la foto no deja ver bien en qué pared está).
+- El **aplique LED** sobre el espejo es la luz que ya tenía el baño (fase 3b).
 
 ### Decisiones (parte A)
 

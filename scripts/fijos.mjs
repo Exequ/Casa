@@ -61,7 +61,51 @@ const COCINA = [
   }, [1.88, 3.73], [5.84, 6.17]),
 ];
 
-export const FIJOS = [...COCINA];
+// --- Baño (fotos "Baño" y plano) ---------------------------------------------------------
+// Según el plano: ducha a la izquierda (x 6,07–6,72, toda la profundidad) con la
+// grifería en la pared del fondo y la mampara fija en su lado derecho (la
+// mitad hacia la puerta); lavabo en el centro de la pared del fondo; inodoro y
+// bidé en la pared de la derecha, pasado el patinillo.
+const BANO = [
+  fijo({
+    id: 'bano-plato', tipo: 'plato-ducha', nombre: 'Plato de ducha extraplano', estancia: 'bano',
+    alto: 0.035, material: 'resina blanca; desagüe de rejilla de acero',
+  }, [6.07, 6.72], [0.23, 1.59]),
+  fijo({
+    id: 'bano-mampara', tipo: 'mampara', nombre: 'Mampara fija de cristal', estancia: 'bano',
+    giro: 90, altura: 0.035, alto: 1.965, material: 'cristal transparente; perfil cromado',
+  }, [6.705, 6.735], [0.93, 1.59]),
+  fijo({
+    id: 'bano-barra-mampara', tipo: 'barra', nombre: 'Barra de sujeción de la mampara', estancia: 'bano',
+    altura: 1.95, alto: 0.03, pared: 'salon-este', material: 'acero cromado',
+  }, [6.07, 6.705], [0.915, 0.945]),
+  fijo({
+    id: 'bano-griferia', tipo: 'griferia-ducha', nombre: 'Grifería termostática con barra de ducha', estancia: 'bano',
+    altura: 0.95, alto: 1.05, pared: 'fachada-norte', material: 'cromo',
+  }, [6.29, 6.59], [0.23, 0.35]),
+  fijo({
+    id: 'bano-agarradera', tipo: 'barra', nombre: 'Agarradera de acero', estancia: 'bano',
+    giro: 90, altura: 0.92, alto: 0.06, pared: 'salon-este', material: 'acero cromado',
+  }, [6.07, 6.15], [1.05, 1.45]),
+  fijo({
+    id: 'bano-lavabo', tipo: 'mueble-lavabo', nombre: 'Mueble de lavabo de 3 cajones con lavabo integrado', estancia: 'bano',
+    alto: 0.98, material: 'lacado blanco; lavabo cerámico; grifo cromado',
+  }, [7.09, 7.89], [0.23, 0.69]),
+  fijo({
+    id: 'bano-espejo', tipo: 'espejo', nombre: 'Espejo sin marco', estancia: 'bano',
+    altura: 1.05, alto: 0.8, pared: 'fachada-norte', material: 'espejo',
+  }, [7.14, 7.84], [0.23, 0.24]),
+  fijo({
+    id: 'bano-inodoro', tipo: 'inodoro', nombre: 'Inodoro', estancia: 'bano',
+    giro: 270, alto: 0.8, material: 'porcelana blanca',
+  }, [7.99, 8.61], [0.735, 1.095]),
+  fijo({
+    id: 'bano-bide', tipo: 'bide', nombre: 'Bidé', estancia: 'bano',
+    giro: 270, alto: 0.52, material: 'porcelana blanca; grifo cromado',
+  }, [8.07, 8.61], [1.22, 1.58]),
+];
+
+export const FIJOS = [...COCINA, ...BANO];
 
 /** Cómo se estimó cada medida (para docs/OBJETOS.md). */
 const NOTAS = {
@@ -70,6 +114,15 @@ const NOTAS = {
   'cocina-bajo-sur': 'Fondo de la L en el plano (0,57–0,60). Horno de 0,60 bajo la placa del plano; cajonera de 0,50 junto a la ventana (fotos).',
   'cocina-alto-este': 'Fondo 0,33, de 1,45 m al falso techo; sobre el lavavajillas y el armario (foto).',
   'cocina-alto-sur': 'Igual; campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana (fotos). Empieza a 5 cm de la ventana para no taparla.',
+  'bano-plato': 'Ancho de la ducha en el plano (0,65) por toda la profundidad del baño (1,36).',
+  'bano-mampara': 'Línea gruesa del plano: la mitad de la ducha hacia la puerta (0,66), sobre el plato; hasta 2,00 m.',
+  'bano-barra-mampara': 'Del extremo libre del cristal a la pared, arriba (foto).',
+  'bano-griferia': 'Posición de la grifería en el plano; termostático a 1,00 m y barra hasta 2,00 m (foto).',
+  'bano-agarradera': 'Foto: barra horizontal en la pared junto a la ducha, a 0,95 m; 40 cm.',
+  'bano-lavabo': 'Plano: 0,80 × 0,47 en el centro de la pared del fondo; encimera a 0,85, sobre patas.',
+  'bano-espejo': 'Foto: algo más estrecho que el mueble, de 1,05 a 1,85 m, bajo el aplique LED (1,95).',
+  'bano-inodoro': 'Plano: 0,37 de ancho y 0,62 de fondo, el primero pasado el patinillo.',
+  'bano-bide': 'Plano: 0,36 × 0,54, junto a la puerta.',
 };
 
 /** Escribe la sección "Elementos fijos" de docs/OBJETOS.md. */
@@ -94,5 +147,6 @@ ${filas.join('\n')}
 
 **No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
 (ni en el plano ni en las fotos). La placa sí está en el plano, y la campana
-extraíble se ve en la foto de la cocina bajo los muebles altos.`);
+extraíble se ve en la foto de la cocina bajo los muebles altos. En el baño, el
+aplique LED sobre el espejo es el que ya había (luz de la estancia).`);
 }
