@@ -98,7 +98,7 @@ describe('cada fijo en su sitio', () => {
       }
       // Ocupa casi toda su caja (no está desplazado ni girado al revés)
       expect(b.max.y - b.min.y, f.id).toBeGreaterThan(f.dimensiones.alto * 0.8);
-      if (esColgado(f)) {
+      if (f.pared) {
         expect(g.parent?.name, f.id).toBe('acabados');
         expect(g.parent?.parent?.name, f.id).toBe(`pared:${f.pared}`);
       }
@@ -246,5 +246,39 @@ describe('armario empotrado (parte C)', () => {
   it('la cama, la mesita y la cómoda de la escena inicial no lo tocan, y no se puede meter un mueble dentro', () => {
     expect(espacio.esValida({ x: 10.1, z: 3.2, ancho: 0.4, fondo: 0.4, giro: 0 })).toBe(false);
     expect(espacio.esValida({ x: 10.1, z: 2.6, ancho: 0.4, fondo: 0.4, giro: 0 })).toBe(true);
+  });
+});
+
+describe('aire acondicionado (parte D)', () => {
+  it('la unidad interior cuelga en el salón sobre el mueble de TV, a unos 2,1 m, junto al mirador', () => {
+    const s = fijo('salon-split');
+    expect(s.tipo).toBe('split-interior');
+    const c = cajaFijo(s);
+    expect((c.min[1] + c.max[1]) / 2).toBeGreaterThan(2.0);
+    expect((c.min[1] + c.max[1]) / 2).toBeLessThan(2.25);
+    const tv = (inicial as unknown as EscenaGuardada).objetos.find((o) => o.catalogo === 'almacenaje/mueble-tv')!;
+    expect(Math.abs((c.min[0] + c.max[0]) / 2 - tv.posicion.x)).toBeLessThan(0.05);
+    expect(c.max[2]).toBeCloseTo(3.23, 3); // contra la pared sur del salón
+    expect(esColgado(s)).toBe(true);
+  });
+
+  it('la unidad exterior está en el tendedero sobre la lavadora, sin tocarla, contra la pared del fondo', () => {
+    const s = fijo('tendedero-split');
+    const c = cajaFijo(s);
+    const lav = (inicial as unknown as EscenaGuardada).objetos.find((o) => o.catalogo === 'tendedero/lavadora')!;
+    expect(c.min[2]).toBeCloseTo(3.48, 3);
+    expect(c.min[0]).toBeLessThan(lav.posicion.x);
+    expect(c.max[0]).toBeGreaterThan(lav.posicion.x - 0.3);
+    expect(c.min[1]).toBeGreaterThan(item('tendedero/lavadora').dimensiones.alto + 0.5);
+  });
+
+  it('bajo la unidad interior caben el mueble de TV y la librería (2,00 m), pero no algo más alto', () => {
+    const gestor = nuevoGestor();
+    const [x, z] = fijo('salon-split').posicion;
+    const h = { x, z: z - 0.1, ancho: 0.4, fondo: 0.3, giro: 0 };
+    const con = (alto: number) => espacio.esValida(h, false, gestor.obstaculos({ item: { dimensiones: { ancho: 0.4, fondo: 0.3, alto } } } as never));
+    expect(con(0.55)).toBe(true);
+    expect(con(2.0)).toBe(true);
+    expect(con(2.2)).toBe(false);
   });
 });
