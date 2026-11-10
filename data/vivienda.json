@@ -1507,6 +1507,25 @@
       },
       "material": "porcelana blanca; grifo cromado",
       "medidas": "estimadas"
+    },
+    {
+      "id": "dormitorio-armario",
+      "tipo": "armario-empotrado",
+      "nombre": "Armario empotrado de 4 puertas",
+      "estancia": "dormitorio",
+      "posicion": [
+        10.125,
+        3.215
+      ],
+      "giro": 180,
+      "dimensiones": {
+        "ancho": 2.19,
+        "fondo": 0.57,
+        "alto": 2.49
+      },
+      "material": "puertas blancas lisas; pomos plateados",
+      "puertas": 4,
+      "medidas": "estimadas"
     }
   ],
   "suposiciones": [

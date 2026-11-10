@@ -227,3 +227,24 @@ describe('baño (parte B)', () => {
     expect(barra.min[0]).toBeCloseTo(plato.min[0], 2);
   });
 });
+
+describe('armario empotrado (parte C)', () => {
+  it('ocupa el hueco del armario del plano, de suelo a techo, con el frente hacia la cama', () => {
+    const a = fijo('dormitorio-armario');
+    expect(a.tipo).toBe('armario-empotrado');
+    expect(a.puertas).toBe(4);
+    const c = cajaFijo(a);
+    expect(c.min[0]).toBeCloseTo(9.03, 3);
+    expect(c.max[0]).toBeCloseTo(11.22, 3);
+    expect(c.min[2]).toBeCloseTo(2.93, 3);
+    expect(c.max[2]).toBeCloseTo(3.5, 3);
+    expect(c.min[1]).toBe(0);
+    expect(2.5 - c.max[1]).toBeLessThan(0.02);
+    expect(a.giro).toBe(180); // frente al norte, hacia la cama
+  });
+
+  it('la cama, la mesita y la cómoda de la escena inicial no lo tocan, y no se puede meter un mueble dentro', () => {
+    expect(espacio.esValida({ x: 10.1, z: 3.2, ancho: 0.4, fondo: 0.4, giro: 0 })).toBe(false);
+    expect(espacio.esValida({ x: 10.1, z: 2.6, ancho: 0.4, fondo: 0.4, giro: 0 })).toBe(true);
+  });
+});
