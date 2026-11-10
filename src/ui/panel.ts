@@ -88,10 +88,20 @@ export function crearPanel(
     const boton = el('button', 'item-catalogo');
     boton.title = 'Añadir a la vivienda';
     boton.dataset.catalogo = item.id;
-    boton.append(
+    const textos = el('span', 'item-textos');
+    textos.append(
       el('span', 'item-nombre', item.nombre),
       el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${DONDE[item.colocacion] ?? ''}`),
     );
+    if (item.urlMiniatura) {
+      const img = el('img', 'item-miniatura');
+      img.src = item.urlMiniatura;
+      img.alt = '';
+      img.loading = 'lazy'; // solo se descarga al abrir su categoría
+      img.width = img.height = 56;
+      boton.append(img);
+    }
+    boton.append(textos);
     boton.addEventListener('click', () => {
       acciones.agregar(item);
       abrir(false); // en el móvil, cerramos el cajón para ver el objeto

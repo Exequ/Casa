@@ -1,0 +1,13 @@
+{
+  "nombre": "Espejo pequeño plateado",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.45,
+  "dimensiones": {
+    "ancho": 0.35,
+    "fondo": 0.02,
+    "alto": 0.75
+  },
+  "medidas": "estimadas",
+  "glb": "espejo-marco-plateado.glb"
+}

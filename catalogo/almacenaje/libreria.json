@@ -1,0 +1,19 @@
+{
+  "nombre": "Librería alta de madera oscura",
+  "categoria": "Almacenaje",
+  "dimensiones": {
+    "ancho": 0.9,
+    "fondo": 0.4,
+    "alto": 2
+  },
+  "superficies": [
+    0.33,
+    0.65,
+    0.97,
+    1.29,
+    1.61,
+    2
+  ],
+  "medidas": "estimadas",
+  "glb": "libreria.glb"
+}

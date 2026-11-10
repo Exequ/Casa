@@ -1,0 +1,12 @@
+{
+  "nombre": "Sofá 3 plazas crema",
+  "categoria": "Sofás y sillones",
+  "dimensiones": {
+    "ancho": 2.05,
+    "fondo": 0.92,
+    "alto": 0.85
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "sofa-3-plazas.glb"
+}

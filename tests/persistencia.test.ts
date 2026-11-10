@@ -63,7 +63,7 @@ describe('catálogo', () => {
   it('lee los objetos de ejemplo con sus medidas', () => {
     const items = leerCatalogo();
     const ids = items.map((i) => i.id).sort();
-    expect(ids).toEqual(['armario', 'cuadro', 'espejo', 'jarron', 'mesa', 'planta']);
+    for (const id of ['armario', 'cuadro', 'espejo', 'jarron', 'mesa', 'planta']) expect(ids).toContain(id);
     for (const i of items) {
       expect(i.dimensiones.ancho).toBeGreaterThan(0);
       expect(i.urlGlb).toMatch(/\.glb/);

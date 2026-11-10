@@ -1,0 +1,12 @@
+{
+  "nombre": "Sillón gris",
+  "categoria": "Sofás y sillones",
+  "dimensiones": {
+    "ancho": 0.8,
+    "fondo": 0.85,
+    "alto": 0.8
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "sillon.glb"
+}

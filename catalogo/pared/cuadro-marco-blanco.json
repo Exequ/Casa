@@ -1,0 +1,13 @@
+{
+  "nombre": "Cuadro pequeño de marco blanco",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.5,
+  "dimensiones": {
+    "ancho": 0.25,
+    "fondo": 0.02,
+    "alto": 0.25
+  },
+  "medidas": "estimadas",
+  "glb": "cuadro-marco-blanco.glb"
+}

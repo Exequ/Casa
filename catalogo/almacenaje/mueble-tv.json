@@ -1,0 +1,16 @@
+{
+  "nombre": "Mueble de TV de listones",
+  "categoria": "Almacenaje",
+  "dimensiones": {
+    "ancho": 0.9,
+    "fondo": 0.38,
+    "alto": 0.55
+  },
+  "superficies": [
+    0.135,
+    0.335,
+    0.55
+  ],
+  "medidas": "estimadas",
+  "glb": "mueble-tv.glb"
+}
