@@ -20,6 +20,7 @@
 // "obstáculos" (las huellas de los otros muebles) que la huella no puede pisar.
 
 import type { Punto, Vivienda } from './modelo';
+import { esColgado, huellaFijo } from './fijos';
 import { largoPared } from './modelo';
 import {
   caja, convexosSeSolapan, encoger, huellaRectangulo, puntoEnPoligono, segmentoTocaConvexo,
@@ -61,6 +62,8 @@ export class EspacioLibre {
   private estancias: Region;
   /** Suelo por el que puede pasar un mueble al arrastrarlo: estancias + puertas. */
   private transito: Region;
+  /** Huellas de los elementos fijos del suelo (cocina, baño, armario): obstáculos permanentes. */
+  readonly fijos: Obstaculo[];
 
   constructor(vivienda: Vivienda) {
     this.poligonos = vivienda.estancias.map((e) => ({ id: e.id, poligono: e.poligono }));
@@ -69,6 +72,7 @@ export class EspacioLibre {
     this.estancias = { poligonos: polis, bordes: calcularBordes(polis) };
     const todos = [...polis, ...this.pasos];
     this.transito = { poligonos: todos, bordes: calcularBordes(todos) };
+    this.fijos = (vivienda.fijos ?? []).filter((f) => !esColgado(f)).map(huellaFijo);
   }
 
   /** Id de la estancia que contiene el punto (o null). */
@@ -92,7 +96,10 @@ export class EspacioLibre {
     // Descarte rápido: el centro tiene que estar sobre suelo.
     if (!region.poligonos.some((poli) => puntoEnPoligono([h.x, h.z], poli, 1e-4))) return false;
     const esquinas = encoger(huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro), HOLGURA);
-    // 0. No pisa otros muebles
+    // 0. No pisa otros muebles ni los elementos fijos del suelo
+    for (const o of this.fijos) {
+      if (convexosSeSolapan(esquinas, o)) return false;
+    }
     for (const o of obstaculos) {
       if (convexosSeSolapan(esquinas, o)) return false;
     }

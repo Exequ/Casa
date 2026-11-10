@@ -79,7 +79,7 @@ escena.cadaFotograma(() => {
 });
 
 // 2. Objetos colocados + interacción con ratón, dedo y teclado
-const gestor = new GestorObjetos(escena.escena, espacio, carasColgables(vivienda));
+const gestor = new GestorObjetos(escena.escena, espacio, carasColgables(vivienda), vivienda.fijos ?? []);
 /** ¿Se ve la cara de pared? (no, si su muro está bajado por el corte) */
 const verticalPorNombre = new Map(casa.verticales.map((v) => [v.objeto.name, v]));
 const caraVisible = (c: CaraColgable) => {

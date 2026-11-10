@@ -6,6 +6,7 @@
 //
 // El formato completo está explicado en el README (sección "Formato de vivienda.json").
 
+import { validarFijos, type Fijo } from './fijos';
 import { validarAcabado, type AcabadoEstancia, type Aplique } from './acabados';
 import { validarSuelo, type Suelo } from './suelos';
 
@@ -118,6 +119,8 @@ export interface Vivienda {
   estancias: Estancia[];
   paredes: Pared[];
   pilares?: Pilar[];
+  /** Elementos fijos: cocina, baño, armario empotrado, aire acondicionado (ver vivienda/fijos.ts). */
+  fijos?: Fijo[];
   /** Notas sobre lo que se ha supuesto al pasar el plano a datos. */
   suposiciones?: string[];
 }
@@ -270,6 +273,7 @@ export function validarVivienda(v: Vivienda): string[] {
       }
     }
   }
+  errores.push(...validarFijos(v));
   return errores;
 }
 

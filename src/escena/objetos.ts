@@ -20,6 +20,7 @@ import {
   buscarEnCara, limitarAltura, puntoEnPared, validoEnPared, type CaraColgable, type RectPared,
 } from '../vivienda/colgar';
 import type { EspacioLibre, Huella, Obstaculo } from '../vivienda/espacio';
+import { esColgado, obstaculosFijos, rectsDeFijos, type Fijo } from '../vivienda/fijos';
 import { convexosSeSolapan, encoger, huellaRectangulo } from '../vivienda/geometria';
 import type { Punto } from '../vivienda/modelo';
 
@@ -83,10 +84,17 @@ export class GestorObjetos {
   private escena: THREE.Scene;
   private espacio: EspacioLibre;
 
-  constructor(escena: THREE.Scene, espacio: EspacioLibre, caras: CaraColgable[] = []) {
+  /** Rectángulos de los elementos fijos pegados a las paredes (ahí no se cuelga nada). */
+  private rectsFijos: RectPared[];
+  /** Elementos fijos colgados (armarios altos, aire acondicionado): estorban a los muebles más altos que su base. */
+  private colgados: { huella: Punto[]; base: number }[];
+
+  constructor(escena: THREE.Scene, espacio: EspacioLibre, caras: CaraColgable[] = [], fijos: Fijo[] = []) {
     this.escena = escena;
     this.espacio = espacio;
     this.caras = caras;
+    this.rectsFijos = rectsDeFijos(caras, fijos);
+    this.colgados = obstaculosFijos(fijos.filter(esColgado));
     this.resaltado.visible = false;
     escena.add(this.resaltado);
   }
@@ -128,7 +136,7 @@ export class GestorObjetos {
   async agregar(item: ItemCatalogo, x = 0, z = 0, rotacion = 0): Promise<ObjetoColocado | null> {
     const obj = await this.crear(item);
     this.aplicarRotacion(obj, rotacion);
-    const sitio = this.espacio.buscarSitio({ ...this.huella(obj), x, z }, this.espacio.radioTotal(), this.obstaculos());
+    const sitio = this.espacio.buscarSitio({ ...this.huella(obj), x, z }, this.espacio.radioTotal(), this.obstaculos(obj));
     if (!sitio) return null;
     obj.raiz.position.set(sitio.x, 0, sitio.z);
     return this.alta(obj);
@@ -322,7 +330,8 @@ export class GestorObjetos {
   rectsPared(excepto?: ObjetoColocado): RectPared[] {
     return this.objetos
       .filter((o) => o !== excepto && o.colocacion === 'pared' && o.pared)
-      .map((o) => ({ cara: o.pared!.cara, u: o.pared!.u, y: o.pared!.y, ancho: o.item.dimensiones.ancho, alto: o.item.dimensiones.alto }));
+      .map((o): RectPared => ({ cara: o.pared!.cara, u: o.pared!.u, y: o.pared!.y, ancho: o.item.dimensiones.ancho, alto: o.item.dimensiones.alto }))
+      .concat(this.rectsFijos);
   }
 
   /** Posición válida en una cara lo más cerca posible de (u, y), o null. */
@@ -581,14 +590,20 @@ export class GestorObjetos {
     obj.raiz.rotation.y = THREE.MathUtils.degToRad(obj.rotacion);
   }
 
-  /** Huellas de los objetos que están en el suelo, menos `excepto` (los obstáculos para él). */
+  /**
+   * Huellas de los objetos que están en el suelo, menos `excepto` (los
+   * obstáculos para él), y de los elementos fijos colgados más bajos que su
+   * parte de arriba. (Los fijos del suelo ya los tiene en cuenta EspacioLibre.)
+   */
   obstaculos(excepto?: ObjetoColocado): Obstaculo[] {
+    const alto = excepto ? excepto.item.dimensiones.alto : Infinity;
     return this.objetos
       .filter((o) => o !== excepto && o.colocacion === 'suelo')
       .map((o) => {
         const h = this.huella(o);
         return huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro) as Punto[];
-      });
+      })
+      .concat(this.colgados.filter((c) => c.base < alto - 1e-6).map((c) => c.huella));
   }
 
   /** Rectángulo que ocupa el objeto en planta. */

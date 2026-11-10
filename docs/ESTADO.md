@@ -1,14 +1,43 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 3
-(la casa amueblada por defecto como en las fotos). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, durante la fase 3c
+(elementos fijos: cocina, baño, armario empotrado y aire acondicionado). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
 
 ---
 
-## Fase 5, lote 3: la casa amueblada por defecto
+## Fase 3c: elementos fijos
+
+Cada parte se publica con su propio PR.
+
+| Parte | Estado | Detalle |
+|---|---|---|
+| Diseño común | **Hecho** | Sección `fijos` en `data/vivienda.json` (desde `scripts/fijos.mjs`), validada al abrir la app y documentada en el README. Huellas para los choques: los fijos del suelo son obstáculo permanente en `EspacioLibre`; los colgados, solo para muebles más altos que su base; ningún cuadro puede colgarse sobre un fijo. Dibujo por código (`src/escena/fijos3d.ts`), con materiales del color y brillo de las fotos y la textura de granito; en el móvil, el modo ligero de siempre. Los colgados van en el grupo de acabados de su pared y se ocultan con ella. |
+| A. Cocina | **Hecho** | En L, según el plano y las fotos: columna con el frigorífico combi (altillo con rejilla), lavavajillas blanco de 45 cm junto a ella, armario y rincón en la pared este; en la del fondo, armario, horno de acero con cristal negro y placa (la del plano) y cajonera de 4. Encimera de granito negro, zócalo blanco, tiradores de barra de acero. Altos lacados hasta el falso techo con campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana. El frente de azulejo ya no queda detrás de la columna; copete de granito de 8 cm y frente de granito sobre el horno. |
+| B. Baño | Pendiente | |
+| C. Armario empotrado | Pendiente | |
+| D. Aire acondicionado | Pendiente | |
+
+### Comprobaciones (parte A)
+
+- `npm test`: todo en verde, con los tests nuevos de `tests/fijos.test.ts`.
+- Capturas desde los puntos de vista de las dos fotos de la cocina, en escritorio y móvil, comparadas con ellas.
+- Navegador (escritorio con ratón y móvil con el dedo): los fijos están en la escena y no se seleccionan; una mesa arrastrada hacia los muebles de la cocina se para delante; no se puede colgar un cuadro sobre los muebles altos. Las baterías anteriores siguen pasando.
+- Carga en el móvil (primera visita, media de 3, tres tandas): casa visible a los 2.020–2.230 ms en main y 2.040–2.250 ms con la cocina (unos +20 ms: no empeora de forma apreciable; +30 KB).
+
+### Decisiones (parte A)
+
+- **Fregadero:** no se dibuja (no se ve ni en las fotos ni en el plano). La **placa** sí (está en el plano) y la **campana** extraíble también (se ve en la foto bajo los muebles altos).
+- **Posición del horno:** x 2,33–2,93, con la cajonera de 0,50 m a su derecha, junto a la ventana, como en las fotos. En el plano la placa está unos 10 cm más a la izquierda.
+- **Lavavajillas:** de 45 cm junto a la columna, en el módulo de 0,51 del plano.
+- **Muebles altos del fondo:** empiezan a 5 cm de la ventana sobre la encimera para no taparla.
+- Tiradores y cromados algo menos metálicos que en la realidad, para que en el móvil (sin reflejos) no se vean negros.
+
+---
+
+## Fase 5, lote 3 (anterior): la casa amueblada por defecto
 
 | # | Requisito | Estado | Detalle |
 |---|---|---|---|
@@ -289,10 +318,8 @@ planta (no 0,45 × 0,45): con tres patas abiertas la planta no es cuadrada.
 
 1. Más decoración y alfombras; decidir cuándo quitar los 4 objetos
    provisionales de la fase 4.
-2. **Fase 3c:** cocina completa, sanitarios, plato de ducha y mampara y
-   armario empotrado (fijos).
-3. Confirmar las medidas de `docs/OBJETOS.md` y, si hace falta, ajustar los `.json`.
-4. Posibles mejoras: texturas de madera y tejido, que las lámparas den luz,
+2. Confirmar las medidas de `docs/OBJETOS.md` (muebles y elementos fijos) y, si hace falta, ajustarlas.
+3. Posibles mejoras: que las lámparas den luz, fregadero si se confirma dónde está,
    reparto automático de lo apoyado, historial que sobreviva a recargar,
    vista de paseo en primera persona.
 

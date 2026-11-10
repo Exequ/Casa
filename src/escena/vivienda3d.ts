@@ -16,6 +16,7 @@ import { distanciaASegmento } from '../vivienda/geometria';
 import { crearBarandilla, crearCarpinteria, type PuertaAbatible } from './carpinteria';
 import { construirAcabados, type AcabadosParedes } from './paredes3d';
 import { construirTechos, type Techos3D } from './techos';
+import { construirFijos, type Fijos3D } from './fijos3d';
 
 /** Un elemento vertical (pared o pilar) que se puede "cortar" para ver el interior. */
 export interface ElementoVertical {
@@ -50,6 +51,8 @@ export interface Vivienda3D {
   puertas: PuertaAbatible[];
   cortinas: THREE.Object3D[];
   techos: Techos3D;
+  /** Elementos fijos (cocina, baño, armario empotrado, aire acondicionado). */
+  fijos: Fijos3D;
 }
 
 // Colores del muro macizo: es lo que se ve en los cantos y en las caras que no dan a ninguna estancia.
@@ -252,6 +255,15 @@ export function construirVivienda(v: Vivienda, tamanoTextura = 512, ligera = fal
     cortinas.push(...c.cortinas);
   });
 
+  // Elementos fijos: los del suelo, con la vivienda; los colgados, con su pared
+  // (en el grupo de acabados, que se oculta cuando la pared se baja).
+  const fijos = construirFijos(v.fijos ?? [], tamanoTextura);
+  for (const g of fijos.suelo) grupo.add(g);
+  for (const [clave, lista] of fijos.colgados) {
+    const destino = verticales.find((el) => el.objeto.name === clave)?.acabados ?? grupo;
+    for (const g of lista) destino.add(g);
+  }
+
   const techos = construirTechos(v);
   grupo.add(techos.grupo);
   if (ligera) {
@@ -261,7 +273,7 @@ export function construirVivienda(v: Vivienda, tamanoTextura = 512, ligera = fal
     });
     for (const [id, m] of acabados.pintura) acabados.pintura.set(id, versionLigera(m) as THREE.MeshLambertMaterial);
   }
-  return { grupo, suelos, verticales, acabados, puertas, cortinas, techos };
+  return { grupo, suelos, verticales, acabados, puertas, cortinas, techos, fijos };
 }
 
 /** ¿Toca el pilar a la pared? (con 2 cm de margen) */

@@ -72,3 +72,26 @@ y la tarima como referencia.
 | Planta pequeña en maceta blanca (`decoracion/planta-pequena`) | 0,2 × 0,2 × 0,3 | colocación: superficie | Las del encargo (maceta de 13 cm de alto). | Mata redonda de hojas pequeñas verde claro en maceta cilíndrica blanca (en la mesa del balcón y en las mesitas del salón). | estimada | 3032 |
 | Lavadora de carga frontal (`tendedero/lavadora`) | 0,6 × 0,55 × 0,85 | colocación: suelo; superficies: 0,85 m | Las del encargo (medidas estándar). No sale en las fotos. | No sale en las fotos: modelo genérico blanco con puerta redonda y panel de mandos. | estimada | 1240 |
 <!-- fin:lote2 -->
+
+<!-- inicio:z-fijos -->
+## Elementos fijos
+
+Forman parte de la vivienda (sección `fijos` de `data/vivienda.json`, generada
+por `scripts/fijos.mjs` con `npm run vivienda:generar`): no se seleccionan, no se
+mueven ni se borran y los muebles no pueden atravesarlos. Medidas estimadas a
+partir de las fotos y del plano (`planos/plano.jpg`). Para corregir una,
+cambia el fijo en `scripts/fijos.mjs` y ejecuta `npm run vivienda:generar` (o
+edita `data/vivienda.json` directamente).
+
+| Elemento | Estancia | Medidas (ancho × fondo × alto, m) | Material | De dónde salen las medidas | Estado |
+|---|---|---|---|---|---|
+| Columna con frigorífico combi (`cocina-columna`) | cocina | 0,6 × 0,6 × 2,39 | lacado blanco brillo; frigorífico blanco | Módulo de 0,60 del plano junto al patinillo; alto hasta el falso techo (2,40 m). | estimada |
+| Muebles bajos (pared este): lavavajillas y armario (`cocina-bajo-este`) | cocina | 1,75 × 0,6 × 0,9 | lacado blanco brillo; encimera de granito negro | Módulos del plano: 0,51 (lavavajillas de 45 cm de libre instalación) y 0,61; el rincón queda tras los muebles del fondo. Fondo 0,60, encimera a 0,90. | estimada |
+| Muebles bajos (pared del fondo): armario, horno con placa y cajonera (`cocina-bajo-sur`) | cocina | 1,63 × 0,6 × 0,9 | lacado blanco brillo; horno de acero; encimera de granito negro | Fondo de la L en el plano (0,57–0,60). Horno de 0,60 bajo la placa del plano; cajonera de 0,50 junto a la ventana (fotos). | estimada |
+| Muebles altos (pared este) (`cocina-alto-este`) | cocina | 1,75 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo | Fondo 0,33, de 1,45 m al falso techo; sobre el lavavajillas y el armario (foto). | estimada |
+| Muebles altos (pared del fondo) con campana y estantes abiertos (`cocina-alto-sur`) | cocina | 1,85 × 0,33 × 0,94 (desde 1,45 m) | lacado blanco brillo; campana de acero | Igual; campana extraíble sobre la placa y estantes abiertos al final, junto a la ventana (fotos). Empieza a 5 cm de la ventana para no taparla. | estimada |
+
+**No se dibuja** lo que no se ve en las fotos ni en el plano: el fregadero
+(ni en el plano ni en las fotos). La placa sí está en el plano, y la campana
+extraíble se ve en la foto de la cocina bajo los muebles altos.
+<!-- fin:z-fijos -->
