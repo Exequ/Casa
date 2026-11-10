@@ -284,7 +284,8 @@ function griferiaDucha(t: Taller, f: Fijo) {
   t.cilindro('cromo', 0.011, 0.011, H - yBarra - 0.01, [0, yBarra + (H - yBarra) / 2, zPared + 0.04], undefined, 12);
   for (const y of [yBarra + 0.02, H - 0.02]) t.caja('cromo', [0.03, 0.03, 0.04], [0, y, zPared + 0.02]);
   t.caja('cromo', [0.03, 0.05, 0.03], [0, H - 0.25, zPared + 0.055]);
-  t.cilindro('cromo', 0.055, 0.05, 0.02, [0, H - 0.18, D / 2 - 0.012], [Math.PI / 2.6, 0, 0], 24);
+  // Rociador inclinado hacia abajo, delante de la barra
+  t.cilindro('cromo', 0.05, 0.045, 0.02, [0, H - 0.2, D / 2 - 0.042], [Math.PI / 2 - 0.55, 0, 0], 24);
   // Flexo: del termostático al mango del rociador
   t.barra('acero', [0, 0.03, zPared + 0.05], [W * 0.35, 0.3, zPared + 0.06], 0.006);
   t.barra('acero', [W * 0.35, 0.3, zPared + 0.06], [0.01, H - 0.27, zPared + 0.06], 0.006);
@@ -326,7 +327,7 @@ function bide(t: Taller, f: Fijo) {
   const hCuerpo = 0.4, zAtras = -D / 2;
   t.redonda('ceramica', [W - 0.06, 0.22, D - 0.1], 0.03, [0, 0.11, zAtras + 0.02 + (D - 0.1) / 2]);
   t.redonda('ceramica', [W, hCuerpo - 0.2, D], 0.04, [0, 0.2 + (hCuerpo - 0.2) / 2, 0]);
-  t.caja('junta', [W - 0.08, 0.002, D - 0.18], [0, hCuerpo + 0.0005, 0.04]);
+  t.ovalo('junta', (W - 0.1) / 2, (D - 0.22) / 2, 0.002, [0, hCuerpo + 0.0005, 0.05]); // la cubeta
   // Grifo monomando cromado atrás
   t.cilindro('cromo', 0.018, 0.022, H - hCuerpo - 0.02, [0, hCuerpo + (H - hCuerpo - 0.02) / 2, zAtras + 0.07], undefined, 16);
   t.caja('cromo', [0.012, 0.012, 0.08], [0, H - 0.01, zAtras + 0.08]);

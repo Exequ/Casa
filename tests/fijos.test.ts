@@ -191,3 +191,39 @@ describe('cocina (parte A)', () => {
     }
   });
 });
+
+describe('baño (parte B)', () => {
+  const x = (id: string) => fijo(id).posicion[0];
+  it('están todas las piezas del baño', () => {
+    const tipos = fijos.filter((f) => f.estancia === 'bano').map((f) => f.tipo).sort();
+    expect(tipos).toEqual(['barra', 'barra', 'bide', 'espejo', 'griferia-ducha', 'inodoro', 'mampara', 'mueble-lavabo', 'plato-ducha']);
+  });
+
+  it('como en el plano: ducha a la izquierda, lavabo en el centro del fondo, inodoro y bidé a la derecha', () => {
+    expect(x('bano-plato')).toBeLessThan(x('bano-lavabo'));
+    expect(x('bano-lavabo')).toBeLessThan(x('bano-inodoro'));
+    // Lavabo y grifería contra la pared del fondo (norte, z = 0,23)
+    for (const id of ['bano-lavabo', 'bano-griferia', 'bano-espejo']) expect(cajaFijo(fijo(id)).min[2], id).toBeCloseTo(0.23, 3);
+    // Inodoro y bidé contra la pared de la derecha (x = 8,61), mirando al baño
+    for (const id of ['bano-inodoro', 'bano-bide']) {
+      expect(cajaFijo(fijo(id)).max[0], id).toBeCloseTo(8.61, 3);
+      expect(fijo(id).giro, id).toBe(270);
+    }
+  });
+
+  it('el espejo cuelga sobre el lavabo, centrado y por debajo del aplique LED', () => {
+    const espejo = cajaFijo(fijo('bano-espejo')), lavabo = cajaFijo(fijo('bano-lavabo'));
+    expect(espejo.min[1]).toBeGreaterThan(lavabo.max[1]);
+    expect((espejo.min[0] + espejo.max[0]) / 2).toBeCloseTo((lavabo.min[0] + lavabo.max[0]) / 2, 2);
+    const aplique = vivienda.estancias.find((e) => e.id === 'bano')!.apliques![0];
+    expect(espejo.max[1]).toBeLessThan(aplique.altura);
+  });
+
+  it('la mampara está sobre el plato, en su lado derecho, y la barra va de ella a la pared', () => {
+    const plato = cajaFijo(fijo('bano-plato')), mampara = cajaFijo(fijo('bano-mampara')), barra = cajaFijo(fijo('bano-barra-mampara'));
+    expect(mampara.min[1]).toBeCloseTo(plato.max[1], 3);
+    expect(mampara.min[0]).toBeLessThan(plato.max[0] + 0.02);
+    expect(barra.max[0]).toBeCloseTo(mampara.min[0], 3);
+    expect(barra.min[0]).toBeCloseTo(plato.min[0], 2);
+  });
+});

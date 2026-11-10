@@ -1336,6 +1336,177 @@
         }
       ],
       "medidas": "estimadas"
+    },
+    {
+      "id": "bano-plato",
+      "tipo": "plato-ducha",
+      "nombre": "Plato de ducha extraplano",
+      "estancia": "bano",
+      "posicion": [
+        6.395,
+        0.91
+      ],
+      "giro": 0,
+      "dimensiones": {
+        "ancho": 0.65,
+        "fondo": 1.36,
+        "alto": 0.035
+      },
+      "material": "resina blanca; desagüe de rejilla de acero",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-mampara",
+      "tipo": "mampara",
+      "nombre": "Mampara fija de cristal",
+      "estancia": "bano",
+      "posicion": [
+        6.72,
+        1.26
+      ],
+      "altura": 0.035,
+      "giro": 90,
+      "dimensiones": {
+        "ancho": 0.66,
+        "fondo": 0.03,
+        "alto": 1.965
+      },
+      "material": "cristal transparente; perfil cromado",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-barra-mampara",
+      "tipo": "barra",
+      "nombre": "Barra de sujeción de la mampara",
+      "estancia": "bano",
+      "posicion": [
+        6.388,
+        0.93
+      ],
+      "altura": 1.95,
+      "giro": 0,
+      "dimensiones": {
+        "ancho": 0.635,
+        "fondo": 0.03,
+        "alto": 0.03
+      },
+      "pared": "salon-este",
+      "material": "acero cromado",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-griferia",
+      "tipo": "griferia-ducha",
+      "nombre": "Grifería termostática con barra de ducha",
+      "estancia": "bano",
+      "posicion": [
+        6.44,
+        0.29
+      ],
+      "altura": 0.95,
+      "giro": 0,
+      "dimensiones": {
+        "ancho": 0.3,
+        "fondo": 0.12,
+        "alto": 1.05
+      },
+      "pared": "fachada-norte",
+      "material": "cromo",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-agarradera",
+      "tipo": "barra",
+      "nombre": "Agarradera de acero",
+      "estancia": "bano",
+      "posicion": [
+        6.11,
+        1.25
+      ],
+      "altura": 0.92,
+      "giro": 90,
+      "dimensiones": {
+        "ancho": 0.4,
+        "fondo": 0.08,
+        "alto": 0.06
+      },
+      "pared": "salon-este",
+      "material": "acero cromado",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-lavabo",
+      "tipo": "mueble-lavabo",
+      "nombre": "Mueble de lavabo de 3 cajones con lavabo integrado",
+      "estancia": "bano",
+      "posicion": [
+        7.49,
+        0.46
+      ],
+      "giro": 0,
+      "dimensiones": {
+        "ancho": 0.8,
+        "fondo": 0.46,
+        "alto": 0.98
+      },
+      "material": "lacado blanco; lavabo cerámico; grifo cromado",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-espejo",
+      "tipo": "espejo",
+      "nombre": "Espejo sin marco",
+      "estancia": "bano",
+      "posicion": [
+        7.49,
+        0.235
+      ],
+      "altura": 1.05,
+      "giro": 0,
+      "dimensiones": {
+        "ancho": 0.7,
+        "fondo": 0.01,
+        "alto": 0.8
+      },
+      "pared": "fachada-norte",
+      "material": "espejo",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-inodoro",
+      "tipo": "inodoro",
+      "nombre": "Inodoro",
+      "estancia": "bano",
+      "posicion": [
+        8.3,
+        0.915
+      ],
+      "giro": 270,
+      "dimensiones": {
+        "ancho": 0.36,
+        "fondo": 0.62,
+        "alto": 0.8
+      },
+      "material": "porcelana blanca",
+      "medidas": "estimadas"
+    },
+    {
+      "id": "bano-bide",
+      "tipo": "bide",
+      "nombre": "Bidé",
+      "estancia": "bano",
+      "posicion": [
+        8.34,
+        1.4
+      ],
+      "giro": 270,
+      "dimensiones": {
+        "ancho": 0.36,
+        "fondo": 0.54,
+        "alto": 0.52
+      },
+      "material": "porcelana blanca; grifo cromado",
+      "medidas": "estimadas"
     }
   ],
   "suposiciones": [
