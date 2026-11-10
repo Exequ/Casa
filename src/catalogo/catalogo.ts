@@ -37,8 +37,11 @@ export interface FichaObjeto {
   /**
    * Solo muebles de suelo: alturas (m) de sus tapas o baldas, donde se pueden
    * apoyar objetos de "superficie". Por defecto, el borde superior del mueble.
+   * `[]` = no se puede apoyar nada encima (sofás, sillas, lámparas...).
    */
   superficies?: number[];
+  /** "estimadas" (sacadas de fotos) o "confirmadas" (medidas de verdad). Solo informativo. */
+  medidas?: 'estimadas' | 'confirmadas';
 }
 
 /** Un objeto del catálogo ya listo para usar en la app (con los valores por defecto puestos). */
@@ -47,6 +50,8 @@ export interface ItemCatalogo extends FichaObjeto {
   id: string;
   /** URL final del .glb (la que entiende el navegador). */
   urlGlb: string;
+  /** URL de la miniatura (<id>.png junto al .json), si existe. */
+  urlMiniatura?: string;
   colocacion: Colocacion;
 }
 
@@ -56,12 +61,14 @@ export const alturaCentroDe = (item: FichaObjeto) => item.alturaCentro ?? ALTURA
 /** Alturas donde se pueden apoyar cosas sobre un mueble, de abajo arriba ([] si no es un mueble de suelo). */
 export function superficiesDe(item: FichaObjeto): number[] {
   if ((item.colocacion ?? 'suelo') !== 'suelo') return [];
-  return [...(item.superficies?.length ? item.superficies : [item.dimensiones.alto])].sort((a, b) => a - b);
+  return [...(Array.isArray(item.superficies) ? item.superficies : [item.dimensiones.alto])].sort((a, b) => a - b);
 }
 
 // Vite sustituye estas dos líneas por el contenido real de la carpeta.
 const fichas = import.meta.glob<FichaObjeto>('/catalogo/**/*.json', { eager: true, import: 'default' });
 const urlsGlb = import.meta.glob<string>('/catalogo/**/*.glb', { eager: true, query: '?url', import: 'default' });
+// Solo las URL: cada .glb y cada miniatura se descargan cuando hacen falta.
+const urlsMiniatura = import.meta.glob<string>('/catalogo/**/*.png', { eager: true, query: '?url', import: 'default' });
 
 /** Comprueba que una ficha tiene todos los campos necesarios. Devuelve el error o null. */
 export function validarFicha(f: Partial<FichaObjeto>): string | null {
@@ -120,6 +127,7 @@ export function leerCatalogo(): ItemCatalogo[] {
       colocacion: ficha.colocacion ?? 'suelo',
       id: rutaJson.replace(/^\/catalogo\//, '').replace(/\.json$/, ''),
       urlGlb,
+      urlMiniatura: urlsMiniatura[rutaJson.replace(/\.json$/, '.png')],
     });
   }
 

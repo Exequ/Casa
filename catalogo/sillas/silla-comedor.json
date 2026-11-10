@@ -1,0 +1,12 @@
+{
+  "nombre": "Silla de comedor blanca",
+  "categoria": "Sillas",
+  "dimensiones": {
+    "ancho": 0.48,
+    "fondo": 0.55,
+    "alto": 0.82
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "silla-comedor.glb"
+}

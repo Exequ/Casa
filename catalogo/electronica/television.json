@@ -1,0 +1,12 @@
+{
+  "nombre": "Televisión 32\"",
+  "categoria": "Electrónica",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.73,
+    "fondo": 0.2,
+    "alto": 0.48
+  },
+  "medidas": "estimadas",
+  "glb": "television.glb"
+}

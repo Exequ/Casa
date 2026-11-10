@@ -1,0 +1,12 @@
+{
+  "nombre": "Lámpara de pie semiesfera negra",
+  "categoria": "Iluminación",
+  "dimensiones": {
+    "ancho": 0.3,
+    "fondo": 0.3,
+    "alto": 1.45
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "lampara-pie-semiesfera.glb"
+}

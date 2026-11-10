@@ -1,0 +1,14 @@
+{
+  "nombre": "Mesa de centro de madera y cristal",
+  "categoria": "Mesas",
+  "dimensiones": {
+    "ancho": 1,
+    "fondo": 0.7,
+    "alto": 0.45
+  },
+  "superficies": [
+    0.45
+  ],
+  "medidas": "estimadas",
+  "glb": "mesa-centro.glb"
+}

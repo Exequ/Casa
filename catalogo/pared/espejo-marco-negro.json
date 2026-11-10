@@ -1,0 +1,13 @@
+{
+  "nombre": "Espejo con marco negro",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.3,
+  "dimensiones": {
+    "ancho": 0.95,
+    "fondo": 0.04,
+    "alto": 0.65
+  },
+  "medidas": "estimadas",
+  "glb": "espejo-marco-negro.glb"
+}

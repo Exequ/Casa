@@ -344,3 +344,15 @@ details.categoria > summary {
 .barra-objeto { flex-wrap: wrap; }
 .barra-objeto .nombre { flex-basis: 100%; }
 @media (min-width: 420px) { .barra-objeto .nombre { flex-basis: auto; } }
+
+/* --- Fase 5: miniaturas en el catálogo --------------------------------------- */
+.item-catalogo { flex-direction: row; align-items: center; gap: 8px; }
+.item-textos { display: flex; flex-direction: column; min-width: 0; }
+.item-miniatura {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #f1f3f5;
+  object-fit: contain;
+}

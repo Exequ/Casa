@@ -1,14 +1,71 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 4 (herramientas
-para decorar). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 1
+(muebles reales del salón y del pasillo). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
 
 ---
 
-## Fase 4: herramientas para decorar
+## Fase 5, lote 1: muebles reales del salón y del pasillo
+
+| # | Requisito | Estado | Detalle |
+|---|---|---|---|
+| 1 | Script reutilizable que genera cada objeto (.glb + .json) en `catalogo/<categoria>/` | **Hecho** | `scripts/catalogo-lote1.mjs` (`npm run catalogo:lote1`) con la librería `scripts/lib/modelo3d.mjs`: piezas de three.js (cajas, cajas redondeadas para tapizados y cojines, cilindros, barras inclinadas, esferas, tornos y extrusiones), una malla por material, materiales compartidos dentro de cada objeto. Carpetas: `sofas/`, `mesas/`, `sillas/`, `almacenaje/`, `electronica/`, `iluminacion/`, `pared/`. |
+| 2 | Formas fieles, menos de 20.000 triángulos, .glb ligeros | **Hecho** | Entre 108 y 6.948 triángulos; entre 7 y 132 KB. |
+| 3 | Origen en el centro de la base, frente +Z, medidas reales, colocación y superficies | **Hecho** | El script comprueba la caja envolvente de cada modelo al guardarlo (falla si no coincide con la ficha o no está centrado). Sofá, sillón, silla y lámparas llevan `"superficies": []`: no se puede apoyar nada encima (la app ahora entiende la lista vacía). |
+| 4 | Medidas estimadas y `docs/OBJETOS.md` | **Hecho** | Tabla con medidas, colocación, de dónde sale cada medida y estado. Corregir una medida = editar el `.json` (la app estira el modelo); el script respeta esas correcciones si se vuelve a ejecutar. |
+| 5 | Miniaturas de 128 px en el panel | **Hecho** | `scripts/miniaturas.mjs` (`npm run catalogo:miniaturas`) dibuja cada `.glb` en un Chromium sin ventana; se muestran en el catálogo (también las de los objetos de ejemplo). |
+| 6 | Verificación de cada objeto | **Hecho** | Caja envolvente (script y test), frente +Z y 3 vistas por objeto (frente, lado y 3/4 desde atrás, con una flecha roja hacia +Z) revisadas una a una; luego, en la app, el salón y el pasillo amueblados. |
+| 7 | Tests del catálogo | **Hecho** | `tests/catalogo.test.ts`: todo el catálogo carga; cada `.glb` es coherente con su `.json`; triángulos y tamaño; colocación y superficies. |
+| 8 | Tiempo de carga en el móvil | **Hecho, no empeora** | Los `.glb` ya se cargaban bajo demanda (al añadir el objeto); ahora además las miniaturas y los modelos nunca van dentro del JavaScript (`assetsInlineLimit`) y las imágenes son `loading="lazy"`. iPhone 13 emulado, media de 3 cargas: fase 4, 948 ms y 227 KB; fase 5, 963 ms y 235 KB. |
+
+**Lo que cambió del encargo:** la lámpara de trípode mide 0,449 × 0,442 m en
+planta (no 0,45 × 0,45): con tres patas abiertas la planta no es cuadrada.
+
+### Comprobaciones de la fase 5
+
+- **`npm test`: 184 tests, todos pasan** (27 nuevos en `tests/catalogo.test.ts`).
+- **`npm run build`** sin errores.
+- **Vistas de cada objeto** (frente, lado, 3/4 trasera) revisadas: corregí el
+  color de la mesa de centro (salía naranja) y piezas que se salían de la caja.
+- **Navegador automático, escritorio (12 comprobaciones):** 22 miniaturas de
+  128 px; buscador; añadir los 16 objetos desde el catálogo (cada uno donde le
+  toca y descargando su modelo en ese momento); amueblar el salón y el pasillo;
+  en la escena cada modelo mide lo que dice su ficha (±5 mm); todo bien
+  colocado; la tele sobre el mueble de TV; el sofá no es soporte; recarga; sin
+  errores. Capturas del salón (fuera, planta y dentro: sofá, tele, comedor) y del pasillo.
+- **Navegador automático, móvil (iPhone 13, toques reales, 4 comprobaciones):**
+  miniatura en el menú, añadir el sofá tocándola, arrastrarlo con el dedo, sin
+  errores; capturas del salón amueblado por fuera y por dentro.
+- Las baterías de las fases 4 y 3b siguen pasando (en la de la fase 4 actualicé la búsqueda: "espe" ahora encuentra tres espejos; en la de la 3b, dos comprobaciones esperan aún la versión 4 de la escena, que ya es la 5).
+
+### Problemas y limitaciones de la fase 5
+
+- **No recibí fotos en este encargo**: los modelos siguen las descripciones y
+  medidas del mensaje; no he podido compararlos con las fotos. Los colores son
+  los descritos (crema, gris-marrón, madera miel/caoba, muy oscura...).
+- Las medidas interiores (alturas de asiento, baldas...) las puse yo; están
+  marcadas en `docs/OBJETOS.md`.
+- Las texturas son colores lisos (sin vetas de madera ni tejido).
+- Las lámparas no dan luz (no se pedía en este lote).
+
+### Decisiones de la fase 5
+
+- Carpetas por categoría (`catalogo/sofas/`, `mesas/`...), así que los
+  identificadores son `sofas/sofa-3-plazas`, etc.
+- `"superficies": []` para lo que no es soporte, y campo informativo
+  `"medidas": "estimadas"`.
+- La librería tiene 6 superficies: las 5 baldas (0,33 a 1,61 m) y la tapa
+  (2,00 m); el mueble de TV, 3 (0,135, 0,335 y 0,55 m); la mesita de bandeja,
+  0,43 m (fondo de la bandeja).
+- Sofá con cojines azules en los extremos y crema en el centro; sillón con su cojín gris.
+- Las miniaturas son de todo el catálogo (también los objetos de ejemplo).
+
+---
+
+## Fase 4 (anterior): herramientas para decorar
 
 | # | Requisito | Estado | Detalle |
 |---|---|---|---|
@@ -27,7 +84,7 @@ comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 ---
 
-## Comprobaciones
+### Comprobaciones de la fase 4
 
 - **`npm test`: 157 tests, todos pasan.** Nuevos (`tests/decorar.test.ts`, 26):
   - catálogo: colocación de los ejemplos, valores por defecto y validación de los campos nuevos;
@@ -56,7 +113,7 @@ comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 ---
 
-## Problemas conocidos y limitaciones
+### Problemas conocidos de la fase 4
 
 - Los 4 objetos de decoración son **provisionales** (cajas y cilindros).
 - Al apoyar varias cosas en un mueble, cada una va al sitio libre más cercano
@@ -76,7 +133,7 @@ comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 ---
 
-## Decisiones que tomé por mi cuenta
+### Decisiones de la fase 4
 
 - **"superficie" también puede ir al suelo**: es la forma de dar a la planta
   la opción "suelo o superficie" con los valores pedidos. Al añadirla se busca
@@ -98,15 +155,16 @@ comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 ---
 
-## Qué falta: fase 3c y siguientes
+## Qué falta
 
-1. **Fase 3c:** cocina completa, sanitarios, plato de ducha y mampara y
+1. **Fase 5, lote 2:** dormitorio, balcón, tendedero, plantas y decoración
+   (entonces se quitarán los 4 objetos provisionales de la fase 4).
+2. **Fase 3c:** cocina completa, sanitarios, plato de ducha y mampara y
    armario empotrado (fijos).
-2. Sustituir los 4 objetos provisionales por modelos reales y ampliar el
-   catálogo (con `superficies` en las estanterías y muebles de TV).
-3. Posibles mejoras de decoración: reparto automático de lo apoyado, choques
-   de cuadros con muebles altos, historial que sobreviva a recargar.
-4. Vista de paseo en primera persona y luces nuevas (no pedidas aún).
+3. Confirmar las medidas de `docs/OBJETOS.md` y, si hace falta, ajustar los `.json`.
+4. Posibles mejoras: texturas de madera y tejido, que las lámparas den luz,
+   reparto automático de lo apoyado, historial que sobreviva a recargar,
+   vista de paseo en primera persona.
 
 ---
 

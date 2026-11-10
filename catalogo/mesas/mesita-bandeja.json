@@ -1,0 +1,14 @@
+{
+  "nombre": "Mesita auxiliar de bandeja negra",
+  "categoria": "Mesas",
+  "dimensiones": {
+    "ancho": 0.45,
+    "fondo": 0.45,
+    "alto": 0.45
+  },
+  "superficies": [
+    0.43
+  ],
+  "medidas": "estimadas",
+  "glb": "mesita-bandeja.glb"
+}

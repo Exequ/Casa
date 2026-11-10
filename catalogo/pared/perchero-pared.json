@@ -1,0 +1,13 @@
+{
+  "nombre": "Perchero de pared de 3 ganchos",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.65,
+  "dimensiones": {
+    "ancho": 0.45,
+    "fondo": 0.1,
+    "alto": 0.12
+  },
+  "medidas": "estimadas",
+  "glb": "perchero-pared.glb"
+}
