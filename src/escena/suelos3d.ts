@@ -3,7 +3,7 @@
 
 import type * as THREE from 'three';
 import type { Vivienda } from '../vivienda/modelo';
-import { mismoSuelo, soloSuelo, sueloDe, validarSuelo, type Suelo } from '../vivienda/suelos';
+import { giroDe, mismoSuelo, soloSuelo, sueloDe, validarSuelo, type Suelo } from '../vivienda/suelos';
 import { materialSuelo } from './texturasSuelo';
 
 type Oyente = () => void;
@@ -13,12 +13,15 @@ export class GestorSuelos {
   private oyentes: Oyente[] = [];
   private vivienda: Vivienda;
   private mallas: Map<string, THREE.Mesh>;
+  /** Trozos de suelo bajo puertas y balconeras, por la estancia de la que toman el suelo. */
+  private umbrales: Map<string, THREE.Mesh[]>;
   /** Resolución de las texturas (px). */
   private tamano: number;
 
-  constructor(vivienda: Vivienda, mallas: Map<string, THREE.Mesh>, tamanoTextura = 512) {
+  constructor(vivienda: Vivienda, mallas: Map<string, THREE.Mesh>, tamanoTextura = 512, umbrales: Map<string, THREE.Mesh[]> = new Map()) {
     this.vivienda = vivienda;
     this.mallas = mallas;
+    this.umbrales = umbrales;
     this.tamano = tamanoTextura;
     for (const e of vivienda.estancias) this.poner(e.id, sueloDe(e));
   }
@@ -75,7 +78,12 @@ export class GestorSuelos {
 
   private poner(id: string, s: Suelo) {
     this.actuales.set(id, s);
+    const e = this.vivienda.estancias.find((x) => x.id === id);
+    if (!e) return;
+    const material = materialSuelo(s, this.tamano, giroDe(s, e));
     const malla = this.mallas.get(id);
-    if (malla) malla.material = materialSuelo(s, this.tamano);
+    if (malla) malla.material = material;
+    // Umbrales de puertas y balconeras que llevan el suelo de esta estancia
+    for (const u of this.umbrales.get(id) ?? []) u.material = material;
   }
 }

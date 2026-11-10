@@ -9,9 +9,15 @@ Todas las medidas están en **metros**, a escala real.
 - **Fase 2:** la vivienda real (2ºA), sacada de los planos de
   `planos/`: estancias, paredes con sus puertas y ventanas, pilares, selector
   de estancia y modo de comprobación con el plano superpuesto.
-- **Fase 2.5 y 3a (actual):** choques entre muebles, altura de paredes según
+- **Fase 2.5 y 3a:** choques entre muebles, altura de paredes según
   las estancias, mejor corte de paredes, calidad gráfica adaptada al móvil y
   **suelos con textura** por estancia, con selector en la interfaz.
+- **Fase 3b (actual):** **acabados reales** sacados de las fotos del piso:
+  suelos (tarima de ipé, granito negro pulido, mármol…), pintura de paredes por
+  estancia y por cara, alicatado del baño y frente de la cocina, rodapiés,
+  tapajuntas, **carpintería** (ventanas de nogal con cristal, puertas lacadas,
+  lamas del tendedero, barandilla, cortinas), **techos** con falso techo y
+  focos, **luces** con interruptores y **vista interior** a la altura de los ojos.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -42,8 +48,17 @@ Abre <http://localhost:5173> en el navegador.
 
 - **Selector de estancia:** centra la cámara en una estancia o en toda la vivienda.
 - **Planta:** vista desde arriba.
+- **Interior:** entra en la estancia elegida: cámara a la altura de los ojos
+  (1,55 m), mirando a lo largo de la estancia desde el lado de la puerta, con
+  techo y focos. Se gira con el dedo o el ratón; vuelve a pulsarlo para salir.
+- **Luces:** enciende o apaga todos los focos (cada estancia tiene además su
+  interruptor en el panel, sección *Acabados*).
+- **Puertas:** abre o cierra todas las puertas a la vez.
+- **Cortinas:** muestra u oculta las cortinas del mirador y del dormitorio.
 - **Plano:** superpone el plano original (ver [Comprobar con el plano](#comprobar-con-el-plano)).
-- **☰** (solo en el móvil): abre el menú con el catálogo, los suelos, guardar y cargar.
+- **☰** (solo en el móvil): abre el menú con el catálogo, los acabados, guardar y cargar.
+
+Los interruptores (luces, puertas, cortinas) se guardan con la escena.
 
 **Ordenador:**
 
@@ -85,9 +100,27 @@ las fachadas del fondo. Al elegir una estancia, se bajan las que quedan entre
 la cámara y ella y las que tapan su suelo; las del fondo de la estancia se
 quedan en pie. Cada pared mide la mayor altura de techo de las estancias que toca.
 
-**Suelos:** en el panel (en el móvil, menú ☰), sección *Suelo*: elige la
-estancia (o elígela en la barra superior) y toca uno de los 8 suelos. *Volver
-al original* deja el de `vivienda.json`. Los cambios se guardan con la escena.
+**Acabados:** en el panel (en el móvil, menú ☰), sección *Acabados*: elige la
+estancia (o elígela en la barra superior) y:
+
+- **Suelo:** toca uno de los 10 suelos. *Suelo original* deja el de `vivienda.json`.
+- **Color de las paredes:** 8 colores (blanco roto, gris perla, arena, greige,
+  verde salvia, azul niebla, terracota suave, antracita) u *Otro color* (libre).
+  Pinta todas las paredes de esa estancia por su lado, sin tocar la otra cara
+  de los tabiques ni el alicatado. *Color original* vuelve al de `vivienda.json`.
+- **Luz de esta estancia:** su interruptor (solo en las que tienen focos).
+
+Los cambios se guardan con la escena.
+
+**Techos:** solo se ven desde dentro (vista *Interior*, o al acercar la
+cámara por debajo del techo); en la vista general y en planta se ocultan.
+
+**Luces:** el sol entra por las ventanas reales (dentro, un sol bajo de
+poniente que proyecta la forma de la carpintería en el suelo), un entorno
+neutro da los reflejos (el granito pulido brilla) y los focos son luces de
+3000 K. Para que vaya fluido, solo dan sombra el sol y, con calidad normal,
+hasta 2 luces de la estancia en la que está la cámara (máximo 3 con sombra).
+En el móvil, una luz por estancia y solo el sol da sombra.
 
 **Calidad gráfica:** en pantallas táctiles o pequeñas la app usa sombras de
 1024 px y menos píxeles por punto (más fluido); en el ordenador, sombras de
@@ -116,6 +149,9 @@ src/vivienda/             Datos y geometría en planta (sin 3D)
   geometria.ts            Áreas, puntos en polígonos, cruces de segmentos...
   espacio.ts              Dónde caben los muebles (paredes, puertas, pilares, otros muebles)
   suelos.ts               Formato del campo "suelo", suelos disponibles y por defecto
+  acabados.ts             Formato de los acabados (pintura, revestimientos, rodapié) y colores de pared
+  caras.ts                Caras de pared de cada estancia (qué trozo de qué muro ve cada estancia)
+  vista.ts                Desde dónde mirar una estancia en la vista interior
 src/escena/               Todo lo 3D
   escena.ts               Renderizador, cámara orbital, luces y encuadres
   vivienda3d.ts           Suelos, paredes con huecos y pilares a partir del JSON
@@ -124,6 +160,11 @@ src/escena/               Todo lo 3D
   plano.ts                Plano original superpuesto (modo comprobación)
   texturasSuelo.ts        Texturas de suelo dibujadas por código (canvas) y sus materiales
   suelos3d.ts             Pone el suelo de cada estancia y recuerda los cambios
+  texturasPared.ts        Texturas de alicatado, azulejo y granito de pared
+  paredes3d.ts            Pintura y revestimientos por cara, rodapiés, umbrales; colores de pared
+  carpinteria.ts          Marcos, hojas, cristales, manillas, lamas, cortinas y barandilla
+  techos.ts               Techos, tabicas del falso techo y focos
+  luces.ts                Focos como luces, interruptores, sol y sombras según la vista
   objetos.ts              Objetos colocados: añadir, mover, girar, borrar, seleccionar
   interaccion.ts          Ratón, dedo y teclado sobre la escena 3D
   persistencia.ts         Guardar/cargar JSON, autoguardado y migración de escenas
@@ -133,7 +174,7 @@ src/catalogo/
 src/ui/
   panel.ts                Panel lateral (cajón en el móvil)
   barra.ts                Barra superior y barra del objeto seleccionado (móvil)
-  selectorSuelo.ts        Selector de suelo con vistas previas
+  selectorAcabados.ts     Suelo, color de paredes y luz de cada estancia
   estilos.css             Estilos
 ```
 
@@ -160,7 +201,9 @@ suelo está en `y = 0`. Un punto se escribe `[x, z]`.
       "alturaTecho": 2.5,              // opcional
       "superficiePlano": 15.74,        // opcional: la del plano, para comprobar
       "exterior": false,               // opcional: true en balcones y terrazas
-      "suelo": { "tipo": "tarima", "color": "#5c3b26", "escala": 2.4 },  // opcional (ver abajo)
+      "suelo": { "tipo": "tarima", "color": "#56301e", "escala": 2.4, "pieza": 0.08 },  // opcional (ver abajo)
+      "acabado": { "pared": { "color": "#eeede9" } },                    // opcional (ver "Acabados")
+      "focos": [[1.5, 1.0], [1.5, 2.4]],                                 // opcional: focos empotrados [x, z]
       "poligono": [[0.86, 0.23], [5.93, 0.23], [5.93, 2.84], ...]
     }
   ],
@@ -171,6 +214,7 @@ suelo está en `y = 0`. Un punto se escribe `[x, z]`.
       "hasta": [6.0, 2.84],
       "grosor": 0.14,                  // la pared ocupa grosor/2 a cada lado del eje
       "alto": 2.5,                     // opcional (por defecto, la mayor alturaTecho de las estancias que toca)
+      "tipo": "muro",                  // opcional: "muro" (por defecto) o "barandilla" (barrotes, no maciza)
       "huecos": [
         {
           "tipo": "puerta",            // "puerta" o "ventana"
@@ -178,7 +222,10 @@ suelo está en `y = 0`. Un punto se escribe `[x, z]`.
           "distancia": 1.83,           // desde el punto "desde" hasta el borde del hueco
           "ancho": 0.81,
           "alto": 2.05,
-          "alfeizar": 0                // altura del antepecho (0 en puertas)
+          "alfeizar": 0,               // altura del antepecho (0 en puertas)
+          "estilo": "puerta-blanca",   // opcional: carpintería (ver "Carpintería")
+          "bisagra": "hasta",          // opcional, puertas: extremo con las bisagras ("desde" | "hasta")
+          "abre": "izquierda"          // opcional, puertas: hacia dónde abre, mirando de "desde" a "hasta"
         }
       ]
     }
@@ -206,22 +253,85 @@ Reglas:
 Cada estancia puede llevar un `suelo`:
 
 ```json
-"suelo": { "tipo": "tarima", "color": "#5c3b26", "escala": 2.4 }
+"suelo": { "tipo": "tarima", "color": "#56301e", "escala": 2.4, "pieza": 0.08, "acabado": "satinado" }
 ```
 
-- `tipo`: el dibujo. Uno de `tarima`, `baldosa`, `marmol`, `microcemento`,
-  `terrazo` o `exterior`.
+- `tipo`: el dibujo. Uno de `tarima`, `baldosa`, `marmol`, `granito`,
+  `microcemento`, `terrazo`, `exterior` o `pizarra`.
 - `color`: color base, en hexadecimal (`#rrggbb`).
 - `escala`: **metros reales que ocupa una repetición de la textura**. Por
-  ejemplo, `baldosa` con escala 1,2 son 2 × 2 baldosas de 60 cm; `exterior`
-  con escala 1 son 3 × 3 baldosas de 33 cm; `tarima` con escala 2,4 son
-  12 filas de tablas de 20 cm, de 0,8 a 1,6 m de largo.
+  ejemplo, `baldosa` con escala 1,2 y pieza 0,6 son 2 × 2 baldosas de 60 cm.
+- `pieza` (opcional): ancho del listón de tarima o lado de la baldosa, en
+  metros (tarima de ipé: 0,08; baldosas: 0,6 o 0,45).
+- `acabado` (opcional): `mate`, `satinado` o `pulido` (el pulido refleja).
+- `giro` (opcional): `0` o `90`. Sin él, la tarima va a lo largo del lado
+  mayor de la estancia.
 
-Si una estancia no tiene `suelo`, se usa uno por defecto: tarima de nogal
-oscuro en las zonas de estar, mármol blanco en baño, cocina y tendedero, y
-gres de exterior en balcones y terrazas. Son también los que lleva ahora
-`vivienda.json` (salón, dormitorio y distribuidor con tarima; baño, cocina y
-tendedero con mármol; balcón con gres).
+Si una estancia no tiene `suelo`, se usa uno por defecto: tarima de ipé
+oscura en las zonas de estar, mármol gris claro en baño, cocina y tendedero, y
+pizarra en balcones y terrazas. Lo que lleva ahora `vivienda.json`, según las
+fotos: tarima de ipé (listón de 8 cm, satinada) en salón, distribuidor y
+dormitorio; granito negro pulido 60 × 60 en la cocina; piedra gris oscura
+mate con vetas claras en el tendedero; mármol gris claro mate 45 × 45 en el
+baño, y pizarra gris oscura en el balcón.
+
+### Acabados (`acabado`, `focos`, `apliques`)
+
+```jsonc
+"acabado": {
+  "pared": { "color": "#eeede9" },          // pintura de las paredes de la estancia
+  "rodapie": { "alto": 0.07, "color": "#5d5750" },  // null = sin rodapié; si falta, blanco de 10 cm
+  "revestimientos": [                       // alicatados y frentes; si se solapan, gana el último
+    {
+      "nombre": "Alicatado hasta 1,10 m",
+      "material": { "tipo": "alicatado", "color": "#d5d6d4", "pieza": [0.6, 0.3], "acabado": "satinado" },
+      "desde": 0,                           // altura de inicio (m), por defecto 0
+      "hasta": 1.1                          // altura final (m) o "techo" (por defecto)
+    },
+    {
+      "nombre": "Ducha hasta el techo",
+      "material": { "tipo": "alicatado", "color": "#d5d6d4" },
+      "hasta": "techo",
+      "zona": [6.0, 0.2, 7.01, 1.7]          // solo las paredes dentro de este rectángulo [x1, z1, x2, z2]
+    }
+  ]
+},
+"focos": [[6.55, 0.95], [7.6, 1.0]],        // focos empotrados en el techo
+"apliques": [{ "desde": [7.2, 0.25], "hasta": [7.8, 0.25], "altura": 1.95 }]  // LED lineal de pared
+```
+
+- **Pintura:** cada estancia pinta *su* cara de cada pared. Un tabique entre
+  dos estancias tiene un color por cada lado; las fachadas por fuera se quedan
+  con el color del muro. Por defecto, blanco roto con un matiz gris (`#eeede9`).
+- **Revestimientos:** `tipo` `alicatado` (piezas rectangulares en varios
+  grises y blanco veteado, con despiece irregular), `azulejo` (liso, de un
+  color) o `granito` (piedra moteada sin juntas). La altura del alicatado se
+  cambia con `hasta`. Encima de un revestimiento sigue la pintura.
+- **Rodapié:** blanco de 10 cm salvo que se diga otra cosa; el tendedero
+  lleva 7 cm del mismo material que el suelo y el baño ninguno.
+- **Techo:** `alturaTecho` de la estancia. El **falso techo** de la cocina y
+  el distribuidor (2,40 m) es una suposición: se cambia ahí. Donde dos techos
+  de distinta altura se tocan sin muro (salón | cocina) se dibuja la tabica.
+- **Focos:** discos luminosos de 8 cm en el techo; la luz es cálida (3000 K).
+
+Las texturas de pared también se dibujan por código, con coordenadas en
+metros (la pieza mide lo que dice el JSON en cualquier pared).
+
+### Carpintería (`estilo` de los huecos)
+
+| `estilo` | Qué dibuja |
+| --- | --- |
+| `puerta-blanca` | Puerta interior lisa lacada en blanco, tapajuntas de 7 cm y manilla plateada (por defecto en puertas) |
+| `puerta-entrada` | Puerta de entrada blanca lisa con mirilla |
+| `puerta-vidriera` | Puerta de madera oscura con vidrio |
+| `ventana` | Marco y hojas de nogal con cristal y manillas plateadas (por defecto en ventanas) |
+| `fijo` | Paño fijo acristalado con marco de nogal |
+| `lamas` | Celosía de lamas horizontales de aluminio negro |
+
+Otros campos opcionales de un hueco: `hojas` (número de hojas o paños),
+`travesano` (altura de un travesaño horizontal que parte el hueco),
+`cortina: true` (cortina blanca hasta el suelo por dentro). Las paredes con
+`"tipo": "barandilla"` se dibujan como barandilla de barrotes negros.
 
 **Texturas:** se dibujan por código en el navegador (`src/escena/texturasSuelo.ts`,
 con `<canvas>`), así que no hay imágenes descargadas ni licencias de terceros:
@@ -319,32 +429,41 @@ para crear otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "vivienda": "Vivienda 2ºA",
   "objetos": [
     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
   ],
   "suelos": {
     "salon": { "tipo": "microcemento", "color": "#bcb5aa", "escala": 2 }
+  },
+  "paredes": { "dormitorio": { "color": "#bfccd6" } },
+  "ajustes": {
+    "luces": { "encendidas": true, "apagadas": ["bano"] },
+    "puertasAbiertas": false,
+    "cortinas": true
   }
 }
 ```
 
 `posicion` es el centro de la base del objeto en metros, en las coordenadas de
 `vivienda.json`, y `rotacion` el giro alrededor del eje vertical en grados
-(positivo = antihorario visto desde arriba). `suelos` lleva solo las
-estancias cuyo suelo se ha cambiado respecto a `vivienda.json`.
+(positivo = antihorario visto desde arriba). `suelos` y `paredes` llevan solo
+las estancias cambiadas respecto a `vivienda.json`. `ajustes` guarda los
+interruptores: luces (general y estancias apagadas), puertas y cortinas.
 
 **Escenas antiguas** (se migran solas al cargarlas, también el autoguardado):
 
-- **v2** (fase 2): igual pero sin `suelos`; se cargan con los suelos originales.
+- **v3** (fase 3a): sin `paredes` ni `ajustes`; se cargan con los colores
+  originales, luces encendidas, puertas cerradas y cortinas visibles.
+- **v2** (fase 2): además, sin `suelos`; se cargan con los suelos originales.
 - **v1** (fase 1, o sin versión): las posiciones eran relativas al centro de
   la habitación de ejemplo; se colocan relativas al centro del salón.
 
 Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
 sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa en
-el panel. Los suelos de estancias que no existen o mal escritos se ignoran
-(también con aviso).
+el panel. Los suelos y colores de estancias que no existen o mal escritos se
+ignoran (también con aviso).
 
 ## Tests
 
@@ -361,7 +480,15 @@ el panel. Los suelos de estancias que no existen o mal escritos se ignoran
 - que los muebles no atraviesan paredes, pilares, puertas, ventanas ni otros
   muebles, que pasan por las puertas solo si caben, y que se avisa si no hay sitio;
 - el corte automático de paredes (incluidas las cortas y la barandilla);
-- el formato del suelo, los suelos por defecto y la migración de escenas v1 → v3 y v2 → v3.
+- el formato del suelo, los suelos por defecto y la migración de escenas v1, v2 y v3 → v4;
+- el formato de los acabados, que **cada pared tiene material en sus dos caras**
+  (y que la cara que da a una estancia lleva su pintura o su alicatado), que el
+  alicatado del baño llega a 1,10 m y al techo en la ducha, y el cambio de color;
+- que **la altura de cada techo coincide con `vivienda.json`** (falso techo de
+  2,40 m en cocina y distribuidor) y que ninguna pared queda más baja que su techo;
+- el número de focos, puertas abatibles y cortinas, los interruptores de luz y
+  que nunca hay más de 3 luces con sombra (1 en el móvil);
+- el punto de vista de la vista interior de cada estancia.
 
 ## Publicación
 

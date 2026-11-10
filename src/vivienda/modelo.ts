@@ -6,6 +6,7 @@
 //
 // El formato completo está explicado en el README (sección "Formato de vivienda.json").
 
+import { validarAcabado, type AcabadoEstancia, type Aplique } from './acabados';
 import { validarSuelo, type Suelo } from './suelos';
 
 /** Punto en planta: [x, z] en metros. */
@@ -24,7 +25,25 @@ export interface Estancia {
   superficiePlano?: number;
   /** Suelo (tipo, color y escala). Si no se indica, uno por defecto según la estancia. */
   suelo?: Suelo;
+  /** Acabados de las paredes: pintura, revestimientos y rodapié. */
+  acabado?: AcabadoEstancia;
+  /** Focos empotrados en el techo: posiciones [x, z]. */
+  focos?: Punto[];
+  /** Apliques lineales de pared. */
+  apliques?: Aplique[];
 }
+
+/**
+ * Carpintería de un hueco:
+ * - `puerta-blanca`: puerta lacada blanca con tapajuntas (por defecto en las puertas).
+ * - `puerta-entrada`: como la anterior, con mirilla.
+ * - `puerta-vidriera`: puerta de madera oscura con vidrio.
+ * - `ventana`: ventana o balconera de madera oscura con hojas de vidrio (por defecto en las ventanas).
+ * - `fijo`: paño fijo acristalado con marco de madera.
+ * - `lamas`: celosía de lamas horizontales de aluminio negro.
+ */
+export type EstiloHueco = 'puerta-blanca' | 'puerta-entrada' | 'puerta-vidriera' | 'ventana' | 'fijo' | 'lamas';
+export const ESTILOS_HUECO: EstiloHueco[] = ['puerta-blanca', 'puerta-entrada', 'puerta-vidriera', 'ventana', 'fijo', 'lamas'];
 
 export interface Hueco {
   tipo: 'puerta' | 'ventana';
@@ -37,6 +56,21 @@ export interface Hueco {
   alto: number;
   /** Altura del alféizar (m): 0 en puertas y puertas-ventana. */
   alfeizar: number;
+  /** Carpintería. Por defecto: `puerta-blanca` en puertas y `ventana` en ventanas. */
+  estilo?: EstiloHueco;
+  /** Número de hojas o paños en que se reparte el ancho. Por defecto 1. */
+  hojas?: number;
+  /** Altura (m, desde el suelo) de un travesaño horizontal que parte el hueco en dos. */
+  travesano?: number;
+  /**
+   * Puertas: extremo donde están las bisagras (`desde` = el más cercano al
+   * punto "desde" de la pared) y lado hacia el que abre, visto caminando de
+   * "desde" a "hasta". Por defecto: `desde` e `izquierda`.
+   */
+  bisagra?: 'desde' | 'hasta';
+  abre?: 'izquierda' | 'derecha';
+  /** true = cortina de tela hasta el suelo por el lado interior. */
+  cortina?: boolean;
 }
 
 export interface Pared {
@@ -52,6 +86,8 @@ export interface Pared {
    * que toca (o la de la vivienda si no toca ninguna).
    */
   alto?: number;
+  /** `barandilla` = barrotes verticales (no es un muro macizo). Por defecto `muro`. */
+  tipo?: 'muro' | 'barandilla';
   huecos?: Hueco[];
 }
 
@@ -175,6 +211,13 @@ export function validarVivienda(v: Vivienda): string[] {
       const error = validarSuelo(e.suelo);
       if (error) errores.push(`${donde}: ${error}`);
     }
+    if (e?.acabado !== undefined) errores.push(...validarAcabado(e.acabado).map((x) => `${donde}: ${x}`));
+    if (e?.focos !== undefined && !(Array.isArray(e.focos) && e.focos.every(esPunto))) {
+      errores.push(`${donde}: "focos" debe ser una lista de puntos [x, z]`);
+    }
+    for (const [k, a] of (e?.apliques ?? []).entries()) {
+      if (!esPunto(a?.desde) || !esPunto(a?.hasta) || !esNumero(a?.altura)) errores.push(`${donde}: aplique ${k} necesita "desde", "hasta" y "altura"`);
+    }
   }
 
   for (const [i, p] of (v.paredes ?? []).entries()) {
@@ -187,6 +230,7 @@ export function validarVivienda(v: Vivienda): string[] {
     const largo = largoPared(p);
     if (largo <= 0) errores.push(`${donde}: tiene largo 0`);
     if (!(esNumero(p.grosor) && p.grosor > 0)) errores.push(`${donde}: "grosor" debe ser > 0`);
+    if (p.tipo !== undefined && p.tipo !== 'muro' && p.tipo !== 'barandilla') errores.push(`${donde}: "tipo" debe ser "muro" o "barandilla"`);
     const alto = altoPared(p, v);
     for (const [j, h] of (p.huecos ?? []).entries()) {
       const dh = `${donde}, hueco ${h?.nombre ?? j}`;
@@ -201,6 +245,13 @@ export function validarVivienda(v: Vivienda): string[] {
       if (h.alfeizar < 0 || h.alto <= 0 || h.alfeizar + h.alto > alto + 1e-6) {
         errores.push(`${dh}: alféizar + alto supera la altura de la pared (${alto} m)`);
       }
+      if (h.estilo !== undefined && !ESTILOS_HUECO.includes(h.estilo)) errores.push(`${dh}: "estilo" debe ser uno de: ${ESTILOS_HUECO.join(', ')}`);
+      if (h.hojas !== undefined && !(Number.isInteger(h.hojas) && h.hojas >= 1 && h.hojas <= 8)) errores.push(`${dh}: "hojas" debe ser un entero entre 1 y 8`);
+      if (h.travesano !== undefined && !(esNumero(h.travesano) && h.travesano > h.alfeizar && h.travesano < h.alfeizar + h.alto)) {
+        errores.push(`${dh}: "travesano" debe quedar dentro del hueco`);
+      }
+      if (h.bisagra !== undefined && h.bisagra !== 'desde' && h.bisagra !== 'hasta') errores.push(`${dh}: "bisagra" debe ser "desde" o "hasta"`);
+      if (h.abre !== undefined && h.abre !== 'izquierda' && h.abre !== 'derecha') errores.push(`${dh}: "abre" debe ser "izquierda" o "derecha"`);
     }
   }
 
@@ -220,4 +271,9 @@ export function validarVivienda(v: Vivienda): string[] {
     }
   }
   return errores;
+}
+
+/** Estilo de carpintería de un hueco (el indicado o el de por defecto según su tipo). */
+export function estiloDe(h: Hueco): EstiloHueco {
+  return h.estilo ?? (h.tipo === 'puerta' ? 'puerta-blanca' : 'ventana');
 }

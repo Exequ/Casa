@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import datos from '../data/vivienda.json';
 import { construirVivienda } from '../src/escena/vivienda3d';
-import { altoPared, altoPilar, estanciasDePared, type Vivienda } from '../src/vivienda/modelo';
+import { alturaEstancia, altoPared, altoPilar, estanciasDePared, type Vivienda } from '../src/vivienda/modelo';
 
 const original = datos as Vivienda;
 /** Copia de la vivienda con otras alturas de techo. */
@@ -27,9 +27,17 @@ describe('altura de las paredes', () => {
   });
 
   it('con todas las estancias a 2,50 m, todas las paredes miden 2,50 m (salvo la barandilla)', () => {
-    for (const p of original.paredes) {
-      expect(altoPared(p, original), p.id).toBe(p.id.startsWith('barandilla') ? 1 : 2.5);
+    const v = conAlturas({ cocina: 2.5, distribuidor: 2.5 });
+    for (const p of v.paredes) {
+      expect(altoPared(p, v), p.id).toBe(p.id.startsWith('barandilla') ? 1 : 2.5);
     }
+  });
+
+  it('las paredes que solo tocan estancias con falso techo (2,40 m) miden 2,40 m', () => {
+    expect(alturaEstancia(original.estancias.find((e) => e.id === 'cocina')!, original)).toBe(2.4);
+    expect(alturaEstancia(original.estancias.find((e) => e.id === 'distribuidor')!, original)).toBe(2.4);
+    expect(altoPared(pared(original, 'cocina-sur'), original)).toBe(2.4);
+    expect(altoPared(pared(original, 'rellano'), original)).toBe(2.5); // también toca el salón
   });
 
   it('una pared entre dos estancias usa la mayor altura de techo', () => {
@@ -44,13 +52,13 @@ describe('altura de las paredes', () => {
   });
 
   it('la pared 3D tiene esa altura (y sus huecos siguen dentro)', () => {
-    const v = conAlturas({ salon: 2.7, bano: 2.3 });
+    const v = conAlturas({ salon: 2.7, bano: 2.3, distribuidor: 2.5 });
     const casa = construirVivienda(v);
     const alto = (id: string) => {
       const el = casa.verticales.find((x) => x.objeto.name === id)!;
       el.objeto.updateMatrixWorld(true);
       const b = new THREE.Box3();
-      el.objeto.traverse((o) => { if ((o as THREE.Mesh).isMesh && o.name !== 'cristal') b.expandByObject(o); });
+      el.nucleo.traverse((o) => { if ((o as THREE.Mesh).isMesh) b.expandByObject(o); });
       return b.max.y - b.min.y;
     };
     expect(alto('pared:salon-este')).toBeCloseTo(2.7, 6);

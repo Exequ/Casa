@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 /** Rectángulo en planta (m). */
 export interface Caja2D { minX: number; maxX: number; minZ: number; maxZ: number }
@@ -28,8 +29,8 @@ export function elegirCalidad(): Calidad {
 
 const AJUSTES: Record<Calidad, { sombra: number; maxPixelRatio: number; textura: number }> = {
   ligera: { sombra: 1024, maxPixelRatio: 1.5, textura: 512 },
-  normal: { sombra: 2048, maxPixelRatio: 2, textura: 512 },
-  alta: { sombra: 4096, maxPixelRatio: 2, textura: 512 },
+  normal: { sombra: 2048, maxPixelRatio: 2, textura: 1024 },
+  alta: { sombra: 4096, maxPixelRatio: 2, textura: 1024 },
 };
 
 export interface Escena {
@@ -41,6 +42,13 @@ export interface Escena {
   escena: THREE.Scene;
   camara: THREE.PerspectiveCamera;
   controles: OrbitControls;
+  /** Luz natural con sombras y luz ambiental del cielo (las ajusta luces.ts según la vista). */
+  sol: THREE.DirectionalLight;
+  cielo: THREE.HemisphereLight;
+  /** Coloca la cámara dentro de una estancia, a la altura de los ojos (ver `mirarDesdeDentro`). */
+  mirarDesdeDentro(ojo: THREE.Vector3, camara: THREE.Vector3): void;
+  /** Activa o desactiva los límites de la cámara para la vista interior (poder mirar hacia arriba y acercarse más). */
+  limitesInterior(interior: boolean): void;
   /** Registra una función que se ejecuta en cada fotograma, antes de dibujar. */
   cadaFotograma(fn: () => void): void;
   /**
@@ -83,8 +91,18 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D, calidad: Cal
   // --- Luces ----------------------------------------------------------------
   const centroX = (total.minX + total.maxX) / 2, centroZ = (total.minZ + total.maxZ) / 2;
   const tamano = Math.max(total.maxX - total.minX, total.maxZ - total.minZ);
+  // Entorno de iluminación: una "habitación" neutra que da reflejos a los suelos pulidos y a los cristales.
+  // Con calidad ligera no se usa (es caro en cada píxel): los suelos pulidos solo brillan con el sol y los focos.
+  if (calidad !== 'ligera') {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    escena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    escena.environmentIntensity = 0.55;
+    pmrem.dispose();
+  }
   // Luz ambiental de cielo/suelo: rellena las sombras para que no queden negras.
-  escena.add(new THREE.HemisphereLight(0xffffff, 0xb9a48f, 1.6));
+  // (Sin mapa de entorno, el color "de suelo" es más claro: si no, los techos se verían marrones.)
+  const cielo = new THREE.HemisphereLight(0xffffff, calidad === 'ligera' ? 0xd6d0c6 : 0xb9a48f, calidad === 'ligera' ? 1.45 : 1.0);
+  escena.add(cielo);
   // "Sol" casi cenital que proyecta las sombras.
   const sol = new THREE.DirectionalLight(0xfff4e5, 2.2);
   sol.position.set(centroX + 3, 12, centroZ + 4);
@@ -96,7 +114,7 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D, calidad: Cal
   sol.shadow.bias = -0.0005;
   sol.shadow.normalBias = 0.02;
   const margen = tamano / 2 + 2;
-  Object.assign(sol.shadow.camera, { left: -margen, right: margen, top: margen, bottom: -margen, near: 1, far: 40 });
+  Object.assign(sol.shadow.camera, { left: -margen, right: margen, top: margen, bottom: -margen, near: 1, far: 45 });
   escena.add(sol, sol.target);
 
   // --- Encuadre animado -------------------------------------------------------
@@ -161,7 +179,18 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D, calidad: Cal
     renderer.setSize(w, h);
     etiquetas.setSize(w, h);
     camara.aspect = w / h;
+    camara.fov = fovPara(interiorActivo);
     camara.updateProjectionMatrix();
+  }
+  /**
+   * Ángulo de visión vertical. Dentro de una estancia hace falta más: unos 80°
+   * en horizontal, también con el móvil en vertical (sin pasar de 100° en vertical).
+   */
+  let interiorActivo = false;
+  function fovPara(interior: boolean): number {
+    if (!interior) return 50;
+    const vertical = (2 * Math.atan(Math.tan((80 * Math.PI) / 360) / camara.aspect) * 180) / Math.PI;
+    return Math.min(100, Math.max(64, vertical));
   }
   new ResizeObserver(ajustarTamano).observe(contenedor);
   ajustarTamano();
@@ -180,8 +209,20 @@ export function crearEscena(contenedor: HTMLElement, total: Caja2D, calidad: Cal
     etiquetas.render(escena, camara);
   });
 
+  function mirarDesdeDentro(ojo: THREE.Vector3, posicion: THREE.Vector3) {
+    animacion = { desdePos: camara.position.clone(), desdeObj: controles.target.clone(), aPos: posicion, aObj: ojo, t0: performance.now() };
+  }
+
+  function limitesInterior(interior: boolean) {
+    controles.minDistance = interior ? 0.15 : 0.5;
+    controles.maxPolarAngle = interior ? Math.PI * 0.72 : Math.PI / 2 - 0.05;
+    interiorActivo = interior;
+    camara.fov = fovPara(interior);
+    camara.updateProjectionMatrix();
+  }
+
   return {
-    renderer, calidad, tamanoTextura: ajustes.textura, escena, camara, controles,
-    cadaFotograma: (fn) => tareas.push(fn), encuadrar,
+    renderer, calidad, tamanoTextura: ajustes.textura, escena, camara, controles, sol, cielo,
+    cadaFotograma: (fn) => tareas.push(fn), encuadrar, mirarDesdeDentro, limitesInterior,
   };
 }

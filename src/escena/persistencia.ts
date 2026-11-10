@@ -1,23 +1,25 @@
 // Guardar y cargar la escena.
 //
-// Formato del archivo (JSON), versión 3:
+// Formato del archivo (JSON), versión 4:
 // {
-//   "version": 3,
+//   "version": 4,
 //   "vivienda": "Vivienda 2ºA",
 //   "objetos": [
 //     { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90 }
 //   ],
-//   "suelos": {
-//     "salon": { "tipo": "tarima", "color": "#a97b4f", "escala": 1.2 }
-//   }
+//   "suelos": { "salon": { "tipo": "tarima", "color": "#a97b4f", "escala": 2.4 } },
+//   "paredes": { "dormitorio": { "color": "#bfccd6" } },
+//   "ajustes": { "luces": { "encendidas": true, "apagadas": ["bano"] }, "puertasAbiertas": false, "cortinas": true }
 // }
 //   - "catalogo": id del objeto (nombre del .json del catálogo sin extensión)
 //   - "posicion": centro de la base del objeto, en metros, en coordenadas de vivienda.json
 //   - "rotacion": giro alrededor del eje vertical, en grados
-//   - "suelos": solo las estancias cuyo suelo se ha cambiado respecto a vivienda.json
+//   - "suelos" y "paredes": solo las estancias cambiadas respecto a vivienda.json
+//   - "ajustes": interruptores de luz, puertas abiertas o cerradas y cortinas visibles
 //
 // Versiones anteriores (se migran solas al cargarlas):
-//   - v2 (fase 2): igual, pero sin "suelos".
+//   - v3 (fase 3a): sin "paredes" ni "ajustes".
+//   - v2 (fase 2): además, sin "suelos".
 //   - v1 (fase 1, o sin versión): las posiciones eran relativas al centro de una
 //     habitación de ejemplo; se colocan relativas al centro del salón.
 // Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
@@ -25,7 +27,9 @@
 
 import type { ItemCatalogo } from '../catalogo/catalogo';
 import type { Suelo } from '../vivienda/suelos';
+import type { EstadoLuces } from './luces';
 import type { GestorObjetos } from './objetos';
+import type { GestorParedes } from './paredes3d';
 import type { GestorSuelos } from './suelos3d';
 
 export interface ObjetoGuardado {
@@ -34,17 +38,35 @@ export interface ObjetoGuardado {
   rotacion: number;
 }
 
+/** Interruptores y opciones de vista que se guardan con la escena. */
+export interface AjustesEscena {
+  luces: EstadoLuces;
+  puertasAbiertas: boolean;
+  cortinas: boolean;
+}
+
+/** Ajustes de una escena que no los trae (versiones anteriores a la 4). */
+export const AJUSTES_POR_DEFECTO: AjustesEscena = {
+  luces: { encendidas: true, apagadas: [] },
+  puertasAbiertas: false,
+  cortinas: true,
+};
+
 export interface EscenaGuardada {
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   vivienda?: string;
   objetos: ObjetoGuardado[];
   suelos?: Record<string, Suelo>;
+  paredes?: Record<string, { color: string }>;
+  ajustes?: Partial<AjustesEscena>;
 }
 
-/** Lo que forma una escena: los muebles colocados y los suelos elegidos. */
+/** Lo que forma una escena: los muebles, los suelos y colores elegidos, y los ajustes. */
 export interface EstadoEscena {
   objetos: GestorObjetos;
   suelos: GestorSuelos;
+  paredes: GestorParedes;
+  ajustes: { leer(): AjustesEscena; aplicar(a: Partial<AjustesEscena> | undefined): void };
   nombreVivienda?: string;
 }
 
@@ -57,7 +79,7 @@ const redondear = (n: number, decimales = 3) => Number(n.toFixed(decimales));
 /** Convierte el estado actual de la escena en un objeto JSON. */
 export function serializar(estado: EstadoEscena): EscenaGuardada {
   return {
-    version: 3,
+    version: 4,
     ...(estado.nombreVivienda ? { vivienda: estado.nombreVivienda } : {}),
     objetos: estado.objetos.objetos.map((o) => ({
       catalogo: o.item.id,
@@ -69,26 +91,36 @@ export function serializar(estado: EstadoEscena): EscenaGuardada {
       rotacion: redondear(o.rotacion, 2),
     })),
     suelos: estado.suelos.cambios(),
+    paredes: estado.paredes.cambios(),
+    ajustes: estado.ajustes.leer(),
   };
 }
 
 /**
- * Pasa una escena de cualquier versión a la versión 3.
+ * Pasa una escena de cualquier versión a la versión 4.
  * `centroV1` es el punto donde se colocaba el centro de la habitación de la fase 1.
  */
 export function migrar(datos: EscenaGuardada, centroV1: { x: number; z: number }): EscenaGuardada {
   if (!datos || !Array.isArray(datos.objetos)) throw new Error('El archivo no tiene una lista "objetos".');
   const version = datos.version ?? 1;
-  if (version === 3) return { ...datos, suelos: datos.suelos ?? {} };
-  if (version === 2) return { ...datos, version: 3, suelos: {} };
-  if (version !== 1) throw new Error(`Versión de escena desconocida: ${String(version)}`);
-  return {
-    version: 3,
-    objetos: datos.objetos.map((o) => ({
+  if (![1, 2, 3, 4].includes(version)) throw new Error(`Versión de escena desconocida: ${String(version)}`);
+  const objetos = version === 1
+    ? datos.objetos.map((o) => ({
       ...o,
       posicion: { x: (o.posicion?.x ?? 0) + centroV1.x, y: 0, z: (o.posicion?.z ?? 0) + centroV1.z },
-    })),
-    suelos: {},
+    }))
+    : datos.objetos;
+  return {
+    ...(version === 1 ? {} : datos),
+    version: 4,
+    objetos,
+    suelos: version >= 3 ? datos.suelos ?? {} : {},
+    paredes: version >= 4 ? datos.paredes ?? {} : {},
+    ajustes: {
+      ...AJUSTES_POR_DEFECTO,
+      ...(version >= 4 ? datos.ajustes : {}),
+      luces: { ...AJUSTES_POR_DEFECTO.luces, ...(version >= 4 ? datos.ajustes?.luces : {}) },
+    },
   };
 }
 
@@ -96,11 +128,12 @@ export function migrar(datos: EscenaGuardada, centroV1: { x: number; z: number }
 export interface ResultadoCarga {
   /** Nombres de objetos que no estaban en el catálogo o no cabían en ninguna parte. */
   omitidos: string[];
-  /** Suelos ignorados (estancia desconocida o formato no válido). */
+  /** Suelos y colores de pared ignorados (estancia desconocida o formato no válido). */
   suelosIgnorados: number;
+  paredesIgnoradas: number;
 }
 
-/** Sustituye la escena actual (muebles y suelos) por la guardada. */
+/** Sustituye la escena actual (muebles, suelos, paredes y ajustes) por la guardada. */
 export async function aplicar(
   estado: EstadoEscena,
   datos: EscenaGuardada,
@@ -111,6 +144,8 @@ export async function aplicar(
   const gestor = estado.objetos;
   gestor.vaciar();
   const suelosIgnorados = estado.suelos.restaurar(escena.suelos);
+  const paredesIgnoradas = estado.paredes.restaurar(escena.paredes);
+  estado.ajustes.aplicar(escena.ajustes);
   const porId = new Map(catalogo.map((item) => [item.id, item]));
   const omitidos: string[] = [];
   for (const o of escena.objetos) {
@@ -124,7 +159,7 @@ export async function aplicar(
     if (!obj) omitidos.push(item.nombre);
   }
   gestor.notificar();
-  return { omitidos, suelosIgnorados };
+  return { omitidos, suelosIgnorados, paredesIgnoradas };
 }
 
 // --- Autoguardado en localStorage --------------------------------------------

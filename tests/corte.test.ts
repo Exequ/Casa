@@ -21,7 +21,7 @@ function alturas(camara: [number, number, number], objetivo: [number, number, nu
   cam.position.set(...camara);
   cortador.actualizar(cam, new THREE.Vector3(...objetivo));
   const r: Record<string, number> = {};
-  for (const el of casa.verticales) r[el.objeto.name] = el.alto * el.objeto.scale.y;
+  for (const el of casa.verticales) r[el.objeto.name] = el.alto * el.nucleo.scale.y;
   return r;
 }
 

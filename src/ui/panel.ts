@@ -21,8 +21,8 @@ export interface AccionesPanel {
 export interface Panel {
   /** Abre o cierra el cajón (solo tiene efecto visible en pantallas estrechas). */
   abrir(abierto: boolean): void;
-  /** Sección vacía donde va el selector de suelo. */
-  seccionSuelo: HTMLElement;
+  /** Sección vacía donde va el selector de acabados (suelo, paredes, luz). */
+  seccionAcabados: HTMLElement;
   /** Sincroniza la casilla del plano si se activa desde otro sitio. */
   marcarPlano(visible: boolean): void;
   /** Muestra un mensaje arriba del panel (error = en rojo). En el móvil abre el cajón. */
@@ -82,9 +82,9 @@ export function crearPanel(
   }
   panel.append(secCatalogo);
 
-  // --- Suelo (lo rellena src/ui/selectorSuelo.ts) ----------------------------------
-  const seccionSuelo = el('section', 'seccion-suelo');
-  panel.append(seccionSuelo);
+  // --- Acabados (lo rellena src/ui/selectorAcabados.ts) ------------------------------
+  const seccionAcabados = el('section', 'seccion-acabados');
+  panel.append(seccionAcabados);
 
   // --- Objeto seleccionado ------------------------------------------------------
   const secSeleccion = el('section', 'seleccion');
@@ -244,7 +244,7 @@ export function crearPanel(
 
   return {
     abrir,
-    seccionSuelo,
+    seccionAcabados,
     marcarPlano: (visible) => { casillaPlano.checked = visible; },
     avisar(texto, error = false) {
       mensaje.textContent = texto;

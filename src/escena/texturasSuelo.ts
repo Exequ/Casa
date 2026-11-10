@@ -11,14 +11,14 @@
 // sale siempre igual.
 
 import * as THREE from 'three';
-import { claveSuelo, repeticionesPorMetro, type Suelo } from '../vivienda/suelos';
+import { claveSuelo, piezaDe, repeticionesPorMetro, type Suelo } from '../vivienda/suelos';
 
-type RGB = [number, number, number];
+export type RGB = [number, number, number];
 
 // --- Utilidades ---------------------------------------------------------------
 
 /** Generador aleatorio con semilla (mulberry32). */
-function aleatorio(semilla: number) {
+export function aleatorio(semilla: number) {
   let a = semilla >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -30,22 +30,22 @@ function aleatorio(semilla: number) {
 }
 
 /** Semilla estable a partir de un texto. */
-function semillaDe(texto: string): number {
+export function semillaDe(texto: string): number {
   let h = 2166136261;
   for (let i = 0; i < texto.length; i++) h = Math.imul(h ^ texto.charCodeAt(i), 16777619);
   return h >>> 0;
 }
 
-const hexARgb = (hex: string): RGB => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as RGB;
-const css = ([r, g, b]: RGB, a = 1) => `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;
-const aclarar = (c: RGB, f: number): RGB => c.map((v) => Math.max(0, Math.min(255, v * f))) as RGB;
-const mezclar = (a: RGB, b: RGB, t: number): RGB => a.map((v, i) => v + (b[i] - v) * t) as RGB;
+export const hexARgb = (hex: string): RGB => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as RGB;
+export const css = ([r, g, b]: RGB, a = 1) => `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;
+export const aclarar = (c: RGB, f: number): RGB => c.map((v) => Math.max(0, Math.min(255, v * f))) as RGB;
+export const mezclar = (a: RGB, b: RGB, t: number): RGB => a.map((v, i) => v + (b[i] - v) * t) as RGB;
 
 /**
  * Ruido suave y repetible: una rejilla de valores aleatorios de `periodo` ×
  * `periodo` que se repite. Varias capas (fbm) dan aspecto natural.
  */
-function crearRuido(rnd: () => number, periodos: number[]) {
+export function crearRuido(rnd: () => number, periodos: number[]) {
   const capas = periodos.map((p) => ({ p, v: Float32Array.from({ length: p * p }, rnd) }));
   const suave = (t: number) => t * t * (3 - 2 * t);
   /** Valor entre 0 y 1 en (u, v), con u y v entre 0 y 1 (se repite). */
@@ -67,7 +67,7 @@ function crearRuido(rnd: () => number, periodos: number[]) {
 }
 
 /** Recorre todos los píxeles y les pone el color que devuelve `color(u, v)`. */
-function pintarPixeles(ctx: CanvasRenderingContext2D, n: number, color: (u: number, v: number) => RGB) {
+export function pintarPixeles(ctx: CanvasRenderingContext2D, n: number, color: (u: number, v: number) => RGB) {
   const img = ctx.createImageData(n, n);
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
@@ -80,7 +80,7 @@ function pintarPixeles(ctx: CanvasRenderingContext2D, n: number, color: (u: numb
 }
 
 /** Dibuja un rectángulo que, si se sale por un borde, reaparece por el contrario (para que la textura case). */
-function rectRepetido(ctx: CanvasRenderingContext2D, n: number, x: number, y: number, w: number, h: number) {
+export function rectRepetido(ctx: CanvasRenderingContext2D, n: number, x: number, y: number, w: number, h: number) {
   for (const dx of [-n, 0, n]) for (const dy of [-n, 0, n]) ctx.fillRect(x + dx, y + dy, w, h);
 }
 
@@ -96,51 +96,62 @@ function juntas(ctx: CanvasRenderingContext2D, n: number, piezas: number, grosor
 
 // --- Dibujos por tipo -----------------------------------------------------------
 
-/** Tarima: filas de tablas de unos 20 cm de ancho y 0,8–1,6 m de largo, con juntas al tresbolillo y veta. */
+/**
+ * Tarima: filas de lamas del ancho indicado (`pieza`), de largos variados y
+ * con juntas al tresbolillo. Cada lama tiene su tono (en maderas como el ipé
+ * cambia mucho de una a otra) y una veta fina.
+ */
 function tarima(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
   const base = hexARgb(s.color);
-  const filas = Math.max(3, Math.round(s.escala / 0.2));
+  const filas = Math.max(3, Math.round(s.escala / piezaDe(s)));
   const alto = n / filas;
+  const estrecha = piezaDe(s) < 0.12; // listón estrecho: más cambio de tono entre lamas
   const ruido = crearRuido(rnd, [2, 4, 8, 16]);
+  const junta = Math.max(1, n / 520);
   for (let f = 0; f < filas; f++) {
     const y = f * alto;
-    // Dos tablas por fila (la textura es un tramo de `escala` metros), con las juntas desplazadas.
-    const j1 = rnd() * n, j2 = j1 + n * (0.35 + rnd() * 0.3);
-    for (const [xa, xb] of [[j1, j2], [j2, j1 + n]]) {
-      ctx.fillStyle = css(aclarar(base, 0.92 + rnd() * 0.16));
+    // Lamas de la fila: largos entre 0,5 y 1,3 m (en píxeles), empezando en un punto al azar.
+    const cortes: number[] = [];
+    let x = rnd() * n;
+    const fin = x + n;
+    while (x < fin - (0.35 * n) / s.escala) {
+      cortes.push(x);
+      x += ((0.5 + rnd() * 0.8) * n) / s.escala;
+    }
+    cortes.forEach((xa, i) => {
+      const xb = i + 1 < cortes.length ? cortes[i + 1] : fin;
+      const tono = estrecha ? 0.74 + rnd() * 0.36 : 0.92 + rnd() * 0.16;
+      // Algunas lamas tiran a rojizo y otras a marrón
+      const color = mezclar(aclarar(base, tono), [base[0] * 1.1, base[1] * 0.88, base[2] * 0.8], estrecha ? rnd() * 0.4 : 0);
+      ctx.fillStyle = css(color);
       rectRepetido(ctx, n, xa, y, xb - xa, alto);
-    }
-    // Veta: líneas finas onduladas (periódicas en x para que case)
-    ctx.lineWidth = Math.max(1, n / 512);
-    for (let k = 0; k < 7; k++) {
-      const yy = y + alto * (0.1 + 0.8 * rnd());
-      const ondas = 1 + Math.floor(rnd() * 2), fase = rnd() * Math.PI * 2, amp = alto * (0.03 + rnd() * 0.06);
-      ctx.strokeStyle = css(aclarar(base, 0.7 + rnd() * 0.15), 0.1 + rnd() * 0.12);
-      ctx.beginPath();
-      for (let x = 0; x <= n; x += 4) {
-        const yv = yy + amp * Math.sin((2 * Math.PI * ondas * x) / n + fase);
-        if (x === 0) ctx.moveTo(x, yv); else ctx.lineTo(x, yv);
-      }
-      ctx.stroke();
-    }
-    // Juntas: entre filas y entre tablas
-    ctx.fillStyle = css(aclarar(base, 0.42), 0.9);
-    rectRepetido(ctx, n, 0, y - 1, n, Math.max(1.5, n / 340));
-    for (const jx of [j1, j2]) rectRepetido(ctx, n, jx - 1, y, Math.max(1.5, n / 340), alto);
+      // Veta: un par de líneas finas a lo largo de la lama
+      ctx.fillStyle = css(aclarar(color, 0.8), 0.35);
+      for (let k = 0; k < 2; k++) rectRepetido(ctx, n, xa, y + alto * (0.2 + 0.6 * rnd()), xb - xa, Math.max(1, alto * 0.06));
+      // Junta de testa
+      ctx.fillStyle = css(aclarar(base, 0.4), 0.9);
+      rectRepetido(ctx, n, xa - junta / 2, y, junta, alto);
+    });
+    // Junta entre filas
+    ctx.fillStyle = css(aclarar(base, 0.4), 0.85);
+    rectRepetido(ctx, n, 0, y - junta / 2, n, junta);
   }
   // Variación suave de tono por encima
   const img = ctx.getImageData(0, 0, n, n);
   for (let p = 0; p < n * n; p++) {
-    const f = 0.92 + 0.16 * ruido((p % n) / n, Math.floor(p / n) / n);
+    const f = 0.93 + 0.14 * ruido((p % n) / n, Math.floor(p / n) / n);
     for (let c = 0; c < 3; c++) img.data[p * 4 + c] = Math.min(255, img.data[p * 4 + c] * f);
   }
   ctx.putImageData(img, 0, 0);
 }
 
-/** Mármol: vetas finas y suaves, en baldosas de 60 cm. */
+/** Mármol o piedra veteada en baldosas: vetas finas, más oscuras en piedra clara y más claras en piedra oscura. */
 function marmol(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
   const base = hexARgb(s.color);
-  const veta = aclarar(mezclar(base, [120, 120, 125], 0.6), 0.85);
+  const oscura = base[0] + base[1] + base[2] < 380;
+  const veta: RGB = oscura ? mezclar(base, [215, 208, 196], 0.75) : aclarar(mezclar(base, [120, 120, 125], 0.6), 0.85);
+  const piezas = Math.max(1, Math.round(s.escala / piezaDe(s)));
+  const tonos = Array.from({ length: piezas * piezas }, () => 0.94 + rnd() * 0.1);
   const ruido = crearRuido(rnd, [2, 4, 8, 16, 32]);
   const fino = crearRuido(rnd, [64, 128]);
   pintarPixeles(ctx, n, (u, v) => {
@@ -148,15 +159,16 @@ function marmol(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => n
     const onda = Math.sin(2 * Math.PI * (u * 1 + v * 1) + 4.5 * t);
     const intensidad = Math.pow(1 - Math.abs(onda), 24) * 0.4 + Math.pow(1 - Math.abs(onda), 5) * 0.08;
     const c = mezclar(base, veta, intensidad);
-    return aclarar(c, 0.97 + 0.05 * fino(u, v));
+    const tono = tonos[Math.floor(v * piezas) * piezas + Math.floor(u * piezas)];
+    return aclarar(c, tono * (0.97 + 0.05 * fino(u, v)));
   });
-  juntas(ctx, n, Math.max(1, Math.round(s.escala / 0.6)), Math.max(1, n / 400), css(aclarar(base, 0.88)));
+  juntas(ctx, n, piezas, Math.max(1, n / 400), css(aclarar(base, oscura ? 0.7 : 0.86)));
 }
 
 /** Baldosa porcelánica lisa de 60 cm con leve variación entre piezas. */
 function baldosa(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
   const base = hexARgb(s.color);
-  const piezas = Math.max(1, Math.round(s.escala / 0.6));
+  const piezas = Math.max(1, Math.round(s.escala / piezaDe(s)));
   const tonos = Array.from({ length: piezas * piezas }, () => 0.95 + rnd() * 0.08);
   const ruido = crearRuido(rnd, [8, 32, 128]);
   pintarPixeles(ctx, n, (u, v) => {
@@ -201,7 +213,7 @@ function terrazo(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => 
 /** Gres de exterior: baldosas de 33 cm algo rugosas, con juntas anchas. */
 function exterior(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
   const base = hexARgb(s.color);
-  const piezas = Math.max(1, Math.round(s.escala / 0.33));
+  const piezas = Math.max(1, Math.round(s.escala / piezaDe(s)));
   const tonos = Array.from({ length: piezas * piezas }, () => 0.9 + rnd() * 0.16);
   const ruido = crearRuido(rnd, [6, 24, 96, 192]);
   pintarPixeles(ctx, n, (u, v) => {
@@ -211,7 +223,42 @@ function exterior(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () =>
   juntas(ctx, n, piezas, Math.max(2, n / 128), css(mezclar(aclarar(base, 0.75), [150, 145, 135], 0.6)));
 }
 
-const DIBUJOS: Record<Suelo['tipo'], typeof tarima> = { tarima, marmol, baldosa, microcemento, terrazo, exterior };
+/** Granito pulido: fondo oscuro con un moteado fino y juntas casi invisibles. */
+function granito(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
+  const base = hexARgb(s.color);
+  const piezas = Math.max(1, Math.round(s.escala / piezaDe(s)));
+  fondoGranito(ctx, n, base, rnd);
+  juntas(ctx, n, piezas, Math.max(1, n / 512), css(mezclar(base, [60, 60, 64], 0.5)));
+}
+
+/** Fondo de granito (sin juntas): también se usa en el frente de la cocina. */
+export function fondoGranito(ctx: CanvasRenderingContext2D, n: number, base: RGB, rnd: () => number) {
+  const ruido = crearRuido(rnd, [8, 32, 128]);
+  pintarPixeles(ctx, n, (u, v) => aclarar(mezclar(base, [70, 72, 78], 0.1 * ruido(u, v)), 1));
+  // Motas claras y brillantes, muy pequeñas
+  for (let i = 0; i < 900 * (n / 512) ** 2; i++) {
+    const g = 60 + rnd() * 120;
+    ctx.fillStyle = css([g, g, g + 6], 0.25 + rnd() * 0.45);
+    const t = Math.max(1, (n / 512) * (0.6 + rnd() * 1.2));
+    ctx.fillRect(rnd() * n, rnd() * n, t, t);
+  }
+}
+
+/** Pizarra: baldosa gris oscuro con la superficie algo irregular y cambios de tono entre piezas. */
+function pizarra(ctx: CanvasRenderingContext2D, n: number, s: Suelo, rnd: () => number) {
+  const base = hexARgb(s.color);
+  const piezas = Math.max(1, Math.round(s.escala / piezaDe(s)));
+  const tonos = Array.from({ length: piezas * piezas }, () => 0.82 + rnd() * 0.36);
+  const lajas = crearRuido(rnd, [4, 8, 16, 64]);
+  const grano = crearRuido(rnd, [128, 256]);
+  pintarPixeles(ctx, n, (u, v) => {
+    const t = tonos[Math.floor(v * piezas) * piezas + Math.floor(u * piezas)];
+    return aclarar(base, t * (0.86 + 0.22 * lajas(u, v) + 0.06 * grano(u, v)));
+  });
+  juntas(ctx, n, piezas, Math.max(1.5, n / 256), css(aclarar(base, 0.55)));
+}
+
+const DIBUJOS: Record<Suelo['tipo'], typeof tarima> = { tarima, marmol, baldosa, microcemento, terrazo, exterior, granito, pizarra };
 
 /** Dibuja un suelo en un canvas nuevo de `n` × `n` píxeles. */
 export function dibujarSuelo(s: Suelo, n = 512): HTMLCanvasElement {
@@ -226,8 +273,10 @@ export function dibujarSuelo(s: Suelo, n = 512): HTMLCanvasElement {
 
 /** Rugosidad de cada tipo (0 = brillo de espejo, 1 = mate). */
 const RUGOSIDAD: Record<Suelo['tipo'], number> = {
-  tarima: 0.7, marmol: 0.3, baldosa: 0.45, microcemento: 0.65, terrazo: 0.4, exterior: 0.9,
+  tarima: 0.7, marmol: 0.3, baldosa: 0.45, microcemento: 0.65, terrazo: 0.4, exterior: 0.9, granito: 0.12, pizarra: 0.85,
 };
+/** Rugosidad según el acabado indicado en el suelo. */
+export const RUGOSIDAD_ACABADO = { mate: 0.9, satinado: 0.45, pulido: 0.07 } as const;
 
 const materiales = new Map<string, THREE.MeshStandardMaterial>();
 
@@ -235,8 +284,8 @@ const materiales = new Map<string, THREE.MeshStandardMaterial>();
  * Material de un suelo (se reutiliza entre estancias con el mismo suelo).
  * `tamano` es la resolución de la textura en píxeles (menor en el móvil).
  */
-export function materialSuelo(s: Suelo, tamano = 512): THREE.MeshStandardMaterial {
-  const clave = `${claveSuelo(s)}|${tamano}`;
+export function materialSuelo(s: Suelo, tamano = 512, giro: 0 | 90 = 0): THREE.MeshStandardMaterial {
+  const clave = `${claveSuelo(s)}|${tamano}|${giro}`;
   let m = materiales.get(clave);
   if (!m) {
     const textura = new THREE.CanvasTexture(dibujarSuelo(s, tamano));
@@ -244,7 +293,11 @@ export function materialSuelo(s: Suelo, tamano = 512): THREE.MeshStandardMateria
     textura.repeat.set(repeticionesPorMetro(s), repeticionesPorMetro(s));
     textura.colorSpace = THREE.SRGBColorSpace;
     textura.anisotropy = 8;
-    m = new THREE.MeshStandardMaterial({ map: textura, roughness: RUGOSIDAD[s.tipo] });
+    if (giro === 90) textura.rotation = Math.PI / 2;
+    m = new THREE.MeshStandardMaterial({
+      map: textura,
+      roughness: s.acabado ? RUGOSIDAD_ACABADO[s.acabado] : RUGOSIDAD[s.tipo],
+    });
     m.name = `suelo:${clave}`;
     materiales.set(clave, m);
   }
