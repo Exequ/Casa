@@ -46,6 +46,10 @@ export interface ModuloCocina {
   n?: number;
   /** Horno: con placa de cocción encima. */
   placa?: boolean;
+  /** Puertas: con fregadero bajo encimera y grifo encima. */
+  fregadero?: boolean;
+  /** Puerta sola: lado del tirador, visto de frente. */
+  tirador?: 'izquierda' | 'derecha';
 }
 
 export interface Fijo {
@@ -77,6 +81,12 @@ export const ALTURA_COLGADO = 0.5;
 const GIROS = [0, 90, 180, 270];
 
 export const baseDe = (f: Fijo) => f.altura ?? 0;
+
+/** Lo que el grifo del fregadero sobresale por encima de la encimera (m). */
+export const ALTO_GRIFO = 0.31;
+/** Alto total que ocupa: el de sus dimensiones más, en un mueble con fregadero, el grifo. */
+export const altoTotal = (f: Fijo) =>
+  f.dimensiones.alto + (f.tipo === 'cocina-bajo' && f.modulos?.some((m) => m.fregadero) ? ALTO_GRIFO : 0);
 export const esColgado = (f: Fijo) => baseDe(f) >= ALTURA_COLGADO;
 
 /** Rectángulo que ocupa en planta (4 esquinas). */
@@ -85,10 +95,10 @@ export function huellaFijo(f: Fijo): Punto[] {
   return huellaRectangulo(f.posicion[0], f.posicion[1], f.dimensiones.ancho, f.dimensiones.fondo, g);
 }
 
-/** Caja en el mundo: mínimos y máximos [x, y, z]. */
+/** Caja en el mundo (con el grifo, si lo hay): mínimos y máximos [x, y, z]. */
 export function cajaFijo(f: Fijo): { min: [number, number, number]; max: [number, number, number] } {
   const c = caja(huellaFijo(f));
-  return { min: [c.minX, baseDe(f), c.minZ], max: [c.maxX, baseDe(f) + f.dimensiones.alto, c.maxZ] };
+  return { min: [c.minX, baseDe(f), c.minZ], max: [c.maxX, baseDe(f) + altoTotal(f), c.maxZ] };
 }
 
 /** ¿Se cruzan dos cajas (con 1 mm de holgura, para que puedan tocarse)? */
@@ -118,7 +128,7 @@ export function rectsDeFijos(caras: CaraColgable[], fijos: Fijo[]): RectPared[] 
       const u = esquinas.map(([x, z]) => (x - cara.a[0]) * cara.dir[0] + (z - cara.a[1]) * cara.dir[1]);
       const u1 = Math.max(0, Math.min(...u)), u2 = Math.min(cara.largo, Math.max(...u));
       if (u2 - u1 < 0.01) continue;
-      r.push({ cara, u: (u1 + u2) / 2, ancho: u2 - u1, y: baseDe(f) + f.dimensiones.alto / 2, alto: f.dimensiones.alto });
+      r.push({ cara, u: (u1 + u2) / 2, ancho: u2 - u1, y: baseDe(f) + altoTotal(f) / 2, alto: altoTotal(f) });
     }
   }
   return r;
@@ -143,7 +153,7 @@ export function problemasDeFijo(v: Vivienda, f: Fijo): string[] {
   }
   // Huecos: el hueco de la pared, ampliado 3 cm hacia cada lado, no puede tocar la huella
   // del fijo si sus alturas se cruzan.
-  const y1 = baseDe(f), y2 = y1 + f.dimensiones.alto;
+  const y1 = baseDe(f), y2 = y1 + altoTotal(f);
   for (const pared of v.paredes) {
     const largo = largoPared(pared);
     const ux = (pared.hasta[0] - pared.desde[0]) / largo, uz = (pared.hasta[1] - pared.desde[1]) / largo;
@@ -183,7 +193,7 @@ export function validarFijos(v: Vivienda): string[] {
     const dim = f.dimensiones;
     if (!dim || !(esNumero(dim.ancho) && dim.ancho > 0 && esNumero(dim.fondo) && dim.fondo > 0 && esNumero(dim.alto) && dim.alto > 0)) {
       errores.push(`${d}: "dimensiones" debe tener ancho, fondo y alto mayores que 0`);
-    } else if (e && baseDe(f) + dim.alto > alturaEstancia(e, v) + 1e-6) {
+    } else if (e && baseDe(f) + altoTotal(f) > alturaEstancia(e, v) + 1e-6) {
       errores.push(`${d}: llega más arriba que el techo de "${e.id}"`);
     }
     if (f.pared !== undefined && !v.paredes?.some((p) => p.id === f.pared)) errores.push(`${d}: la pared "${f.pared}" no existe`);

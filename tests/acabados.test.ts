@@ -46,12 +46,12 @@ describe('formato de los acabados en vivienda.json', () => {
     for (const c of COLORES_PARED) expect(c.color).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
-  it('el baño va alicatado hasta 1,10 m y hasta el techo en la ducha; la cocina lleva frente de azulejo y granito', () => {
+  it('el baño va alicatado hasta 1,10 m y hasta el techo en la ducha; la cocina lleva copete y panel de granito (pared lisa, sin azulejo)', () => {
     const bano = estancia('bano').acabado!.revestimientos!;
     expect(bano.some((r) => r.hasta === 1.1 && !r.zona)).toBe(true);
     expect(bano.some((r) => r.hasta === 'techo' && r.zona)).toBe(true);
     const cocina = estancia('cocina').acabado!.revestimientos!;
-    expect(cocina.some((r) => r.material.tipo === 'azulejo')).toBe(true);
+    expect(cocina.some((r) => r.material.tipo === 'azulejo')).toBe(false);
     expect(cocina.some((r) => r.material.tipo === 'granito')).toBe(true);
   });
 

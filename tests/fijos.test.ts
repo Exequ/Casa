@@ -25,7 +25,7 @@ import { colocarObjetos, migrar, type EscenaGuardada } from '../src/escena/persi
 import { carasColgables, problemaEnPared } from '../src/vivienda/colgar';
 import { EspacioLibre } from '../src/vivienda/espacio';
 import {
-  cajaFijo, cajasSeCruzan, esColgado, huellaFijo, problemasDeFijo, TIPOS_FIJO, validarFijos, type Fijo,
+  ALTO_GRIFO, altoTotal, cajaFijo, cajasSeCruzan, esColgado, huellaFijo, problemasDeFijo, TIPOS_FIJO, validarFijos, type Fijo,
 } from '../src/vivienda/fijos';
 import { convexosSeSolapan, encoger, huellaRectangulo } from '../src/vivienda/geometria';
 import { validarVivienda, type Vivienda } from '../src/vivienda/modelo';
@@ -168,22 +168,75 @@ describe('la escena inicial y los fijos', () => {
   });
 });
 
-describe('cocina (parte A)', () => {
+describe('cocina (parte A, ajustada con las fotos de cerca)', () => {
+  /** Centro en x o z (mundo) de cada módulo de un mueble de cocina, en el eje de su ancho. */
+  const centros = (f: Fijo) => {
+    const g = f.giro ?? 0, c = g % 180 === 0 ? f.posicion[0] : f.posicion[1];
+    const signo = g === 0 || g === 270 ? 1 : -1; // giro 180: el ancho va hacia −x; giro 270: hacia +z
+    let x = -f.dimensiones.ancho / 2;
+    return f.modulos!.map((m) => { const r = c + signo * (x + m.ancho / 2); x += m.ancho; return { ...m, centro: r }; });
+  };
+
   it('forma de L: columna, bajos y altos en las paredes este y sur, horno con placa y cajonera de 4', () => {
     expect(fijo('cocina-columna').tipo).toBe('columna-frigorifico');
     const sur = fijo('cocina-bajo-sur');
-    expect(sur.modulos!.map((m) => m.tipo)).toEqual(['puertas', 'horno', 'cajones']);
+    expect(sur.modulos!.map((m) => m.tipo)).toEqual(['puertas', 'horno', 'cajones', 'relleno']);
     expect(sur.modulos![1].placa).toBe(true);
     expect(sur.modulos![2].n).toBe(4);
-    expect(fijo('cocina-bajo-este').modulos![0].tipo).toBe('lavavajillas');
     expect(fijo('cocina-alto-sur').modulos!.map((m) => m.tipo)).toContain('estantes');
     for (const id of ['cocina-alto-este', 'cocina-alto-sur']) expect(esColgado(fijo(id)), id).toBe(true);
   });
 
-  it('el frente de azulejo ya no queda detrás de la columna del frigorífico', () => {
+  it('pared este: fregadero junto a la columna del frigorífico y luego el lavavajillas de 45 cm', () => {
+    const este = fijo('cocina-bajo-este');
+    expect(este.modulos!.map((m) => m.tipo)).toEqual(['puertas', 'lavavajillas', 'relleno']);
+    expect(este.modulos![0].fregadero).toBe(true);
+    expect(este.modulos![1].ancho).toBe(0.45);
+    // El primer módulo empieza justo donde acaba la columna
+    expect(cajaFijo(este).min[2]).toBeCloseTo(cajaFijo(fijo('cocina-columna')).max[2], 3);
+    const [freg, lava] = centros(este);
+    expect(freg.centro).toBeLessThan(lava.centro);
+  });
+
+  it('el grifo cuenta en la caja del mueble, y el 3D tiene cubeta de acero y grifo cromado', () => {
+    const este = fijo('cocina-bajo-este');
+    expect(altoTotal(este)).toBeCloseTo(0.9 + ALTO_GRIFO, 5);
+    expect(altoTotal(fijo('cocina-bajo-sur'))).toBe(0.9);
+    // Por debajo de los muebles altos
+    expect(cajaFijo(este).max[1]).toBeLessThan(cajaFijo(fijo('cocina-alto-este')).min[1]);
+    const g = construirVivienda(vivienda, 64).fijos.porId.get('cocina-bajo-este')!;
+    const nombres = g.children.map((m) => m.name);
+    expect(nombres).toContain('fijo:cocina-bajo-este:cromo');
+    expect(nombres).toContain('fijo:cocina-bajo-este:acero');
+    // La encimera tiene el hueco del fregadero: en su centro, mirando hacia abajo, se ve la cubeta (más baja)
+    const [freg] = centros(este);
+    const ray = new THREE.Raycaster(new THREE.Vector3(este.posicion[0] + 0.05, 2, freg.centro), new THREE.Vector3(0, -1, 0));
+    g.updateWorldMatrix(true, true);
+    const golpe = ray.intersectObjects(g.children, false).find((h) => !h.object.name.endsWith(':cromo'))!;
+    expect(golpe.object.name).toBe('fijo:cocina-bajo-este:acero');
+    expect(golpe.point.y).toBeLessThan(0.75);
+  });
+
+  it('pared del fondo: la campana queda sobre la placa y los altos alineados con los bajos', () => {
+    const bajos = centros(fijo('cocina-bajo-sur')), altos = centros(fijo('cocina-alto-sur'));
+    const horno = bajos.find((m) => m.tipo === 'horno')!, campana = altos.find((m) => m.tipo === 'campana')!;
+    expect(Math.abs(horno.centro - campana.centro)).toBeLessThan(0.01);
+    expect(campana.ancho).toBe(horno.ancho);
+    // El armario bajo (0,40) tiene encima una puerta del mismo ancho
+    expect(Math.abs(bajos[0].centro - altos[1].centro)).toBeLessThan(0.01);
+  });
+
+  it('frente: pared lisa con copete de granito y panel de granito justo detrás de la placa', () => {
     const cocina = vivienda.estancias.find((e) => e.id === 'cocina')!;
+    const rev = cocina.acabado?.revestimientos ?? [];
+    expect(rev.some((r) => r.material.tipo === 'azulejo')).toBe(false);
+    const panel = rev.find((r) => /placa/.test(r.nombre ?? ''))!;
+    const horno = centros(fijo('cocina-bajo-sur')).find((m) => m.tipo === 'horno')!;
+    expect((panel.zona![0] + panel.zona![2]) / 2).toBeCloseTo(horno.centro, 2);
+    expect(panel.zona![2] - panel.zona![0]).toBeCloseTo(horno.ancho, 2);
+    // Nada queda detrás de la columna del frigorífico
     const col = cajaFijo(fijo('cocina-columna'));
-    for (const r of cocina.acabado?.revestimientos ?? []) {
+    for (const r of rev) {
       if (!r.zona) continue;
       const [, z1, , z2] = r.zona;
       const enPared = r.zona[0] < col.max[0] && r.zona[2] > col.min[0];

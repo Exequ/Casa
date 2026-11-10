@@ -35,11 +35,14 @@ Todas las medidas están en **metros**, a escala real.
 - **Fase 5, lote 3:** la casa viene **amueblada por defecto** como
   en las fotos (`data/escena-inicial.json`, 39 objetos), todo editable, con
   el botón *Restaurar disposición original*.
-- **Fase 3c (actual):** los **elementos fijos** de la vivienda, sacados de
+- **Fase 3c:** los **elementos fijos** de la vivienda, sacados de
   las fotos y del plano: la **cocina** (muebles bajos y altos, columna con el
-  frigorífico, lavavajillas, horno, placa y campana), el **baño**, el
+  frigorífico, fregadero, lavavajillas, horno, placa y campana), el **baño**, el
   **armario empotrado** y el **aire acondicionado**. Son parte de la vivienda:
   no se mueven ni se borran y los muebles no pueden atravesarlos.
+- **Ajustes con fotos de cerca (actual):** cocina como en las fotos nuevas
+  (fregadero junto al frigorífico y luego el lavavajillas, horno y campana
+  alineados, pared lisa entre muebles).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -435,9 +438,10 @@ atravesarlos. Están en la lista `fijos` de `vivienda.json` (generada desde
   "pared": "cocina-sur",              // opcional: pared a la que va unido (se oculta con ella si se baja)
   "material": "lacado blanco brillo; encimera de granito negro",
   "modulos": [                        // solo muebles de cocina, de izquierda a derecha vistos de frente
-    { "tipo": "puertas", "ancho": 0.53 },
+    { "tipo": "puertas", "ancho": 0.4, "tirador": "derecha" },
     { "tipo": "horno", "ancho": 0.6, "placa": true },
-    { "tipo": "cajones", "ancho": 0.5, "n": 4 }
+    { "tipo": "cajones", "ancho": 0.6, "n": 4 },
+    { "tipo": "relleno", "ancho": 0.03 }
   ],
   "medidas": "estimadas"
 }
@@ -448,9 +452,12 @@ atravesarlos. Están en la lista `fijos` de `vivienda.json` (generada desde
   `inodoro`, `bide`, `espejo`, `armario-empotrado`, `split-interior` y
   `split-exterior`. Cada tipo se dibuja por código dentro de su caja
   (`src/escena/fijos3d.ts`), con el color y el brillo de las fotos.
-- **Módulos de cocina:** `puertas` (`n` hojas), `cajones` (`n`), `horno`
-  (con `placa`), `lavavajillas`, `estantes` (abiertos), `campana` y `relleno`;
-  sus anchos suman el del mueble.
+- **Módulos de cocina:** `puertas` (`n` hojas; con `fregadero` llevan
+  fregadero bajo encimera y grifo; `tirador`: `izquierda` o `derecha` en una
+  puerta sola), `cajones` (`n`), `horno` (con `placa`), `lavavajillas`,
+  `estantes` (abiertos), `campana` y `relleno`; sus anchos suman el del
+  mueble. El grifo sobresale 0,31 m sobre la encimera y cuenta en la caja del
+  mueble.
 - **Choques:** los fijos del suelo (base por debajo de 0,5 m) son obstáculo
   para todos los muebles; los colgados (base a 0,5 m o más: muebles altos,
   espejo, aire acondicionado) solo para los muebles más altos que su base.
