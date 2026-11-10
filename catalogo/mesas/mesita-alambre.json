@@ -2,8 +2,8 @@
   "nombre": "Mesita auxiliar de alambre",
   "categoria": "Mesas",
   "dimensiones": {
-    "ancho": 0.35,
-    "fondo": 0.35,
+    "ancho": 0.45,
+    "fondo": 0.45,
     "alto": 0.55
   },
   "superficies": [

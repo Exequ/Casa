@@ -1,0 +1,12 @@
+{
+  "nombre": "Silla plegable de balcón",
+  "categoria": "Balcón",
+  "dimensiones": {
+    "ancho": 0.4,
+    "fondo": 0.45,
+    "alto": 0.85
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "silla-balcon.glb"
+}

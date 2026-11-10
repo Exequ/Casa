@@ -1,0 +1,12 @@
+{
+  "nombre": "Lámpara de sobremesa blanca",
+  "categoria": "Iluminación",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.28,
+    "fondo": 0.28,
+    "alto": 0.45
+  },
+  "medidas": "estimadas",
+  "glb": "lampara-sobremesa.glb"
+}

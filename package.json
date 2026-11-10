@@ -13,7 +13,8 @@
     "catalogo:ejemplos": "node scripts/generar-catalogo.mjs",
     "vivienda:generar": "node scripts/digitalizar-plano.mjs",
     "catalogo:lote1": "node scripts/catalogo-lote1.mjs",
-    "catalogo:miniaturas": "node scripts/miniaturas.mjs"
+    "catalogo:miniaturas": "node scripts/miniaturas.mjs",
+    "catalogo:lote2": "node scripts/catalogo-lote2.mjs"
   },
   "dependencies": {
     "three": "^0.187.0"

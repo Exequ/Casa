@@ -41,7 +41,20 @@ export function crearPanel(
   acciones: AccionesPanel,
 ): Panel {
   panel.innerHTML = '';
-  const abrir = (abierto: boolean) => document.body.classList.toggle('panel-abierto', abierto);
+  // Miniaturas del catálogo: en el móvil el panel es un cajón cerrado, así que
+  // no se descargan hasta que se abre por primera vez (no retrasan el arranque).
+  const miniaturasPendientes: HTMLImageElement[] = [];
+  const cargarMiniaturas = () => {
+    for (const img of miniaturasPendientes.splice(0)) img.src = img.dataset.src!;
+  };
+  const pantallaMovil = window.matchMedia('(max-width: 760px)');
+  const esMovil = pantallaMovil.matches;
+  // Si la ventana se ensancha, el panel pasa a verse siempre: entonces se cargan.
+  pantallaMovil.addEventListener?.('change', (e) => { if (!e.matches) cargarMiniaturas(); });
+  const abrir = (abierto: boolean) => {
+    if (abierto) cargarMiniaturas();
+    document.body.classList.toggle('panel-abierto', abierto);
+  };
 
   // --- Cabecera ---------------------------------------------------------------
   const cabecera = el('div', 'cabecera');
@@ -95,7 +108,9 @@ export function crearPanel(
     );
     if (item.urlMiniatura) {
       const img = el('img', 'item-miniatura');
-      img.src = item.urlMiniatura;
+      img.dataset.src = item.urlMiniatura;
+      if (esMovil) miniaturasPendientes.push(img);
+      else img.src = item.urlMiniatura;
       img.alt = '';
       img.loading = 'lazy'; // solo se descarga al abrir su categoría
       img.width = img.height = 56;

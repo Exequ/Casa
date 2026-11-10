@@ -1,0 +1,13 @@
+{
+  "nombre": "Marco pequeño de madera",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.5,
+  "dimensiones": {
+    "ancho": 0.18,
+    "fondo": 0.02,
+    "alto": 0.24
+  },
+  "medidas": "estimadas",
+  "glb": "marco-madera.glb"
+}

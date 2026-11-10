@@ -1,12 +1,12 @@
 {
-  "nombre": "Lámpara de trípode negra",
+  "nombre": "Lámpara foco de trípode",
   "categoria": "Iluminación",
+  "colocacion": "superficie",
   "dimensiones": {
-    "ancho": 0.449,
-    "fondo": 0.442,
-    "alto": 1.3
+    "ancho": 0.24,
+    "fondo": 0.28,
+    "alto": 0.55
   },
-  "superficies": [],
   "medidas": "estimadas",
   "glb": "lampara-tripode.glb"
 }

@@ -1,0 +1,12 @@
+{
+  "nombre": "Planta pequeña en maceta blanca",
+  "categoria": "Decoración",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.2,
+    "fondo": 0.2,
+    "alto": 0.3
+  },
+  "medidas": "estimadas",
+  "glb": "planta-pequena.glb"
+}

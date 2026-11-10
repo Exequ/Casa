@@ -1,0 +1,14 @@
+{
+  "nombre": "Lavadora de carga frontal",
+  "categoria": "Tendedero",
+  "dimensiones": {
+    "ancho": 0.6,
+    "fondo": 0.55,
+    "alto": 0.85
+  },
+  "superficies": [
+    0.85
+  ],
+  "medidas": "estimadas",
+  "glb": "lavadora.glb"
+}

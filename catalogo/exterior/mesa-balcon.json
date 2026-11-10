@@ -1,0 +1,14 @@
+{
+  "nombre": "Mesa redonda plegable de balcón",
+  "categoria": "Balcón",
+  "dimensiones": {
+    "ancho": 0.6,
+    "fondo": 0.6,
+    "alto": 0.72
+  },
+  "superficies": [
+    0.72
+  ],
+  "medidas": "estimadas",
+  "glb": "mesa-balcon.glb"
+}

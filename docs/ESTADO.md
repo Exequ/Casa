@@ -1,14 +1,93 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 1
-(muebles reales del salón y del pasillo). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 10 de noviembre de 2026, tras la fase 5, lote 2
+(lote 1 ajustado a las fotos; dormitorio, balcón y tendedero). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
 
 ---
 
-## Fase 5, lote 1: muebles reales del salón y del pasillo
+## Fase 5, lote 2: fotos reales, texturas y dormitorio, balcón y tendedero
+
+### Parte A: el lote 1 ajustado a las fotos
+
+| Objeto | Qué cambió al compararlo con las fotos |
+|---|---|
+| Sofá | Brazos enrollados hacia fuera (perfil curvo) más bajos que el respaldo, con vivo; respaldo fijo; crema más amarillento; cojines como en la foto (azul pizarra y blanco). |
+| Sillón | Mucho más oscuro (gris pardo), brazos rectos. |
+| Mesa de centro | Teca media con veta; cristal ahumado; **celosía de rombos continua en los 4 lados** entre el faldón y un travesaño bajo; patas que se estrechan. |
+| Librería | 4 baldas (no 5) a 0,37 / 0,66 / 0,98 / 1,36 m; cornisa escalonada que vuela; zócalo con moldura; cajón con panel en relieve; madera más rojiza. |
+| Mueble de TV | Un solo estante de listones a 0,275 m (no dos); faldón; teca oscura. |
+| Televisión | Marco gris oscuro algo metálico. |
+| Mesa de comedor | Sin bastidor: patas redondas finas sujetas con pletinas, más abiertas. |
+| Silla de comedor | Carcasa envolvente tapizada en blanco roto. |
+| Lámpara semiesfera | Negro brillante, vástago más fino. |
+| **Lámpara de trípode** | **Medida corregida:** en la foto es un foco de sobremesa sobre la mesita de alambre, no una lámpara de pie: 0,24 × 0,28 × 0,55 m y colocación "superficie". Foco cilíndrico inclinado con horquilla de latón. |
+| **Mesita de alambre** | **Medida corregida:** 0,45 m de diámetro (no 0,35): en la foto es casi tan ancha como alta. Varillas cruzadas en reloj de arena. |
+| Mesita de bandeja | Patas casi rectas unidas por un aspa abajo. |
+| Espejo marco negro | Marco de madera muy oscura más ancho (11 cm) con rebaje. |
+| Cuadro marco blanco | Lámina azul grisácea; en la foto hay tres en fila. |
+
+**Texturas:** veta de madera en todas las maderas y tejido sutil en
+tapicerías, cojines, colchón y pantalla de la lámpara; imágenes de 128 px
+(madera) y 64 px (tela) en grises dentro de cada `.glb` (unos 10 KB).
+
+### Parte B: lote 2
+
+10 objetos nuevos (`npm run catalogo:lote2`): cama con cabecero de cerezo y
+canapé, mesita de noche, lámpara de sobremesa, cómoda alta de 6 cajones,
+cuadro de marco gris, marco pequeño de madera, mesa redonda y silla plegables
+de balcón, planta pequeña en maceta blanca y lavadora. Medidas, colocación y
+superficies en `docs/OBJETOS.md` (la cama y la silla del balcón no admiten
+nada encima).
+
+### Comprobaciones del lote 2
+
+- **`npm test`: 196 tests, todos pasan** (catálogo: los 26 muebles reales con
+  medidas exactas, origen, triángulos, tamaño y texturas; colocación y
+  superficies de ambos lotes; apoyos en la app).
+- **`npm run build`** sin errores.
+- **Vistas de cada objeto** (frente, lado y 3/4 trasera) revisadas frente a
+  las fotos; corregidos: celosía de la mesa de centro (salían X sueltas),
+  color de la madera, ondulación de la veta, maceta de la planta.
+- **Navegador, escritorio:** 32 miniaturas; los 10 objetos del lote 2
+  añadidos desde el catálogo (lámpara y planta se apoyan en la mesita); la
+  casa amueblada como en las fotos (35 objetos); cada modelo mide en la escena
+  lo de su ficha; todo bien colocado; texturas presentes; recarga; sin errores.
+  **Capturas desde los mismos puntos de vista que las 5 fotos** (salón hacia
+  el mirador, hacia el comedor y hacia la cocina, dormitorio y balcón) y del
+  tendedero, comparadas con ellas.
+- **Navegador, móvil (iPhone 13, toques reales):** cama, mesita y lámpara
+  desde el menú; arrastrar la mesita con el dedo y la lámpara va con ella;
+  capturas del dormitorio y del salón; sin errores.
+- **Carga en el móvil** (media de 3, iPhone 13 emulado): vacía, 1.823 ms en
+  main y 1.798 ms ahora; con el salón amueblado (11 muebles), 2.060 ms y
+  2.053 ms. Para compensar las texturas, las miniaturas del catálogo ya no se
+  descargan en el móvil hasta abrir el menú.
+- Las baterías de navegador de las fases 3b, 4 y 5 (lote 1) siguen pasando (en la de la 3b actualicé las dos comprobaciones que esperaban la versión 4 de la escena).
+
+### Problemas y limitaciones del lote 2
+
+- La lavadora y el perchero no salen en las fotos: son modelos genéricos.
+- Las medidas siguen siendo estimadas (las fotos no tienen cotas).
+- Las texturas son procedurales: veta y tejido sutiles, no fotos reales.
+- No probado en un móvil real.
+
+### Decisiones del lote 2
+
+- La lámpara de trípode pasa a ser un foco de sobremesa y la mesita de
+  alambre a 0,45 m de diámetro (anotado en `docs/OBJETOS.md`).
+- La librería tiene 4 baldas (como en la foto) y el mueble de TV un estante.
+- Las texturas multiplican el color (el tono sigue siendo el medido en la foto).
+- `ajustar()` en la librería de modelado estira unos milímetros las piezas
+  curvas para que el modelo mida exactamente lo de la ficha.
+- Carpetas nuevas: `dormitorio/`, `exterior/`, `decoracion/`, `tendedero/`.
+- Cuadro gris con el centro a 1,55 m; marcos de madera a 1,50 m.
+
+---
+
+## Fase 5, lote 1 (anterior): muebles reales del salón y del pasillo
 
 | # | Requisito | Estado | Detalle |
 |---|---|---|---|
@@ -157,8 +236,8 @@ planta (no 0,45 × 0,45): con tres patas abiertas la planta no es cuadrada.
 
 ## Qué falta
 
-1. **Fase 5, lote 2:** dormitorio, balcón, tendedero, plantas y decoración
-   (entonces se quitarán los 4 objetos provisionales de la fase 4).
+1. Más decoración y alfombras; decidir cuándo quitar los 4 objetos
+   provisionales de la fase 4.
 2. **Fase 3c:** cocina completa, sanitarios, plato de ducha y mampara y
    armario empotrado (fijos).
 3. Confirmar las medidas de `docs/OBJETOS.md` y, si hace falta, ajustar los `.json`.

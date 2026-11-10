@@ -1,0 +1,12 @@
+{
+  "nombre": "Cama con cabecero de cerezo y canapé",
+  "categoria": "Dormitorio",
+  "dimensiones": {
+    "ancho": 1.58,
+    "fondo": 2.08,
+    "alto": 0.95
+  },
+  "superficies": [],
+  "medidas": "estimadas",
+  "glb": "cama.glb"
+}
