@@ -31,7 +31,7 @@ const catalogo = leerCatalogo();
 const escena = inicial as unknown as EscenaGuardada;
 
 async function cargar() {
-  const gestor = new GestorObjetos(new THREE.Scene(), espacio, carasColgables(vivienda));
+  const gestor = new GestorObjetos(new THREE.Scene(), espacio, carasColgables(vivienda), vivienda.fijos ?? []);
   const omitidos = await colocarObjetos(gestor, migrar(structuredClone(escena), { x: 0, z: 0 }).objetos, catalogo);
   return { gestor, omitidos };
 }

@@ -120,7 +120,7 @@ y estas tablas se regeneran con ellas.
 `;
 
 /** Sustituye (o añade) la sección `id` de docs/OBJETOS.md. */
-function escribirSeccion(id, texto) {
+export function escribirSeccion(id, texto) {
   let doc = existsSync(DOC) ? readFileSync(DOC, 'utf8') : '';
   if (!doc.includes('<!-- secciones -->')) doc = `${CABECERA}\n<!-- secciones -->\n`;
   doc = doc.replace(/^[\s\S]*?<!-- secciones -->/, `${CABECERA}\n<!-- secciones -->`);

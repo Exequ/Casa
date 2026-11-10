@@ -32,9 +32,14 @@ Todas las medidas están en **metros**, a escala real.
   **dormitorio, el balcón y el tendedero** (cama, mesita, lámpara, cómoda,
   cuadros, mesa y sillas de balcón, planta y lavadora). Medidas estimadas en
   [`docs/OBJETOS.md`](docs/OBJETOS.md).
-- **Fase 5, lote 3 (actual):** la casa viene **amueblada por defecto** como
+- **Fase 5, lote 3:** la casa viene **amueblada por defecto** como
   en las fotos (`data/escena-inicial.json`, 39 objetos), todo editable, con
   el botón *Restaurar disposición original*.
+- **Fase 3c (actual):** los **elementos fijos** de la vivienda, sacados de
+  las fotos y del plano: la **cocina** (muebles bajos y altos, columna con el
+  frigorífico, lavavajillas, horno, placa y campana), el **baño**, el
+  **armario empotrado** y el **aire acondicionado**. Son parte de la vivienda:
+  no se mueven ni se borran y los muebles no pueden atravesarlos.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -204,6 +209,7 @@ planos/                   Planos originales (plano-original.png) y el recorte qu
 catalogo/                 Objetos del catálogo: un .json + un .glb + una miniatura .png por objeto (muebles reales en carpetas por categoría)
 scripts/
   digitalizar-plano.mjs   Medidas tomadas del plano (en píxeles) → data/vivienda.json
+  fijos.mjs               Elementos fijos (cocina, baño, armario, aire acondicionado) para data/vivienda.json
   generar-catalogo.mjs    Crea los objetos de ejemplo del catálogo
   catalogo-lote1.mjs      Crea los muebles reales del lote 1 (salón y pasillo) y su tabla en docs/OBJETOS.md
   catalogo-lote2.mjs      Crea los del lote 2 (dormitorio, balcón y tendedero)
@@ -223,6 +229,7 @@ src/vivienda/             Datos y geometría en planta (sin 3D)
   acabados.ts             Formato de los acabados (pintura, revestimientos, rodapié) y colores de pared
   caras.ts                Caras de pared de cada estancia (qué trozo de qué muro ve cada estancia)
   vista.ts                Desde dónde mirar una estancia en la vista interior
+  fijos.ts                Elementos fijos (cocina, baño, armario, aire acondicionado): formato, huellas y choques
   colgar.ts               Caras de pared donde colgar cuadros y espejos, y sus reglas
 src/escena/               Todo lo 3D
   escena.ts               Renderizador, cámara orbital, luces y encuadres
@@ -237,6 +244,7 @@ src/escena/               Todo lo 3D
   carpinteria.ts          Marcos, hojas, cristales, manillas, lamas, cortinas y barandilla
   techos.ts               Techos, tabicas del falso techo y focos
   luces.ts                Focos como luces, interruptores, sol y sombras según la vista
+  fijos3d.ts              Dibujo 3D de los elementos fijos (un constructor por tipo)
   objetos.ts              Objetos colocados (suelo, pared, sobre muebles): añadir, mover, girar, duplicar, borrar
   historial.ts            Deshacer y rehacer
   interaccion.ts          Ratón, dedo y teclado: arrastrar por el suelo, por la pared o sobre muebles; atajos
@@ -405,6 +413,53 @@ Otros campos opcionales de un hueco: `hojas` (número de hojas o paños),
 `travesano` (altura de un travesaño horizontal que parte el hueco),
 `cortina: true` (cortina blanca hasta el suelo por dentro). Las paredes con
 `"tipo": "barandilla"` se dibujan como barandilla de barrotes negros.
+
+### Elementos fijos (`fijos`)
+
+La cocina, el baño, el armario empotrado y el aire acondicionado son
+**elementos fijos**: forman parte de la vivienda, no se seleccionan, no se
+mueven ni se borran, y ningún mueble, cuadro u objeto apoyado puede
+atravesarlos. Están en la lista `fijos` de `vivienda.json` (generada desde
+`scripts/fijos.mjs` con `npm run vivienda:generar`):
+
+```jsonc
+{
+  "id": "cocina-bajo-sur",
+  "tipo": "cocina-bajo",              // qué es (ver la lista de abajo)
+  "nombre": "Muebles bajos (pared del fondo)",
+  "estancia": "cocina",
+  "posicion": [2.645, 5.87],          // centro de su base en planta [x, z] (m)
+  "altura": 0,                        // opcional: altura de la base (m); 0 = en el suelo
+  "giro": 180,                        // 0, 90, 180 o 270, como los muebles (0 = frente al sur)
+  "dimensiones": { "ancho": 1.63, "fondo": 0.6, "alto": 0.9 },
+  "pared": "cocina-sur",              // opcional: pared de la que cuelga (se oculta con ella)
+  "material": "lacado blanco brillo; encimera de granito negro",
+  "modulos": [                        // solo muebles de cocina, de izquierda a derecha vistos de frente
+    { "tipo": "puertas", "ancho": 0.53 },
+    { "tipo": "horno", "ancho": 0.6, "placa": true },
+    { "tipo": "cajones", "ancho": 0.5, "n": 4 }
+  ],
+  "medidas": "estimadas"
+}
+```
+
+- **Tipos:** `cocina-bajo`, `cocina-alto`, `columna-frigorifico`,
+  `plato-ducha`, `mampara`, `barra`, `griferia-ducha`, `mueble-lavabo`,
+  `inodoro`, `bide`, `espejo`, `armario-empotrado`, `split-interior` y
+  `split-exterior`. Cada tipo se dibuja por código dentro de su caja
+  (`src/escena/fijos3d.ts`), con el color y el brillo de las fotos.
+- **Módulos de cocina:** `puertas` (`n` hojas), `cajones` (`n`), `horno`
+  (con `placa`), `lavavajillas`, `estantes` (abiertos), `campana` y `relleno`;
+  sus anchos suman el del mueble.
+- **Choques:** los fijos del suelo (base por debajo de 0,5 m) son obstáculo
+  para todos los muebles; los colgados (base a 0,5 m o más: muebles altos,
+  espejo, aire acondicionado) solo para los muebles más altos que su base.
+  En la pared donde hay un fijo no se puede colgar ningún cuadro.
+- **Vista desde fuera:** los colgados se ocultan con su `pared` cuando esta
+  se baja, igual que los cuadros.
+- Al abrir la app se valida cada fijo (tipo, estancia, giro, medidas, que no
+  pase del techo, pared, módulos). Las medidas son estimadas; están en la
+  sección "Elementos fijos" de [`docs/OBJETOS.md`](docs/OBJETOS.md).
 
 **Texturas:** se dibujan por código en el navegador (`src/escena/texturasSuelo.ts`,
 con `<canvas>`), así que no hay imágenes descargadas ni licencias de terceros:
@@ -642,6 +697,12 @@ ignoran (también con aviso).
   silla de balcón no admiten nada encima; y que en la app la tele va sobre su
   mueble, la lámpara foco sobre la mesita de alambre, la lámpara de noche sobre
   la mesita y la planta sobre la mesa del balcón;
+- **los elementos fijos** (`tests/fijos.test.ts`): formato y validación; que
+  cada fijo cabe en su estancia sin atravesar paredes, pilares, puertas ni
+  ventanas; que no se cruzan entre sí; que el 3D cabe en su caja y los
+  colgados van con su pared; que los muebles no pueden ponerse ni arrastrarse
+  dentro de un fijo; que los colgados solo estorban a los muebles altos; que no
+  se puede colgar un cuadro sobre un fijo; y que la escena inicial no pisa ninguno;
 - **la escena inicial** (`tests/escena-inicial.test.ts`): que carga entera y
   cada objeto queda exactamente donde dice el archivo; que ningún mueble
   solapa a otro ni atraviesa paredes, puertas o ventanas; que los cuadros no
