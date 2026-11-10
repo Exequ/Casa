@@ -1,0 +1,15 @@
+{
+  "nombre": "Mesita de noche de cerezo",
+  "categoria": "Dormitorio",
+  "dimensiones": {
+    "ancho": 0.45,
+    "fondo": 0.38,
+    "alto": 0.5
+  },
+  "superficies": [
+    0.11,
+    0.5
+  ],
+  "medidas": "estimadas",
+  "glb": "mesita-noche.glb"
+}

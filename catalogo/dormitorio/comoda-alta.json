@@ -1,0 +1,14 @@
+{
+  "nombre": "Cómoda alta de 6 cajones",
+  "categoria": "Dormitorio",
+  "dimensiones": {
+    "ancho": 0.6,
+    "fondo": 0.42,
+    "alto": 1.15
+  },
+  "superficies": [
+    1.15
+  ],
+  "medidas": "estimadas",
+  "glb": "comoda-alta.glb"
+}

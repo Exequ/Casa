@@ -12,6 +12,11 @@
 //     es la cara -Z).
 // Al guardar se comprueba que la caja envolvente mide lo que dice la ficha
 // (ancho × alto × fondo) y está centrada en el origen; si no, da error.
+//
+// Texturas: un material puede llevar `textura: 'madera'` o `'tela'`. Cada
+// pieza recibe coordenadas de textura en metros, proyectadas según la cara y
+// con la veta a lo largo del lado más largo de la pieza (una pata, a lo alto;
+// un tablero, a lo largo). La imagen (pequeña, en grises) va dentro del .glb.
 
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -19,6 +24,7 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 import { Document, NodeIO } from '@gltf-transform/core';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { TEXTURAS } from './texturas.mjs';
 
 /** Tolerancia al comprobar la caja envolvente (m). */
 const TOLERANCIA = 0.002;
@@ -40,27 +46,33 @@ export class Modelo {
    * opciones: color (hex), rugosidad (0 brillante – 1 mate), metalico (0–1),
    * opacidad (1 = opaco), dobleCara (para láminas sin grosor, como pantallas).
    */
-  material(nombre, { color, rugosidad = 0.7, metalico = 0, opacidad = 1, dobleCara = false }) {
+  material(nombre, { color, rugosidad = 0.7, metalico = 0, opacidad = 1, dobleCara = false, textura = null }) {
+    if (textura && !TEXTURAS[textura]) throw new Error(`${this.nombre}: textura "${textura}" desconocida`);
     if (!this.materiales.has(nombre)) {
-      this.materiales.set(nombre, { opciones: { color, rugosidad, metalico, opacidad, dobleCara }, geometrias: [] });
+      this.materiales.set(nombre, { opciones: { color, rugosidad, metalico, opacidad, dobleCara, textura }, geometrias: [] });
     }
     return nombre;
   }
 
   /** Añade una geometría de three.js con una posición, un giro (euler XYZ en radianes) y una escala. */
   pieza(material, geometria, posicion = [0, 0, 0], giro = [0, 0, 0], escala = [1, 1, 1]) {
-    if (!this.materiales.has(material)) throw new Error(`${this.nombre}: material "${material}" sin declarar`);
-    const g = geometria.index ? geometria : geometria; // todas las de three son indexadas
-    const m = new THREE.Matrix4().compose(
+    return this.piezaConMatriz(material, geometria, new THREE.Matrix4().compose(
       new THREE.Vector3(...posicion),
       new THREE.Quaternion().setFromEuler(new THREE.Euler(...giro)),
       new THREE.Vector3(...escala),
-    );
-    const copia = g.clone();
-    copia.applyMatrix4(m);
+    ));
+  }
+
+  /** Añade una geometría (en sus coordenadas propias) colocada con una matriz. */
+  piezaConMatriz(material, geometria, matriz) {
+    const mat = this.materiales.get(material);
+    if (!mat) throw new Error(`${this.nombre}: material "${material}" sin declarar`);
+    const copia = geometria.clone();
     for (const nombre of Object.keys(copia.attributes)) if (nombre !== 'position' && nombre !== 'normal') copia.deleteAttribute(nombre);
+    if (mat.opciones.textura) copia.setAttribute('uv', uvEnMetros(copia, TEXTURAS[mat.opciones.textura].tamano));
+    copia.applyMatrix4(matriz);
     if (!copia.index) copia.setIndex([...Array(copia.attributes.position.count).keys()]);
-    this.materiales.get(material).geometrias.push(copia);
+    mat.geometrias.push(copia);
     return this;
   }
 
@@ -85,23 +97,15 @@ export class Modelo {
   /** Barra redonda de `desde` a `hasta` (puntos [x, y, z]) con un radio. */
   barra(material, desde, hasta, radio, segmentos = 10) {
     const a = new THREE.Vector3(...desde), b = new THREE.Vector3(...hasta);
-    const largo = a.distanceTo(b);
-    const g = new THREE.CylinderGeometry(radio, radio, largo, segmentos, 1);
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-    const m = new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
-    g.applyMatrix4(m);
-    return this.pieza(material, g);
+    const g = new THREE.CylinderGeometry(radio, radio, a.distanceTo(b), segmentos, 1);
+    return this.piezaConMatriz(material, g, matrizEntre(a, b));
   }
 
   /** Barra de sección rectangular de `desde` a `hasta`: `ancho` en el eje X del objeto y `grueso` en el otro. */
   barraCuadrada(material, desde, hasta, grueso, ancho = grueso) {
     const a = new THREE.Vector3(...desde), b = new THREE.Vector3(...hasta);
-    const largo = a.distanceTo(b);
-    const g = new THREE.BoxGeometry(ancho, largo, grueso);
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-    const m = new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
-    g.applyMatrix4(m);
-    return this.pieza(material, g);
+    const g = new THREE.BoxGeometry(ancho, a.distanceTo(b), grueso);
+    return this.piezaConMatriz(material, g, matrizEntre(a, b));
   }
 
   /** Esfera o parte de ella (theta = ángulo desde el polo de arriba). */
@@ -146,6 +150,26 @@ export class Modelo {
     return { ancho: r(t.x), fondo: r(t.z), alto: r(t.y) };
   }
 
+  /**
+   * Para formas curvas o con biseles, que no salen al milímetro: centra el
+   * modelo, comprueba que mide casi lo pedido (±`tolerancia` m por eje) y lo
+   * estira esa diferencia para que mida exactamente lo pedido.
+   */
+  ajustar(objetivo, tolerancia = 0.012) {
+    this.centrar();
+    const t = this.caja3d().getSize(new THREE.Vector3());
+    const real = { ancho: t.x, alto: t.y, fondo: t.z };
+    for (const eje of ['ancho', 'fondo', 'alto']) {
+      if (Math.abs(real[eje] - objetivo[eje]) > tolerancia) {
+        throw new Error(`${this.nombre}: ${eje} construido ${real[eje].toFixed(3)} m, pedido ${objetivo[eje]} m`);
+      }
+    }
+    const e = new THREE.Matrix4().makeScale(objetivo.ancho / t.x, objetivo.alto / t.y, objetivo.fondo / t.z);
+    for (const { geometrias } of this.materiales.values()) for (const g of geometrias) g.applyMatrix4(e);
+    this.dimensiones = { ...objetivo };
+    return this;
+  }
+
   // --- Guardar -------------------------------------------------------------------
 
   /** Caja envolvente de todas las piezas. */
@@ -179,6 +203,15 @@ export class Modelo {
     const buffer = doc.createBuffer();
     const malla = doc.createMesh(this.nombre);
     let triangulos = 0;
+    // Una imagen por tipo de textura, compartida por todos los materiales que la usan
+    const imagenes = new Map();
+    const imagen = (tipo) => {
+      if (!imagenes.has(tipo)) {
+        const t = TEXTURAS[tipo].crear();
+        imagenes.set(tipo, { textura: doc.createTexture(tipo).setImage(new Uint8Array(t.png)).setMimeType('image/png'), media: t.media });
+      }
+      return imagenes.get(tipo);
+    };
     for (const [nombre, { opciones, geometrias }] of this.materiales) {
       if (!geometrias.length) continue;
       // Una sola malla por material, sin vértices repetidos (mismo punto y misma normal)
@@ -186,17 +219,22 @@ export class Modelo {
       const n = g.attributes.position.count;
       const indices = n > 65535 ? new Uint32Array(g.index.array) : new Uint16Array(g.index.array);
       triangulos += indices.length / 3;
+      // Con textura, el color se aclara lo que la oscurece la imagen (de media), para conservar el tono
+      const tex = opciones.textura ? imagen(opciones.textura) : null;
+      const color = lineal(opciones.color).map((c) => Math.min(1, tex ? c / Math.pow(tex.media, 2.2) : c));
       const mat = doc.createMaterial(nombre)
-        .setBaseColorFactor([...lineal(opciones.color), opciones.opacidad])
+        .setBaseColorFactor([...color, opciones.opacidad])
         .setRoughnessFactor(opciones.rugosidad)
         .setMetallicFactor(opciones.metalico)
         .setDoubleSided(opciones.dobleCara);
       if (opciones.opacidad < 1) mat.setAlphaMode('BLEND');
+      if (tex) mat.setBaseColorTexture(tex.textura);
       const prim = doc.createPrimitive()
         .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(g.attributes.position.array)).setBuffer(buffer))
         .setAttribute('NORMAL', doc.createAccessor().setType('VEC3').setArray(new Float32Array(g.attributes.normal.array)).setBuffer(buffer))
         .setIndices(doc.createAccessor().setType('SCALAR').setArray(indices).setBuffer(buffer))
         .setMaterial(mat);
+      if (tex) prim.setAttribute('TEXCOORD_0', doc.createAccessor().setType('VEC2').setArray(new Float32Array(g.attributes.uv.array)).setBuffer(buffer));
       malla.addPrimitive(prim);
     }
     const nodo = doc.createNode(this.nombre).setMesh(malla);
@@ -206,6 +244,34 @@ export class Modelo {
     writeFileSync(ruta, glb);
     return { triangulos, materiales: this.materiales.size, bytes: glb.length };
   }
+}
+
+/** Matriz que lleva el eje Y de una pieza (centrada) del punto a al punto b. */
+function matrizEntre(a, b) {
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  return new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
+}
+
+/**
+ * Coordenadas de textura en metros de una pieza (en sus coordenadas propias):
+ * cada cara se proyecta sobre el plano al que más mira, y U va a lo largo del
+ * lado más largo de la pieza dentro de ese plano (la veta sigue la pieza).
+ */
+function uvEnMetros(g, [tamU, tamV]) {
+  g.computeBoundingBox();
+  const t = g.boundingBox.getSize(new THREE.Vector3()).toArray();
+  const pos = g.attributes.position, nor = g.attributes.normal;
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const n = [Math.abs(nor.getX(i)), Math.abs(nor.getY(i)), Math.abs(nor.getZ(i))];
+    const eje = n.indexOf(Math.max(...n));
+    const [a, b] = [0, 1, 2].filter((k) => k !== eje);
+    const [ejeU, ejeV] = t[a] >= t[b] ? [a, b] : [b, a];
+    const p = [pos.getX(i), pos.getY(i), pos.getZ(i)];
+    uv[i * 2] = p[ejeU] / tamU;
+    uv[i * 2 + 1] = p[ejeV] / tamV;
+  }
+  return new THREE.BufferAttribute(uv, 2);
 }
 
 /** Escribe un objeto del catálogo: el .glb y su ficha .json al lado. */

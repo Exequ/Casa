@@ -1,0 +1,13 @@
+{
+  "nombre": "Cuadro de marco gris",
+  "categoria": "Decoración de pared",
+  "colocacion": "pared",
+  "alturaCentro": 1.55,
+  "dimensiones": {
+    "ancho": 0.3,
+    "fondo": 0.02,
+    "alto": 0.4
+  },
+  "medidas": "estimadas",
+  "glb": "cuadro-marco-gris.glb"
+}

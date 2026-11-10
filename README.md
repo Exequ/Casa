@@ -22,10 +22,15 @@ Todas las medidas están en **metros**, a escala real.
   colgados en las paredes, objetos apoyados sobre los muebles (jarrones,
   plantas, la tele), **deshacer y rehacer**, duplicar, buscador y categorías
   plegables en el catálogo e **imagen PNG** de la vista.
-- **Fase 5, lote 1 (actual):** los **muebles reales del salón y del pasillo**
+- **Fase 5, lote 1:** los **muebles reales del salón y del pasillo**
   (sofá, sillón, mesas, librería, mueble y televisión, sillas, lámparas,
-  mesitas, espejos, cuadro y perchero), modelados por código a partir de las
-  fotos, con **miniaturas** en el catálogo. Medidas estimadas en
+  mesitas, espejos, cuadro y perchero), modelados por código, con
+  **miniaturas** en el catálogo.
+- **Fase 5, lote 2 (actual):** el lote 1 **ajustado a las fotos** reales
+  (colores, formas, la celosía de la mesa de centro, la librería...) con
+  **veta de madera y tejido** en las tapicerías, y los muebles del
+  **dormitorio, el balcón y el tendedero** (cama, mesita, lámpara, cómoda,
+  cuadros, mesa y sillas de balcón, planta y lavadora). Medidas estimadas en
   [`docs/OBJETOS.md`](docs/OBJETOS.md).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
@@ -50,7 +55,8 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run comprobar` | Solo comprueba los tipos de TypeScript |
 | `npm run vivienda:generar` | Regenera `data/vivienda.json` a partir de las medidas del plano |
 | `npm run catalogo:ejemplos` | Regenera los objetos de ejemplo del catálogo (mesa, armario y los provisionales de decoración) |
-| `npm run catalogo:lote1` | Regenera los muebles reales del lote 1 (salón y pasillo) y `docs/OBJETOS.md`; respeta las medidas corregidas en los `.json` (con `-- --reiniciar`, no) |
+| `npm run catalogo:lote1` | Regenera los muebles reales del lote 1 (salón y pasillo) y su tabla de `docs/OBJETOS.md`; respeta las medidas corregidas en los `.json` (con `-- --reiniciar`, no) |
+| `npm run catalogo:lote2` | Igual, para el lote 2 (dormitorio, balcón y tendedero) |
 | `npm run catalogo:miniaturas` | Dibuja las miniaturas PNG del catálogo (necesita Playwright con Chromium); con `-- sofas/sillon` solo esa, con `-- --vistas carpeta` además 3 vistas grandes de cada objeto para revisarlo |
 
 ## Cómo se usa
@@ -187,9 +193,12 @@ catalogo/                 Objetos del catálogo: un .json + un .glb + una miniat
 scripts/
   digitalizar-plano.mjs   Medidas tomadas del plano (en píxeles) → data/vivienda.json
   generar-catalogo.mjs    Crea los objetos de ejemplo del catálogo
-  catalogo-lote1.mjs      Crea los muebles reales del lote 1 (salón y pasillo) y docs/OBJETOS.md
+  catalogo-lote1.mjs      Crea los muebles reales del lote 1 (salón y pasillo) y su tabla en docs/OBJETOS.md
+  catalogo-lote2.mjs      Crea los del lote 2 (dormitorio, balcón y tendedero)
   miniaturas.mjs          Dibuja las miniaturas PNG del catálogo (y vistas de comprobación)
   lib/modelo3d.mjs        Librería para modelar objetos con piezas de three.js y guardarlos en .glb
+  lib/texturas.mjs        Texturas procedurales (veta de madera y tejido) que van dentro de los .glb
+  lib/lote.mjs            Lo común a los lotes: materiales, marcos, guardar y la tabla de docs/OBJETOS.md
 tests/                    Tests automáticos (Vitest)
 docs/                     Estado del proyecto (ESTADO.md), medidas de los objetos (OBJETOS.md) y resumen de la fase 2
 src/main.ts               Punto de entrada: une todas las piezas
@@ -502,15 +511,23 @@ así que **no renombres** un `.json` si ya lo usas en escenas guardadas.
 - Si el `.json` tiene un error o falta el `.glb`, el objeto no aparece y se
   explica el motivo en la consola del navegador (F12).
 
-### Muebles reales (lote 1) y cómo corregir sus medidas
+### Muebles reales (lotes 1 y 2) y cómo corregir sus medidas
 
-`scripts/catalogo-lote1.mjs` construye los 16 muebles del salón y del pasillo
-con la librería `scripts/lib/modelo3d.mjs`: piezas de three.js (tableros,
-patas, cojines redondeados, rollos, baldas, varillas, pantallas...) colocadas
-con su posición y giro; al guardar, todas las piezas de un mismo material se
-juntan en una sola malla y se comprueba que la caja envolvente mide lo que
-dice la ficha, con el origen en el centro de la base y el frente hacia +Z.
-Todos tienen menos de 7.000 triángulos y pesan menos de 140 KB.
+`scripts/catalogo-lote1.mjs` (salón y pasillo, 16 objetos) y
+`scripts/catalogo-lote2.mjs` (dormitorio, balcón y tendedero, 10 objetos)
+construyen los muebles reales con la librería `scripts/lib/modelo3d.mjs`:
+piezas de three.js (tableros, patas, cojines redondeados, brazos enrollados,
+celosías, baldas, varillas, pantallas...) colocadas con su posición y giro; al
+guardar, todas las piezas de un mismo material se juntan en una sola malla y
+se comprueba que la caja envolvente mide lo que dice la ficha, con el origen
+en el centro de la base y el frente hacia +Z. Todos tienen menos de 8.000
+triángulos y pesan menos de 210 KB.
+
+**Texturas:** un material puede llevar `textura: 'madera'` (veta) o `'tela'`
+(tejido). Son imágenes pequeñas en grises (128 y 64 px, generadas por
+`scripts/lib/texturas.mjs`) que van dentro del `.glb` y multiplican el color
+del material, así que el tono sigue siendo el de la foto. Cada pieza recibe
+coordenadas de textura en metros, con la veta a lo largo de su lado más largo.
 
 Todas las medidas son **estimadas** (ver la tabla de
 [`docs/OBJETOS.md`](docs/OBJETOS.md)). Para corregir una basta con **editar
@@ -606,9 +623,12 @@ ignoran (también con aviso).
 - el punto de vista de la vista interior de cada estancia;
 - **el catálogo completo** (`tests/catalogo.test.ts`): que todas las fichas
   se leen y tienen modelo y miniatura; que cada `.glb` mide lo que dice su
-  `.json` (exacto en los del lote 1), con el origen en el centro de la base;
-  menos de 20.000 triángulos y 300 KB por objeto; la colocación de cada mueble
-  y que sofá, sillón, silla y lámparas no admiten nada encima;
+  `.json` (exacto en los de los lotes 1 y 2), con el origen en el centro de la
+  base; menos de 20.000 triángulos, 300 KB y 2 texturas por objeto; la
+  colocación de cada mueble; que sofá, sillón, silla, lámpara de pie, cama y
+  silla de balcón no admiten nada encima; y que en la app la tele va sobre su
+  mueble, la lámpara foco sobre la mesita de alambre, la lámpara de noche sobre
+  la mesita y la planta sobre la mesa del balcón;
 - **decorar** (`tests/decorar.test.ts`): los campos nuevos del catálogo; colgar
   en paredes sin tapar puertas (con su tapajuntas) ni ventanas, sin solapes y
   sin salirse; la altura; apoyar en tapas y baldas sin salirse ni solaparse;
