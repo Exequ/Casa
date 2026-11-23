@@ -8,6 +8,7 @@ import { CortadorParedes, type ModoCorte } from './escena/corte';
 import { crearEscena, type Caja2D } from './escena/escena';
 import { crearEtiquetas } from './escena/etiquetas';
 import { activarInteraccion } from './escena/interaccion';
+import { AVISO_MODO_CAMARA, ModoCamara } from './escena/modoCamara';
 import { GestorObjetos } from './escena/objetos';
 import {
   aplicar, autoguardar, colocarObjetos, migrar, type EscenaGuardada, descargarArchivo, leerArchivo, leerAutoguardado, serializar, VERSION_ESCENA,
@@ -92,7 +93,13 @@ const caraDeFrente = (c: CaraColgable) => {
   const px = c.a[0] + c.n[0] * c.adelanto, pz = c.a[1] + c.n[1] * c.adelanto;
   return caraVisible(c) && (cam.x - px) * c.n[0] + (cam.z - pz) * c.n[1] > 0.2;
 };
-activarInteraccion(escena, gestor, { espacio, caraVisible, deshacer, rehacer, duplicar });
+// Modo cámara (candado): se recuerda entre visitas; por defecto, apagado.
+const modoCamara = new ModoCamara();
+const interaccion = activarInteraccion(escena, gestor, {
+  espacio, caraVisible, deshacer, rehacer, duplicar,
+  modoCamara: () => modoCamara.activo,
+  avisarBloqueo: () => barra.aviso(AVISO_MODO_CAMARA),
+});
 // Los cuadros y espejos de un muro bajado se ocultan (si no, flotarían en el aire)
 escena.cadaFotograma(() => {
   for (const o of gestor.objetos) if (o.colocacion === 'pared' && o.pared) o.raiz.visible = caraVisible(o.pared.cara);
@@ -143,13 +150,13 @@ gestor.alCambiar(anotarCambio);
 suelos.alCambiar(anotarCambio);
 paredes.alCambiar(anotarCambio);
 
-function deshacer() { void historial.deshacer(); }
-function rehacer() { void historial.rehacer(); }
+function deshacer() { if (!modoCamara.activo) void historial.deshacer(); }
+function rehacer() { if (!modoCamara.activo) void historial.rehacer(); }
 
 /** Duplica el objeto seleccionado y selecciona la copia. */
 async function duplicar() {
   const sel = gestor.seleccionado;
-  if (!sel) return;
+  if (!sel || modoCamara.activo) return;
   const copia = await gestor.duplicar(sel);
   if (!copia) {
     panel.avisar(`No hay sitio libre para duplicar "${sel.item.nombre}".`, true);
@@ -303,6 +310,7 @@ function pulsar(cual: Interruptor, activo: boolean) {
 // 4. Interfaz
 const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, gestor, {
   async agregar(item: ItemCatalogo) {
+    if (modoCamara.activo) { barra.aviso(AVISO_MODO_CAMARA); return; }
     const p = puntoParaNuevo();
     const obj = await gestor.agregarSegunTipo(item, p.x, p.z, p.id, caraDeFrente);
     if (!obj) {
@@ -355,10 +363,34 @@ const barra = crearBarra(visor, vivienda, gestor, {
   rehacer,
   captura,
   duplicar,
+  alternarModoCamara: () => modoCamara.alternar(),
 });
 historial.alCambiar(() => barra.historial(historial.puedeDeshacer(), historial.puedeRehacer()));
 barra.marcar('luces', true);
 barra.marcar('cortinas', true);
+
+// Modo cámara: al ponerlo se deselecciona lo que hubiera y los botones de
+// edición (marcados con data-edicion) se apagan y avisan en vez de actuar.
+function aplicarModoCamara(activo: boolean) {
+  if (activo) {
+    interaccion.cancelarArrastre();
+    gestor.seleccionar(null);
+  }
+  barra.modoCamara(activo);
+}
+modoCamara.alCambiar((activo) => {
+  aplicarModoCamara(activo);
+  barra.aviso(activo ? 'Modo cámara: solo se mueve la cámara.' : 'Edición activada: ya se pueden mover los objetos.');
+});
+aplicarModoCamara(modoCamara.activo);
+document.addEventListener('click', (e) => {
+  if (!modoCamara.activo) return;
+  const boton = (e.target as Element | null)?.closest?.('[data-edicion]');
+  if (!boton) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  barra.aviso(AVISO_MODO_CAMARA);
+}, true);
 
 // En el móvil, tocar fuera del cajón lo cierra.
 document.getElementById('fondo-panel')!.addEventListener('click', () => panel.abrir(false));
@@ -378,5 +410,5 @@ aplicar(estado, guardada ?? escenaInicial, catalogo, centroV1)
 
 // Acceso desde la consola del navegador, útil para depurar y para las pruebas automáticas.
 Object.assign(window, {
-  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra, historial, captura, caraVisible },
+  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra, historial, captura, caraVisible, modoCamara },
 });

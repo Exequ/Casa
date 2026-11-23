@@ -356,3 +356,47 @@ details.categoria > summary {
   background: #f1f3f5;
   object-fit: contain;
 }
+
+/* --- Fase 6: Modo cámara (candado) ------------------------------------------- */
+:root { --camara: #c2410c; }
+.herramientas { align-items: flex-end; }
+.herramientas button.candado.activo {
+  background: var(--camara);
+  border-color: var(--camara);
+  color: #fff;
+}
+/* Etiqueta "Modo cámara" encima de los botones (no cambia el ancho de la fila) */
+.etiqueta-modo {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--camara);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+/* Botones de edición apagados en Modo cámara (siguen recibiendo el toque para avisar) */
+body.modo-camara [data-edicion] { opacity: 0.45; cursor: not-allowed; }
+body.modo-camara #visor canvas { cursor: move; }
+/* Aviso flotante breve, por encima de todo (también del cajón del móvil) */
+.aviso-flotante {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  max-width: min(92vw, 440px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(31, 35, 40, 0.92);
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
