@@ -16,6 +16,7 @@ Un PR por parte, cada una publicada al terminarla.
 |---|---|---|
 | A. Modo cámara | **Hecho** | Candado 🔓/🔒 junto a ↶ ↷ 📷 (también en el móvil). Cerrado: botón naranja y etiqueta *Modo cámara*; clics, arrastres y toques solo mueven la cámara (girar, zoom, desplazar), no se selecciona ni resalta nada, Supr/D/Q/E/Ctrl+Z no hacen nada y los botones de edición se ven apagados y avisan con un mensaje flotante. Al ponerlo se deselecciona. Se recuerda (`localStorage`, clave `casa3d:modoCamara`); por defecto, quitado. |
 | B. Capas | **Hecho** | Lista ordenada de capas con Base fija (no se borra ni renombra, empieza bloqueada, lleva la casa amueblada). Nombre, ojo, candado y color por capa; crear ("Capa 2"…), renombrar, duplicar (con sus objetos), borrar (doble toque, con deshacer), reordenar, mostrar/ocultar, bloquear. Capa activa (destino de añadir y duplicar; avisa si está oculta o bloqueada), indicador siempre visible abajo a la izquierda. Ocultas: no se dibujan, seleccionan ni chocan; bloqueadas: se ven y chocan pero no se cogen. Pasar un objeto de capa desde el panel o la barra del móvil. Solapes entre capas marcados en rojo translúcido con aviso; arrastrar sigue sin meter un objeto en otro. Restaurar solo toca Base. Escena v6 (migración desde v5: todo a Base), autoguardado, Guardar/Cargar y deshacer cubren las capas. |
+| C. Catálogo: plegar y desplegar todo | **Hecho** | Cabecera general *▾ Catálogo* que pliega todo el catálogo (solo queda la cabecera); a su lado *Desplegar todo* y *Plegar todo*, que no cierran la cabecera. El buscador abre las categorías con resultados y oculta las vacías; al borrarlo vuelve el estado anterior. Se recuerda entre visitas (`casa3d:catalogo`); por defecto, catálogo abierto y categorías plegadas. En el móvil, botones de 40 px de alto. |
 
 ### Comprobaciones (parte A)
 
@@ -44,6 +45,19 @@ Un PR por parte, cada una publicada al terminarla.
 - El **orden** de las capas es solo el de la lista (no cambia nada en 3D). Base también se puede reordenar.
 - Al cargar o deshacer, cada objeto solo choca con los de su capa, para que no se mueva nada (los solapes entre capas se conservan y se marcan).
 - Tocar un objeto de una capa bloqueada (sin arrastrar) muestra un aviso que dice cómo desbloquearla, porque Base empieza bloqueada.
+
+### Comprobaciones (parte C)
+
+- `npm test`: 279 tests en verde; nuevos en `tests/catalogo-plegado.test.ts` (estado por defecto, cabecera, desplegar y plegar todo, buscador con vuelta al estado anterior, recuerdo entre visitas, estado guardado roto o con categorías que ya no existen).
+- Navegador, escritorio y móvil emulado con toques reales: por defecto abierto con las 12 categorías plegadas; *Desplegar todo* / *Plegar todo*; abrir una categoría; la cabecera pliega todo y al desplegarla vuelven las categorías como estaban; buscar "silla" deja solo *Balcón* y *Sillas* abiertas y al borrar vuelve lo de antes; al recargar se recuerda; añadir desde una categoría sigue funcionando. En el móvil, cabecera y botones de 40 px. Capturas revisadas (en escritorio los dos botones van debajo del título para que "Catálogo" no se corte).
+- Pruebas de las partes A y B repetidas con la versión final: todo bien. Una escena v5 autoguardada se migra al abrir (todo en Base bloqueada) y se vuelve a guardar como v6.
+- **Carga en el móvil** (Pixel 7 emulado, CPU ×4, versión compilada, media de 3 cargas hasta tener la casa amueblada): antes de la fase 6, 6,6 s; después, 5,8 s (dentro del ruido: no empeora). El JavaScript pasa de 832 a 855 KB sin comprimir.
+
+### Decisiones (parte C)
+
+- Por defecto las categorías quedan **plegadas** (antes del cambio el código las abría todas; se sigue lo pedido).
+- Durante una búsqueda, abrir o cerrar categorías a mano solo dura mientras se busca; *Desplegar todo* y *Plegar todo* sí cambian el estado que se recuerda.
+- La sección *Capas* también es plegable y recuerda su estado; las demás secciones del panel se dejan como estaban.
 
 ---
 

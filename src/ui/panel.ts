@@ -7,6 +7,7 @@ import type { GestorObjetos } from '../escena/objetos';
 import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
 import { rellenarSelectorCapas } from './panelCapas';
+import { PlegadoCatalogo } from './plegado';
 import { el, m } from './util';
 
 /**
@@ -106,19 +107,38 @@ export function crearPanel(
   mensaje.setAttribute('role', 'status');
   panel.append(mensaje);
 
-  // --- Catálogo (categorías plegables y buscador) --------------------------------
+  // --- Catálogo (cabecera plegable, categorías plegables y buscador) ------------------
+  // El estado de plegado (y lo que hace el buscador) está en src/ui/plegado.ts.
   const secCatalogo = el('section', 'catalogo');
-  secCatalogo.append(el('h2', '', 'Catálogo'));
-  secCatalogo.append(el('p', 'nota', 'Toca un objeto para ponerlo en la estancia elegida arriba (o en el salón): los muebles en el suelo, los cuadros en una pared libre y los jarrones o plantas sobre un mueble libre.'));
+  const cabCatalogo = el('div', 'cabecera-catalogo');
+  const btnCatalogo = el('button', 'titulo-catalogo');
+  btnCatalogo.type = 'button';
+  btnCatalogo.setAttribute('aria-controls', 'catalogo-contenido');
+  const flecha = el('span', 'flecha', '▾');
+  btnCatalogo.append(flecha, el('h2', '', 'Catálogo'));
+  const btnDesplegar = el('button', 'desplegar-todo', 'Desplegar todo');
+  btnDesplegar.type = 'button';
+  btnDesplegar.title = 'Abrir todas las categorías';
+  const btnPlegar = el('button', 'plegar-todo', 'Plegar todo');
+  btnPlegar.type = 'button';
+  btnPlegar.title = 'Cerrar todas las categorías';
+  const botonesPlegado = el('div', 'botones-plegado');
+  botonesPlegado.append(btnDesplegar, btnPlegar);
+  cabCatalogo.append(btnCatalogo, botonesPlegado);
+  secCatalogo.append(cabCatalogo);
+  const contenido = el('div', 'catalogo-contenido');
+  contenido.id = 'catalogo-contenido';
+  secCatalogo.append(contenido);
+  contenido.append(el('p', 'nota', 'Toca un objeto para ponerlo en la estancia elegida arriba (o en el salón) y en la capa activa: los muebles en el suelo, los cuadros en una pared libre y los jarrones o plantas sobre un mueble libre.'));
   const buscador = el('input', 'buscador');
   buscador.type = 'search';
   buscador.placeholder = 'Buscar por nombre…';
   buscador.setAttribute('aria-label', 'Buscar en el catálogo');
-  secCatalogo.append(buscador);
+  contenido.append(buscador);
   const sinResultados = el('p', 'nota', 'Ningún objeto coincide con la búsqueda.');
   sinResultados.hidden = true;
   if (catalogo.length === 0) {
-    secCatalogo.append(el('p', 'nota', 'No hay objetos. Añade archivos .json + .glb a la carpeta catalogo/.'));
+    contenido.append(el('p', 'nota', 'No hay objetos. Añade archivos .json + .glb a la carpeta catalogo/.'));
   }
   const DONDE: Record<string, string> = { pared: ' · pared', superficie: ' · sobre mueble' };
   const categorias = new Map<string, { detalles: HTMLDetailsElement; items: { boton: HTMLButtonElement; texto: string }[] }>();
@@ -126,9 +146,9 @@ export function crearPanel(
     let cat = categorias.get(item.categoria);
     if (!cat) {
       const detalles = el('details', 'categoria');
-      detalles.open = true;
+      detalles.dataset.categoria = item.categoria;
       detalles.append(el('summary', '', item.categoria));
-      secCatalogo.append(detalles);
+      contenido.append(detalles);
       cat = { detalles, items: [] };
       categorias.set(item.categoria, cat);
     }
@@ -159,14 +179,41 @@ export function crearPanel(
     cat.detalles.append(boton);
     cat.items.push({ boton, texto: sinAcentos(item.nombre) });
   }
-  secCatalogo.append(sinResultados);
+  contenido.append(sinResultados);
   panel.append(secCatalogo);
-  // Mientras se busca, se abren las categorías con resultados y se ocultan las demás.
-  const abiertas = new Map<HTMLDetailsElement, boolean>();
+
+  const plegado = new PlegadoCatalogo([...categorias.keys()]);
+  /** Pone la vista como diga el estado de plegado. */
+  const pintarPlegado = () => {
+    const abierto = plegado.catalogoAbierto;
+    contenido.hidden = !abierto;
+    flecha.textContent = abierto ? '▾' : '▸';
+    btnCatalogo.setAttribute('aria-expanded', String(abierto));
+    btnCatalogo.title = abierto ? 'Plegar todo el catálogo' : 'Desplegar el catálogo';
+    for (const [nombre, { detalles }] of categorias) {
+      const v = plegado.vista(nombre);
+      detalles.hidden = !v.visible;
+      if (detalles.open !== v.abierta) detalles.open = v.abierta;
+    }
+  };
+  // Abrir o cerrar una categoría a mano (el evento llega después del cambio; si
+  // coincide con el estado, lo ha hecho pintarPlegado y no hay que apuntarlo).
+  for (const [nombre, { detalles }] of categorias) {
+    detalles.addEventListener('toggle', () => {
+      if (detalles.hidden || detalles.open === plegado.vista(nombre).abierta) return;
+      plegado.ponerCategoria(nombre, detalles.open);
+    });
+  }
+  btnCatalogo.addEventListener('click', () => { plegado.alternarCatalogo(); pintarPlegado(); });
+  btnDesplegar.addEventListener('click', () => { plegado.desplegarTodo(); pintarPlegado(); });
+  btnPlegar.addEventListener('click', () => { plegado.plegarTodo(); pintarPlegado(); });
+  // Mientras se busca, se abren las categorías con resultados y se ocultan las
+  // demás; al borrar la búsqueda vuelve el plegado de antes.
   buscador.addEventListener('input', () => {
     const q = sinAcentos(buscador.value.trim());
     let total = 0;
-    for (const { detalles, items } of categorias.values()) {
+    const conResultados: string[] = [];
+    for (const [nombre, { items }] of categorias) {
       let n = 0;
       for (const { boton, texto } of items) {
         const ve = !q || texto.includes(q);
@@ -174,18 +221,13 @@ export function crearPanel(
         if (ve) n++;
       }
       total += n;
-      if (q) {
-        if (!abiertas.has(detalles)) abiertas.set(detalles, detalles.open);
-        detalles.hidden = n === 0;
-        detalles.open = true;
-      } else {
-        detalles.hidden = false;
-        if (abiertas.has(detalles)) detalles.open = abiertas.get(detalles)!;
-      }
+      if (n) conResultados.push(nombre);
     }
-    if (!q) abiertas.clear();
+    plegado.buscar(q ? conResultados : null);
+    pintarPlegado();
     sinResultados.hidden = !q || total > 0;
   });
+  pintarPlegado();
 
   // --- Capas (lo rellena src/ui/panelCapas.ts) ----------------------------------------
   const seccionCapas = el('section', 'seccion-capas');

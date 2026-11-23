@@ -486,3 +486,26 @@ details.plegable[open] > summary { margin-bottom: 8px; }
   .capa-elegir { min-height: 40px; }
   .indicador-capa { max-width: calc(100% - 250px); }
 }
+
+/* --- Fase 6: catálogo plegable ------------------------------------------------ */
+.cabecera-catalogo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.titulo-catalogo {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 2px;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+.titulo-catalogo h2 { margin: 0; }
+.titulo-catalogo .flecha { width: 1em; color: var(--suave); }
+.botones-plegado { display: flex; gap: 6px; margin-left: auto; }
+.desplegar-todo, .plegar-todo { padding: 4px 8px; font-size: 12px; background: #fff; white-space: nowrap; }
+@media (max-width: 760px) {
+  .titulo-catalogo, .desplegar-todo, .plegar-todo { min-height: 40px; }
+  .desplegar-todo, .plegar-todo { font-size: 13px; padding: 6px 10px; }
+  details.categoria > summary { padding: 10px 0; }
+}
