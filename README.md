@@ -50,7 +50,8 @@ Todas las medidas están en **metros**, a escala real.
   trampillas y un **coffee corner** (mueble cafetera) de tubo negro y madera
   rústica. Solo están en el catálogo: no se colocan en la casa.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
-  mover solo la cámara).
+  mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
+  para probar variantes: mostrar, ocultar, bloquear, duplicar…).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -112,6 +113,52 @@ deshacer, rehacer, cargar, vaciar y restaurar) se ven apagados y, si se tocan,
 avisan. Al ponerlo se deselecciona lo que hubiera. Se recuerda entre visitas;
 por defecto está quitado. Los acabados, las luces, las puertas y las vistas
 siguen funcionando.
+
+**Capas** (panel, sección *Capas*; en el móvil, menú ☰). Los objetos van
+en capas, como en un programa de dibujo:
+
+- Siempre existe la capa **Base**, con los muebles de la disposición original
+  de la casa. No se puede borrar ni renombrar, y **empieza bloqueada**: para
+  mover sus muebles, quítale el candado. Los elementos fijos de la vivienda
+  (cocina, baño, armario, aire) no son de ninguna capa.
+- Cada capa tiene nombre, color de etiqueta (toca el círculo para cambiarlo),
+  número de objetos, **ojo** (mostrar u ocultar) y **candado** (bloquear).
+  Botones: *＋ Nueva* ("Capa 2", "Capa 3"…), *Duplicar* (con todos sus
+  objetos), *Renombrar*, *▲ ▼* (orden) y *Borrar* (con un segundo toque;
+  borra también sus objetos y se puede deshacer). Actúan sobre la capa activa.
+- **Capa activa:** una sola, la resaltada; se elige tocándola. Los objetos
+  nuevos (añadir y duplicar) van a ella; si está oculta o bloqueada no se
+  puede añadir y se avisa. Se ve siempre abajo a la izquierda (también en el
+  móvil); tocar ese indicador lleva a la sección *Capas*.
+- **Capa oculta:** sus objetos no se dibujan, no se seleccionan y no cuentan
+  para choques ni como soporte. **Capa bloqueada:** se ven y estorban a los
+  demás, pero no se pueden seleccionar ni mover (al tocarlos se avisa).
+- **Pasar un objeto a otra capa:** desplegable *Capa* del panel del objeto
+  seleccionado (en el móvil, en su barra). Solo a capas visibles y
+  desbloqueadas. El objeto no se mueve.
+- **Solapes:** los choques se calculan entre objetos de capas visibles. Si al
+  mostrar una capa o pasar un objeto a otra quedan objetos solapados, no se
+  impide: se marcan en **rojo translúcido** y la sección *Capas* avisa. Un
+  objeto solapado se puede sacar arrastrándolo, pero ningún arrastre lo mete
+  dentro de otro.
+- **Apoyados en un mueble de otra capa** (regla): siguen al mueble cuando se
+  mueve o gira, aunque sea de otra capa. Si la capa del mueble **se oculta**,
+  se quedan en su sitio, visibles, y la sección *Capas* lo avisa; al volver a
+  mostrarla todo sigue igual. **Cambiar el mueble de capa** no les afecta. Si
+  el mueble **se borra** (o su capa), pasan a otro mueble cercano o al suelo.
+- **Duplicar una capa:** la copia ("Nombre (copia)") queda visible, activa y
+  con los objetos en el mismo sitio, y la original **se oculta** para que no
+  quede todo solapado.
+- *Restaurar disposición original* restaura **solo la capa Base**; lo de las
+  demás capas no cambia (lo que estaba apoyado en un mueble de Base sigue
+  sobre ese mueble). *Vaciar* quita los objetos de las capas **visibles y
+  desbloqueadas**.
+- En **Modo cámara** se pueden mostrar u ocultar capas y cambiar la activa,
+  pero no crear, duplicar, renombrar, reordenar, borrar, cambiar bloqueos ni
+  pasar objetos de capa.
+- Las capas, su orden, visibilidad, bloqueo, color, la capa activa y la capa
+  de cada objeto se autoguardan, van en *Guardar/Cargar* y se pueden
+  deshacer y rehacer (todas las operaciones de capas).
 
 **Catálogo** (panel; en el móvil, menú ☰): las categorías se pliegan tocando
 su título y el **buscador** filtra por nombre (sin importar tildes ni mayúsculas).
@@ -218,8 +265,9 @@ deshacer. Si ya hay algo autoguardado, se respeta (también una casa vaciada).
 
 **Guardar / Cargar / Vaciar / Restaurar:** descarga la escena como `escena.json` o abre una
 guardada (si el archivo no vale, se explica en el panel y la escena no cambia).
-*Vaciar* quita todos los muebles y *Restaurar disposición original* los
-vuelve a poner como en las fotos (sin tocar suelos ni colores); los dos piden
+*Vaciar* quita los objetos de las capas visibles y desbloqueadas y
+*Restaurar disposición original* vuelve a poner la capa Base como en las fotos
+(sin tocar las demás capas, los suelos ni los colores); los dos piden
 un segundo toque para confirmar y se pueden deshacer con ↶. Además, cada cambio se **autoguarda** en el navegador
 (`localStorage`) y se recupera al volver a abrir la app.
 
@@ -271,6 +319,7 @@ src/escena/               Todo lo 3D
   objetos.ts              Objetos colocados (suelo, pared, sobre muebles): añadir, mover, girar, duplicar, borrar
   historial.ts            Deshacer y rehacer
   modoCamara.ts           Modo cámara (candado): estado recordado y qué hace cada tecla
+  capas.ts                Lista de capas (Base, visibilidad, bloqueo, color, activa)
   interaccion.ts          Ratón, dedo y teclado: arrastrar por el suelo, por la pared o sobre muebles; atajos
   persistencia.ts         Guardar/cargar JSON, autoguardado y migración de escenas
 src/catalogo/
@@ -280,6 +329,7 @@ src/ui/
   panel.ts                Panel lateral (cajón en el móvil): catálogo con buscador, objeto seleccionado, escena
   barra.ts                Barra superior, herramientas (↶ ↷ 📷) y barra del objeto seleccionado (móvil)
   selectorAcabados.ts     Suelo, color de paredes y luz de cada estancia
+  panelCapas.ts           Sección Capas del panel y desplegable de capa de un objeto
   estilos.css             Estilos
 ```
 
@@ -648,14 +698,19 @@ otros objetos sencillos y ejecutar `npm run catalogo:ejemplos`.
 
 ```json
 {
-  "version": 5,
+  "version": 6,
   "vivienda": "Vivienda 2ºA",
+  "capas": [
+    { "id": "base", "nombre": "Base", "visible": true, "bloqueada": true, "color": "#2f7cf6" },
+    { "id": "capa-2", "nombre": "Propuesta salón", "visible": true, "bloqueada": false, "color": "#16a34a" }
+  ],
+  "capaActiva": "capa-2",
   "objetos": [
-    { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90, "colocacion": "suelo" },
+    { "catalogo": "mesa", "posicion": { "x": 3.1, "y": 0, "z": 1.8 }, "rotacion": 90, "colocacion": "suelo", "capa": "base" },
     { "catalogo": "jarron", "posicion": { "x": 3.2, "y": 0.75, "z": 1.7 }, "rotacion": 90,
-      "colocacion": "superficie", "soporte": 0, "nivel": 0.75 },
+      "colocacion": "superficie", "soporte": 0, "nivel": 0.75, "capa": "capa-2" },
     { "catalogo": "cuadro", "posicion": { "x": 2.0, "y": 1.35, "z": 0.255 }, "rotacion": 0,
-      "colocacion": "pared", "pared": "pared:fachada-norte", "estancia": "salon", "altura": 1.5 }
+      "colocacion": "pared", "pared": "pared:fachada-norte", "estancia": "salon", "altura": 1.5, "capa": "base" }
   ],
   "suelos": {
     "salon": { "tipo": "microcemento", "color": "#bcb5aa", "escala": 2 }
@@ -678,9 +733,15 @@ la estancia a la que mira y la `altura` de su centro) o sobre un mueble
 en 0, y `nivel` = altura de la tapa o balda). `suelos` y `paredes` llevan solo
 las estancias cambiadas respecto a `vivienda.json`. `ajustes` guarda los
 interruptores: luces (general y estancias apagadas), puertas y cortinas.
+`capas` es la lista ordenada de capas y `capaActiva` la activa; `capa` dice en
+qué capa está cada objeto (si falta o no existe, en Base). Al cargar, cada
+objeto se coloca teniendo en cuenta solo los de su capa, así que guardar y
+volver a cargar no mueve nada (aunque haya solapes entre capas).
 
 **Escenas antiguas** (se migran solas al cargarlas, también el autoguardado):
 
+- **v5** (fases 4 y 5): sin capas; todos los objetos pasan a la capa Base, que
+  queda bloqueada.
 - **v4** (fase 3b): objetos sin `colocacion`; se cargan en el suelo (y un
   objeto de pared, si lo hubiera, se cuelga en la pared más cercana).
 - **v3** (fase 3a): sin `paredes` ni `ajustes`; se cargan con los colores
@@ -745,6 +806,15 @@ ignoran (también con aviso).
   duplicar; guardar y cargar en v5 (y migrar desde v4); deshacer y rehacer
   (más de 50 pasos, cambios seguidos juntos y añadir, mover, girar, borrar,
   colgar y apoyar);
+- **capas** (`tests/capas.test.ts`): la lista (Base fija, nombres "Capa N",
+  renombrar, orden, color, normalizar); capa activa y no poder añadir a una
+  oculta o bloqueada; objetos ocultos (no se ven, no se seleccionan, no
+  chocan, no son soporte) y bloqueados (se ven y chocan, no se seleccionan);
+  solapes al mostrar una capa (en suelo y en pared), sacar un objeto del solape
+  sin poder meterlo en otro; pasar a otra capa; apoyados en muebles de otra
+  capa (moverse con él, quedarse si se oculta, borrar su capa); duplicar y
+  borrar capas con deshacer y rehacer; Vaciar; restaurar solo Base; migración
+  v5 → v6 e ida y vuelta al guardar y cargar (con capas ocultas y solapes);
 - **Modo cámara** (`tests/modo-camara.test.ts`): apagado por defecto, se
   recuerda, funciona sin almacenamiento, y con el candado Supr, D, Q/E,
   deshacer y rehacer quedan bloqueados.

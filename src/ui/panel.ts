@@ -6,13 +6,14 @@ import type { ItemCatalogo } from '../catalogo/catalogo';
 import type { GestorObjetos } from '../escena/objetos';
 import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
+import { rellenarSelectorCapas } from './panelCapas';
 import { el, m } from './util';
 
 /**
  * El botón pide un segundo toque para confirmar (antes de 4 s): el primero
  * cambia su texto a "¿Seguro? Toca otra vez". `hacePregunta` = ¿hace falta confirmar?
  */
-function confirmarEnElBoton(boton: HTMLButtonElement, hacePregunta: () => boolean, accion: () => void) {
+export function confirmarEnElBoton(boton: HTMLButtonElement, hacePregunta: () => boolean, accion: () => void) {
   const texto = boton.textContent ?? '';
   let hasta = 0;
   let temporizador: number | undefined;
@@ -46,6 +47,8 @@ export interface AccionesPanel {
   /** Vuelve a poner los muebles como en las fotos (data/escena-inicial.json). */
   restaurar(): void;
   duplicar(): void;
+  /** Pasa el objeto seleccionado a otra capa. */
+  moverACapa(capa: string): void;
   /** Muestra u oculta el plano superpuesto. */
   verPlano(visible: boolean): void;
   opacidadPlano(valor: number): void;
@@ -56,6 +59,8 @@ export interface Panel {
   abrir(abierto: boolean): void;
   /** Sección vacía donde va el selector de acabados (suelo, paredes, luz). */
   seccionAcabados: HTMLElement;
+  /** Sección vacía donde va la lista de capas (src/ui/panelCapas.ts). */
+  seccionCapas: HTMLElement;
   /** Sincroniza la casilla del plano si se activa desde otro sitio. */
   marcarPlano(visible: boolean): void;
   /** Muestra un mensaje arriba del panel (error = en rojo). En el móvil abre el cajón. */
@@ -182,6 +187,10 @@ export function crearPanel(
     sinResultados.hidden = !q || total > 0;
   });
 
+  // --- Capas (lo rellena src/ui/panelCapas.ts) ----------------------------------------
+  const seccionCapas = el('section', 'seccion-capas');
+  panel.append(seccionCapas);
+
   // --- Acabados (lo rellena src/ui/selectorAcabados.ts) ------------------------------
   const seccionAcabados = el('section', 'seccion-acabados');
   panel.append(seccionAcabados);
@@ -239,7 +248,14 @@ export function crearPanel(
   filaAcciones.append(btnDuplicar, btnBorrar);
   for (const b of [btnIzq, btnDer, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
 
-  conSeleccion.append(nombreSel, posicionSel, bloqueGiro, bloqueAltura, filaAcciones);
+  const filaCapa = el('label', 'fila');
+  const selectorCapa = el('select', 'selector-capa');
+  selectorCapa.title = 'Pasar el objeto a otra capa (visible y desbloqueada)';
+  selectorCapa.dataset.edicion = '';
+  filaCapa.append(el('span', '', 'Capa'), selectorCapa);
+  selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
+
+  conSeleccion.append(nombreSel, posicionSel, filaCapa, bloqueGiro, bloqueAltura, filaAcciones);
   secSeleccion.append(sinSeleccion, conSeleccion);
   panel.append(secSeleccion);
 
@@ -271,6 +287,8 @@ export function crearPanel(
     const donde = sel.colocacion === 'pared' ? ' · en la pared'
       : sel.colocacion === 'superficie' && sel.apoyo ? ` · sobre ${sel.apoyo.soporte.item.nombre.toLowerCase()} (${m(sel.apoyo.nivel)} m)` : '';
     posicionSel.textContent = `Posición: x ${m(p.x)} m · z ${m(p.z)} m${donde}`;
+    rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
+    selectorCapa.value = sel.capa;
     const enPared = sel.colocacion === 'pared' && !!sel.pared;
     bloqueGiro.hidden = enPared;
     bloqueAltura.hidden = !enPared;
@@ -298,7 +316,7 @@ export function crearPanel(
   const btnVaciar = el('button', '', 'Vaciar');
   btnGuardar.title = 'Descarga la escena como archivo .json';
   btnCargar.title = 'Abre un archivo .json guardado antes';
-  btnVaciar.title = 'Quita todos los objetos';
+  btnVaciar.title = 'Quita los objetos de las capas visibles y desbloqueadas';
   const selectorArchivo = el('input');
   selectorArchivo.type = 'file';
   selectorArchivo.accept = '.json,application/json';
@@ -308,9 +326,9 @@ export function crearPanel(
   const btnRestaurar = el('button', '', 'Restaurar disposición original');
   btnRestaurar.id = 'restaurar';
   btnRestaurar.dataset.edicion = '';
-  btnRestaurar.title = 'Vuelve a poner los muebles como en las fotos del piso (se puede deshacer con ↶)';
+  btnRestaurar.title = 'Vuelve a poner la capa Base como en las fotos del piso, sin tocar las demás capas (se puede deshacer con ↶)';
   secEscena.append(filaArchivo, btnRestaurar,
-    el('p', 'nota', 'Los cambios se guardan solos en este navegador. "Restaurar" vuelve a colocar los muebles como en las fotos; los suelos y colores no cambian.'));
+    el('p', 'nota', 'Los cambios se guardan solos en este navegador. "Vaciar" quita los objetos de las capas visibles y desbloqueadas. "Restaurar" vuelve a colocar la capa Base como en las fotos, sin tocar las demás capas ni los suelos y colores.'));
   panel.append(secEscena);
 
   btnGuardar.addEventListener('click', () => acciones.guardar());
@@ -321,7 +339,7 @@ export function crearPanel(
     selectorArchivo.value = ''; // permite volver a cargar el mismo archivo
   });
   // Vaciar y Restaurar piden confirmación en el propio botón: un segundo toque en 4 s lo confirma.
-  confirmarEnElBoton(btnVaciar, () => gestor.objetos.length > 0, () => acciones.vaciar());
+  confirmarEnElBoton(btnVaciar, () => gestor.objetos.some((o) => gestor.editable(o)), () => acciones.vaciar());
   confirmarEnElBoton(btnRestaurar, () => true, () => acciones.restaurar());
 
   // --- Comprobación con el plano ----------------------------------------------------
@@ -369,6 +387,7 @@ export function crearPanel(
       <li><kbd>D</kbd> duplicar · <kbd>Supr</kbd> borrar · <kbd>Esc</kbd> deseleccionar</li>
       <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer · <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>Z</kbd> rehacer</li>
       <li>🔒 <b>Modo cámara</b> (abajo a la derecha): solo se mueve la cámara, sin tocar los objetos</li>
+      <li><b>Capas:</b> los objetos nuevos van a la capa activa; las capas bloqueadas no se mueven</li>
       <li>Cuadros y espejos: arrastrar a lo largo de la pared o a otra pared</li>
       <li>Jarrones y plantas: arrastrar encima de un mueble para apoyarlos</li>
     </ul>
@@ -378,12 +397,14 @@ export function crearPanel(
       <li>Girar, subir o bajar (cuadros), duplicar y borrar: barra inferior</li>
       <li>Deshacer, rehacer e imagen: botones ↶ ↷ 📷 de abajo a la derecha</li>
       <li>🔒 <b>Modo cámara:</b> los toques solo mueven la cámara, sin tocar los objetos</li>
+      <li><b>Capas</b> (en este menú): la capa activa se ve abajo a la izquierda; tócala para ir a las capas</li>
     </ul>`;
   panel.append(ayuda);
 
   return {
     abrir,
     seccionAcabados,
+    seccionCapas,
     marcarPlano: (visible) => { casillaPlano.checked = visible; },
     avisar(texto, error = false) {
       mensaje.textContent = texto;

@@ -295,7 +295,7 @@ describe('duplicar', () => {
   });
 });
 
-describe('escena v5', () => {
+describe('escena v5 y v6', () => {
   const estadoDe = (g: GestorObjetos) => ({
     objetos: g,
     suelos: { cambios: () => ({}) },
@@ -309,7 +309,7 @@ describe('escena v5', () => {
     const c = (await gestor.agregarEnParedCerca(item('cuadro'), 5.5, 1, 'salon'))!;
     gestor.ponerAltura(c, 1.7);
     const guardada = serializar(estadoDe(gestor));
-    expect(guardada.version).toBe(5);
+    expect(guardada.version).toBe(6);
     const [gm, gj, gc] = guardada.objetos;
     expect(gm).toMatchObject({ catalogo: 'mesa', colocacion: 'suelo' });
     expect(gj).toMatchObject({ catalogo: 'jarron', colocacion: 'superficie', soporte: 0, nivel: 0.75 });
@@ -330,11 +330,11 @@ describe('escena v5', () => {
     expect(serializar(estadoDe(otro)).objetos).toEqual(guardada.objetos);
   });
 
-  it('una escena v4 pasa a v5 con todos los objetos en el suelo', () => {
+  it('una escena v4 pasa a v6 con todos los objetos en el suelo', () => {
     const v4: EscenaGuardada = { version: 4, objetos: [{ catalogo: 'mesa', posicion: { x: 3, y: 0, z: 1.6 }, rotacion: 0 }] };
-    const v5 = migrar(v4, { x: 0, z: 0 });
-    expect(v5.version).toBe(5);
-    expect(v5.objetos[0].colocacion).toBe('suelo');
+    const v6 = migrar(v4, { x: 0, z: 0 });
+    expect(v6.version).toBe(6);
+    expect(v6.objetos[0].colocacion).toBe('suelo');
     expect(migrar({ version: 1, objetos: [{ catalogo: 'mesa', posicion: { x: 0, y: 0, z: 0 }, rotacion: 0 }] } as EscenaGuardada, { x: 3, z: 1.6 }).objetos[0])
       .toMatchObject({ posicion: { x: 3, z: 1.6 }, colocacion: 'suelo' });
   });

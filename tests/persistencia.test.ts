@@ -3,21 +3,26 @@
 import { describe, expect, it } from 'vitest';
 import { leerCatalogo } from '../src/catalogo/catalogo';
 import { AJUSTES_POR_DEFECTO, migrar, type EscenaGuardada } from '../src/escena/persistencia';
+import { capasPorDefecto } from '../src/escena/capas';
+
+/** Lo que la migración a v6 añade a una escena sin capas: solo Base (bloqueada), activa. */
+const SIN_CAPAS = { capas: capasPorDefecto().capas, capaActiva: 'base' };
 
 const centro = { x: 3, z: 1.6 };
 
 describe('escenas guardadas', () => {
-  it('una escena de la fase 1 se recoloca respecto al centro del salón y pasa a v5', () => {
+  it('una escena de la fase 1 se recoloca respecto al centro del salón y pasa a v6', () => {
     const v1 = {
       version: 1,
       objetos: [{ catalogo: 'mesa', posicion: { x: 0.5, y: 0, z: -0.25 }, rotacion: 90 }],
     } as EscenaGuardada;
-    const v5 = migrar(v1, centro);
-    expect(v5.version).toBe(5);
-    expect(v5.suelos).toEqual({});
-    expect(v5.paredes).toEqual({});
-    expect(v5.ajustes).toEqual(AJUSTES_POR_DEFECTO);
-    expect(v5.objetos[0]).toEqual({ catalogo: 'mesa', posicion: { x: 3.5, y: 0, z: 1.35 }, rotacion: 90, colocacion: 'suelo' });
+    const v6 = migrar(v1, centro);
+    expect(v6.version).toBe(6);
+    expect(v6.suelos).toEqual({});
+    expect(v6.paredes).toEqual({});
+    expect(v6.ajustes).toEqual(AJUSTES_POR_DEFECTO);
+    expect(v6.capas).toEqual(SIN_CAPAS.capas);
+    expect(v6.objetos[0]).toEqual({ catalogo: 'mesa', posicion: { x: 3.5, y: 0, z: 1.35 }, rotacion: 90, colocacion: 'suelo', capa: 'base' });
   });
 
   it('una escena sin número de versión se trata como de la fase 1', () => {
@@ -25,17 +30,17 @@ describe('escenas guardadas', () => {
     expect(migrar(sinVersion, centro).objetos[0].posicion).toEqual({ x: 3, y: 0, z: 1.6 });
   });
 
-  it('una escena v2 pasa a v5 sin mover nada, sin suelos ni paredes cambiados y con los ajustes por defecto', () => {
+  it('una escena v2 pasa a v6 sin mover nada, sin suelos ni paredes cambiados y con los ajustes por defecto', () => {
     const v2: EscenaGuardada = { version: 2, objetos: [{ catalogo: 'mesa', posicion: { x: 9, y: 0, z: 2 }, rotacion: 15 }] };
-    expect(migrar(v2, centro)).toEqual({ ...v2, version: 5, objetos: [{ ...v2.objetos[0], colocacion: 'suelo' }], suelos: {}, paredes: {}, ajustes: AJUSTES_POR_DEFECTO });
+    expect(migrar(v2, centro)).toEqual({ ...v2, ...SIN_CAPAS, version: 6, objetos: [{ ...v2.objetos[0], colocacion: 'suelo', capa: 'base' }], suelos: {}, paredes: {}, ajustes: AJUSTES_POR_DEFECTO });
   });
 
-  it('una escena v3 conserva sus suelos y pasa a v5', () => {
+  it('una escena v3 conserva sus suelos y pasa a v6', () => {
     const v3: EscenaGuardada = {
       version: 3, objetos: [],
       suelos: { salon: { tipo: 'microcemento', color: '#bcb5aa', escala: 2 } },
     };
-    expect(migrar(v3, centro)).toEqual({ ...v3, version: 5, paredes: {}, ajustes: AJUSTES_POR_DEFECTO });
+    expect(migrar(v3, centro)).toEqual({ ...v3, ...SIN_CAPAS, version: 6, paredes: {}, ajustes: AJUSTES_POR_DEFECTO });
   });
 
   it('una escena v4 conserva paredes y ajustes (y completa los que falten)', () => {
@@ -45,7 +50,7 @@ describe('escenas guardadas', () => {
       paredes: { dormitorio: { color: '#bfccd6' } },
       ajustes: { luces: { encendidas: false, apagadas: ['bano'] }, puertasAbiertas: true, cortinas: false },
     };
-    expect(migrar(v4, centro)).toEqual({ ...v4, version: 5 });
+    expect(migrar(v4, centro)).toEqual({ ...v4, ...SIN_CAPAS, version: 6 });
     const parcial = migrar({ version: 4, objetos: [], ajustes: { cortinas: false } }, centro);
     expect(parcial.ajustes).toEqual({ ...AJUSTES_POR_DEFECTO, cortinas: false });
   });

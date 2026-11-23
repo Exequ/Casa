@@ -62,6 +62,9 @@ export class Historial {
     this.avisar();
   }
 
+  /** ¿Se está volviendo a una foto ahora mismo? */
+  restaurandoAhora() { return this.restaurando; }
+
   puedeDeshacer() { return !this.restaurando && (this.indice > 0 || this.temporizador !== undefined); }
   puedeRehacer() { return !this.restaurando && this.temporizador === undefined && this.indice < this.pila.length - 1; }
   /** Número de pasos que se pueden deshacer ahora. */

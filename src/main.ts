@@ -24,6 +24,8 @@ import { GestorParedes } from './escena/paredes3d';
 import { crearBarra, type Interruptor } from './ui/barra';
 import { crearPanel } from './ui/panel';
 import { crearSelectorAcabados } from './ui/selectorAcabados';
+import { crearPanelCapas } from './ui/panelCapas';
+import { ID_BASE } from './escena/capas';
 import { GestorSuelos } from './escena/suelos3d';
 import { EspacioLibre } from './vivienda/espacio';
 import { caja, puntoEnPoligono, puntoInterior } from './vivienda/geometria';
@@ -99,10 +101,17 @@ const interaccion = activarInteraccion(escena, gestor, {
   espacio, caraVisible, deshacer, rehacer, duplicar,
   modoCamara: () => modoCamara.activo,
   avisarBloqueo: () => barra.aviso(AVISO_MODO_CAMARA),
+  avisarCapaBloqueada: (obj) => {
+    const c = gestor.capas.get(obj.capa);
+    barra.aviso(`"${obj.item.nombre}" está en la capa bloqueada "${c?.nombre ?? obj.capa}". Desbloquéala en Capas para moverlo.`);
+  },
 });
-// Los cuadros y espejos de un muro bajado se ocultan (si no, flotarían en el aire)
+// Los objetos de capas ocultas no se dibujan, y los cuadros y espejos de un
+// muro bajado tampoco (si no, flotarían en el aire)
 escena.cadaFotograma(() => {
-  for (const o of gestor.objetos) if (o.colocacion === 'pared' && o.pared) o.raiz.visible = caraVisible(o.pared.cara);
+  for (const o of gestor.objetos) {
+    o.raiz.visible = gestor.visible(o) && (o.colocacion !== 'pared' || !o.pared || caraVisible(o.pared.cara));
+  }
 });
 const estado: EstadoEscena = {
   objetos: gestor, suelos, paredes, nombreVivienda: vivienda.nombre,
@@ -124,6 +133,7 @@ const programarAutoguardado = () => {
   temporizador = window.setTimeout(() => autoguardar(estado), 300);
 };
 gestor.alCambiar(programarAutoguardado);
+gestor.capas.alCambiar(programarAutoguardado);
 suelos.alCambiar(programarAutoguardado);
 paredes.alCambiar(programarAutoguardado);
 luces.alCambiar(programarAutoguardado);
@@ -131,7 +141,7 @@ luces.alCambiar(programarAutoguardado);
 // 3b. Deshacer y rehacer: una "foto" de muebles, suelos y colores tras cada cambio.
 const fotoEscena = () => {
   const g = serializar(estado);
-  return JSON.stringify({ objetos: g.objetos, suelos: g.suelos, paredes: g.paredes });
+  return JSON.stringify({ objetos: g.objetos, suelos: g.suelos, paredes: g.paredes, capas: g.capas, capaActiva: g.capaActiva });
 };
 const historial = new Historial(fotoEscena, async (foto) => {
   // Se intenta volver a seleccionar el mismo objeto (el del mismo tipo más cercano)
@@ -147,6 +157,16 @@ const historial = new Historial(fotoEscena, async (foto) => {
 });
 const anotarCambio = () => historial.cambio();
 gestor.alCambiar(anotarCambio);
+gestor.capas.alCambiar(anotarCambio);
+// Al cambiar las capas: ocultar o mostrar sus objetos, deseleccionar si hace falta, recalcular solapes
+gestor.capas.alCambiar(() => gestor.actualizarCapas());
+// Si aparecen solapes nuevos (al mostrar una capa o pasar un objeto a otra), se avisa
+let solapesAntes = 0;
+gestor.alSeleccionar(() => {
+  const n = gestor.solapes().length;
+  if (n > solapesAntes && !historial.restaurandoAhora()) barra.aviso(`⚠ ${n} objetos se solapan: están marcados en rojo (ver Capas).`);
+  solapesAntes = n;
+});
 suelos.alCambiar(anotarCambio);
 paredes.alCambiar(anotarCambio);
 
@@ -157,6 +177,8 @@ function rehacer() { if (!modoCamara.activo) void historial.rehacer(); }
 async function duplicar() {
   const sel = gestor.seleccionado;
   if (!sel || modoCamara.activo) return;
+  const motivo = gestor.puedeAnadir();
+  if (motivo) { panel.avisar(motivo, true); return; }
   const copia = await gestor.duplicar(sel);
   if (!copia) {
     panel.avisar(`No hay sitio libre para duplicar "${sel.item.nombre}".`, true);
@@ -311,6 +333,8 @@ function pulsar(cual: Interruptor, activo: boolean) {
 const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, gestor, {
   async agregar(item: ItemCatalogo) {
     if (modoCamara.activo) { barra.aviso(AVISO_MODO_CAMARA); return; }
+    const motivo = gestor.puedeAnadir();
+    if (motivo) { panel.avisar(motivo, true); return; }
     const p = puntoParaNuevo();
     const obj = await gestor.agregarSegunTipo(item, p.x, p.z, p.id, caraDeFrente);
     if (!obj) {
@@ -335,23 +359,43 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
       panel.avisar(`No se pudo cargar "${archivo.name}": ${(e as Error).message}. Comprueba que es un archivo guardado con esta app.`, true);
     }
   },
-  vaciar: () => gestor.vaciar(),
-  async restaurar() {
-    // Solo los muebles: los suelos, colores y ajustes se quedan como estén. Se puede deshacer.
-    gestor.vaciar();
-    const omitidos = await colocarObjetos(gestor, migrar(structuredClone(escenaInicial), centroV1).objetos, catalogo);
-    gestor.notificar();
-    historial.apuntar();
-    panel.avisar(omitidos.length
-      ? `Disposición original restaurada, salvo: ${omitidos.join(', ')}.`
-      : 'Disposición original restaurada. Puedes deshacerlo con ↶.', omitidos.length > 0);
+  vaciar() {
+    const n = gestor.vaciarEditables();
+    panel.avisar(`${n} objetos quitados de las capas visibles y desbloqueadas. Puedes deshacerlo con ↶.`);
   },
+  async restaurar() {
+    // Solo la capa Base: las demás capas, los suelos, colores y ajustes se quedan como estén. Se puede deshacer.
+    const objetos = migrar(structuredClone(escenaInicial), centroV1).objetos.map((o) => ({ ...o, capa: ID_BASE }));
+    const omitidos = await gestor.reemplazarCapa(ID_BASE, () => colocarObjetos(gestor, objetos, catalogo));
+    historial.apuntar();
+    const oculta = !gestor.capas.visible(ID_BASE) ? ' (la capa Base está oculta: muéstrala con 👁 para verla)' : '';
+    panel.avisar(omitidos.length
+      ? `Capa Base restaurada como en las fotos, salvo: ${omitidos.join(', ')}.`
+      : `Capa Base restaurada como en las fotos${oculta}. Las demás capas no cambian. Puedes deshacerlo con ↶.`, omitidos.length > 0);
+  },
+  moverACapa,
   duplicar,
   verPlano,
   opacidadPlano(valor) {
     if (capaPlano) (capaPlano.material as { opacity: number }).opacity = valor;
   },
 });
+
+const panelCapas = crearPanelCapas(panel.seccionCapas, gestor, (texto, error) => panel.avisar(texto, error));
+
+/** Pasa el objeto seleccionado a otra capa (visible y desbloqueada). */
+function moverACapa(capa: string) {
+  const sel = gestor.seleccionado;
+  if (!sel || modoCamara.activo) return;
+  const destino = gestor.capas.get(capa);
+  if (!destino) return;
+  if (!gestor.ponerCapa(sel, capa)) {
+    barra.aviso(`No se puede pasar a "${destino.nombre}": está ${destino.visible ? 'bloqueada' : 'oculta'}.`);
+    gestor.notificar(false); // vuelve a poner el desplegable en su capa
+    return;
+  }
+  barra.aviso(`"${sel.item.nombre}" pasa a la capa "${destino.nombre}".`);
+}
 
 const selectorAcabados = crearSelectorAcabados(panel.seccionAcabados, vivienda, suelos, paredes, luces);
 
@@ -364,6 +408,11 @@ const barra = crearBarra(visor, vivienda, gestor, {
   captura,
   duplicar,
   alternarModoCamara: () => modoCamara.alternar(),
+  abrirCapas() {
+    panel.abrir(true);
+    panelCapas.mostrar();
+  },
+  moverACapa,
 });
 historial.alCambiar(() => barra.historial(historial.puedeDeshacer(), historial.puedeRehacer()));
 barra.marcar('luces', true);
@@ -410,5 +459,5 @@ aplicar(estado, guardada ?? escenaInicial, catalogo, centroV1)
 
 // Acceso desde la consola del navegador, útil para depurar y para las pruebas automáticas.
 Object.assign(window, {
-  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra, historial, captura, caraVisible, modoCamara },
+  casa: { escena, vivienda, espacio, gestor, suelos, paredes, luces, catalogo, cortador, capaPlano, verPlano, vivienda3d: casa, barra, historial, captura, caraVisible, modoCamara, capas: gestor.capas },
 });
