@@ -51,7 +51,8 @@ Todas las medidas están en **metros**, a escala real.
   rústica. Solo están en el catálogo: no se colocan en la casa.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
-  para probar variantes: mostrar, ocultar, bloquear, duplicar…).
+  para probar variantes: mostrar, ocultar, bloquear, duplicar…) y **catálogo
+  plegable** (plegar o desplegar todo de una vez).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -160,8 +161,15 @@ en capas, como en un programa de dibujo:
   de cada objeto se autoguardan, van en *Guardar/Cargar* y se pueden
   deshacer y rehacer (todas las operaciones de capas).
 
-**Catálogo** (panel; en el móvil, menú ☰): las categorías se pliegan tocando
-su título y el **buscador** filtra por nombre (sin importar tildes ni mayúsculas).
+**Catálogo** (panel; en el móvil, menú ☰): la cabecera **▾ Catálogo** pliega
+o despliega todo el catálogo de un toque (solo queda la cabecera). A su lado,
+**Desplegar todo** y **Plegar todo** abren o cierran todas las categorías a la
+vez sin cerrar la cabecera (si estaba plegada, *Desplegar todo* la abre). Cada
+categoría se pliega tocando su título. El **buscador** filtra por nombre (sin
+importar tildes ni mayúsculas): mientras se busca se abren las categorías con
+resultados y se ocultan las vacías; al borrar la búsqueda vuelve el plegado de
+antes. El plegado se recuerda entre visitas; por defecto, el catálogo abierto
+con todas las categorías plegadas.
 
 **Ordenador:**
 
@@ -330,6 +338,7 @@ src/ui/
   barra.ts                Barra superior, herramientas (↶ ↷ 📷) y barra del objeto seleccionado (móvil)
   selectorAcabados.ts     Suelo, color de paredes y luz de cada estancia
   panelCapas.ts           Sección Capas del panel y desplegable de capa de un objeto
+  plegado.ts              Plegado del catálogo (cabecera, todo, buscador) y su recuerdo
   estilos.css             Estilos
 ```
 
@@ -815,6 +824,9 @@ ignoran (también con aviso).
   capa (moverse con él, quedarse si se oculta, borrar su capa); duplicar y
   borrar capas con deshacer y rehacer; Vaciar; restaurar solo Base; migración
   v5 → v6 e ida y vuelta al guardar y cargar (con capas ocultas y solapes);
+- **plegado del catálogo** (`tests/catalogo-plegado.test.ts`): por defecto
+  abierto y con todo plegado; la cabecera; desplegar y plegar todo; el
+  buscador y la vuelta al estado de antes; recuerdo entre visitas;
 - **Modo cámara** (`tests/modo-camara.test.ts`): apagado por defecto, se
   recuerda, funciona sin almacenamiento, y con el candado Supr, D, Q/E,
   deshacer y rehacer quedan bloqueados.
