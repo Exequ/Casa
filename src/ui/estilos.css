@@ -400,3 +400,89 @@ body.modo-camara #visor canvas { cursor: move; }
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   pointer-events: none;
 }
+
+/* --- Fase 6: capas ------------------------------------------------------------ */
+/* Secciones plegables: el título (h2) va dentro del summary */
+details.plegable > summary { list-style-position: inside; padding: 2px 0; }
+details.plegable > summary h2 { display: inline; margin: 0; }
+details.plegable[open] > summary { margin-bottom: 8px; }
+.aviso-capas { margin: 0 0 8px; padding: 6px 8px; border-radius: 6px; background: #f3f4f6; }
+.aviso-capas.error { background: #fff1f1; color: var(--peligro); }
+.lista-capas { list-style: none; margin: 0 0 8px; padding: 0; }
+.lista-capas li.capa {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 4px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+.lista-capas li.capa.activa { border-color: var(--acento); background: #eef4ff; }
+.lista-capas li.capa.oculta .capa-elegir { opacity: 0.55; }
+.capa-color {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+.capa-elegir {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 4px;
+}
+.capa-activa { font-size: 11px; color: #fff; background: var(--acento); border-radius: 999px; padding: 1px 7px; }
+.capa-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-capas li.activa .capa-nombre { font-weight: 600; }
+.capa-num {
+  font-size: 12px;
+  color: var(--suave);
+  background: #f1f3f5;
+  border-radius: 999px;
+  padding: 0 7px;
+}
+.capa-campo { flex: 1; min-width: 0; font: inherit; padding: 5px 6px; border: 1px solid var(--acento); border-radius: 6px; }
+.capa-ojo, .capa-candado { min-width: 34px; padding: 4px 6px; background: #fff; }
+.capa-ojo.apagado { opacity: 0.35; text-decoration: line-through; }
+.capa-candado.activo { background: #fff4e5; border-color: #f0b46a; }
+.acciones-capa { flex-wrap: wrap; }
+.acciones-capa button { padding: 5px 8px; }
+
+/* Indicador de la capa activa: abajo a la izquierda, sobre la vista */
+.indicador-capa {
+  position: absolute;
+  left: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 270px);
+  min-height: 40px;
+  padding: 6px 10px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+}
+.indicador-capa .punto-capa { width: 12px; height: 12px; min-width: 12px; border-radius: 50%; }
+.indicador-capa .texto-capa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.indicador-capa.no-editable { color: var(--suave); }
+.barra-objeto .selector-capa { font: inherit; padding: 7px 4px; max-width: 34vw; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
+.seleccion .selector-capa { flex: 1; font: inherit; padding: 4px; }
+
+@media (max-width: 760px) {
+  .capa-ojo, .capa-candado, .capa-color { min-width: 40px; min-height: 40px; }
+  .capa-color { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
+  .acciones-capa button { min-height: 40px; }
+  .capa-elegir { min-height: 40px; }
+  .indicador-capa { max-width: calc(100% - 250px); }
+}

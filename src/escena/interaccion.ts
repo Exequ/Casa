@@ -32,6 +32,8 @@ export interface OpcionesInteraccion {
   modoCamara: () => boolean;
   /** Se ha pulsado una tecla de edición con el Modo cámara puesto. */
   avisarBloqueo: () => void;
+  /** Se ha tocado (sin arrastrar) un objeto de una capa bloqueada. */
+  avisarCapaBloqueada: (obj: ObjetoColocado) => void;
 }
 
 export interface Interaccion {
@@ -47,7 +49,7 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
   /** Datos del arrastre en curso (si lo hay). */
   let arrastre: { obj: ObjetoColocado; desfase: THREE.Vector3; movido: boolean; puntero: number } | null = null;
   /** Dónde se pulsó el ratón sobre el vacío (para distinguir clic de giro de cámara). */
-  let pulsacionEnVacio: { x: number; y: number } | null = null;
+  let pulsacionEnVacio: { x: number; y: number; bloqueado: ObjetoColocado | null } | null = null;
 
   /** Prepara el raycaster con la posición del ratón. */
   function apuntar(e: PointerEvent) {
@@ -59,12 +61,18 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
     raycaster.setFromCamera(ndc, escena.camara);
   }
 
-  /** Objeto bajo el ratón, o null. */
-  function objetoBajoRaton(e: PointerEvent): ObjetoColocado | null {
+  /** Objeto visible bajo el ratón (el primero que se toca), o null. */
+  function objetoTocado(e: PointerEvent): ObjetoColocado | null {
     apuntar(e);
-    // (los objetos ocultos, como los cuadros de un muro bajado, no se pueden tocar)
+    // (los objetos ocultos, como los cuadros de un muro bajado o los de una capa oculta, no se pueden tocar)
     const impactos = raycaster.intersectObjects(gestor.objetos.filter((o) => o.raiz.visible).map((o) => o.raiz), true);
     return impactos.length ? gestor.objetoDe(impactos[0].object) : null;
+  }
+
+  /** Objeto que se puede seleccionar bajo el ratón, o null (los de capas bloqueadas tapan pero no se cogen). */
+  function objetoBajoRaton(e: PointerEvent): ObjetoColocado | null {
+    const obj = objetoTocado(e);
+    return obj && gestor.editable(obj) ? obj : null;
   }
 
   /** Punto del suelo bajo el ratón, o null si se apunta al cielo. */
@@ -112,9 +120,10 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
   lienzo.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || !e.isPrimary) return; // solo botón izquierdo / primer dedo
     // En Modo cámara no se mira si hay un objeto debajo: el gesto es de la cámara.
-    const obj = opciones.modoCamara() ? null : objetoBajoRaton(e);
+    const tocado = opciones.modoCamara() ? null : objetoTocado(e);
+    const obj = tocado && gestor.editable(tocado) ? tocado : null;
     if (!obj) {
-      pulsacionEnVacio = { x: e.clientX, y: e.clientY };
+      pulsacionEnVacio = { x: e.clientX, y: e.clientY, bloqueado: tocado };
       return;
     }
     gestor.seleccionar(obj);
@@ -157,7 +166,10 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
     // Clic (sin apenas mover el ratón) en el vacío → deseleccionar.
     if (pulsacionEnVacio) {
       const distancia = Math.hypot(e.clientX - pulsacionEnVacio.x, e.clientY - pulsacionEnVacio.y);
-      if (distancia < 5 && e.type === 'pointerup') gestor.seleccionar(null);
+      if (distancia < 5 && e.type === 'pointerup') {
+        gestor.seleccionar(null);
+        if (pulsacionEnVacio.bloqueado) opciones.avisarCapaBloqueada(pulsacionEnVacio.bloqueado);
+      }
       pulsacionEnVacio = null;
     }
   };

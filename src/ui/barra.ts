@@ -3,11 +3,13 @@
 //     interior, plano) e interruptores (luces, puertas, cortinas).
 //   - Herramientas (abajo a la derecha): deshacer, rehacer, imagen de la vista
 //     y el candado del Modo cámara (con su etiqueta encima cuando está puesto).
+//   - Indicador de la capa activa (abajo a la izquierda): abre la sección Capas.
 //   - Barra del objeto (móvil): girar (o subir y bajar si es de pared),
 //     duplicar y borrar el objeto seleccionado.
 
 import type { GestorObjetos } from '../escena/objetos';
 import type { Vivienda } from '../vivienda/modelo';
+import { rellenarSelectorCapas } from './panelCapas';
 import { el, m } from './util';
 
 /** Botones de la barra que se quedan marcados. */
@@ -26,6 +28,10 @@ export interface AccionesBarra {
   duplicar(): void;
   /** Pone o quita el candado del Modo cámara. */
   alternarModoCamara(): void;
+  /** Ir a la sección Capas (abre el menú en el móvil). */
+  abrirCapas(): void;
+  /** Pasar el objeto seleccionado a otra capa. */
+  moverACapa(capa: string): void;
 }
 
 export interface Barra {
@@ -110,7 +116,12 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   const btnDuplicar = boton('⧉', 'Duplicar (tecla D)', 'duplicar');
   const btnBorrar = boton('Borrar', 'Borrar', 'peligro');
   const btnSoltar = boton('✕', 'Deseleccionar');
-  barraObj.append(nombre, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
+  const selectorCapa = el('select', 'selector-capa');
+  selectorCapa.title = 'Capa del objeto (elige otra para pasarlo a ella)';
+  selectorCapa.setAttribute('aria-label', 'Capa del objeto');
+  selectorCapa.dataset.edicion = '';
+  selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
+  barraObj.append(nombre, selectorCapa, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
   // Botones que editan objetos: con el Modo cámara se ven apagados y avisan (ver main.ts)
   for (const b of [btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
   contenedor.append(barraObj);
@@ -146,6 +157,26 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   herramientas.append(etiquetaModo, btnDeshacer, btnRehacer, btnCaptura, btnCandado);
   contenedor.append(herramientas);
 
+  // Indicador compacto de la capa activa (siempre visible, también en el móvil)
+  const indicador = el('button', 'indicador-capa');
+  indicador.type = 'button';
+  const puntoCapa = el('span', 'punto-capa');
+  const textoCapa = el('span', 'texto-capa');
+  indicador.append(puntoCapa, textoCapa);
+  indicador.addEventListener('click', () => acciones.abrirCapas());
+  contenedor.append(indicador);
+  const pintarIndicador = () => {
+    const c = gestor.capas.capaActiva();
+    puntoCapa.style.background = c.color;
+    const estado = !c.visible ? ' · oculta' : c.bloqueada ? ' 🔒' : '';
+    textoCapa.textContent = `${c.nombre}${estado}`;
+    indicador.title = `Capa activa: ${c.nombre}${!c.visible ? ' (oculta)' : c.bloqueada ? ' (bloqueada)' : ''}. Toca para ver las capas`;
+    indicador.setAttribute('aria-label', indicador.title);
+    indicador.classList.toggle('no-editable', !gestor.capas.editable(c.id));
+  };
+  gestor.capas.alCambiar(pintarIndicador);
+  pintarIndicador();
+
   // Aviso flotante (p. ej. al tocar un botón de edición en Modo cámara)
   const avisoFlotante = el('div', 'aviso-flotante');
   avisoFlotante.hidden = true;
@@ -160,13 +191,17 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
     const enPared = sel?.colocacion === 'pared';
     btnIzq.hidden = btnDer.hidden = enPared;
     btnSubir.hidden = btnBajar.hidden = !enPared;
+    if (sel) {
+      rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
+      selectorCapa.value = sel.capa;
+    }
     nombre.textContent = !sel ? ''
       : enPared && sel.pared ? `${sel.item.nombre} · centro a ${m(sel.pared.y)} m`
         : `${sel.item.nombre} · ${Math.round(sel.rotacion)}°`;
     // Las herramientas suben para no quedar debajo de la barra del objeto (en el móvil)
     requestAnimationFrame(() => {
       const visible = barraObj.offsetParent !== null && barraObj.classList.contains('visible');
-      herramientas.style.bottom = visible ? `calc(${barraObj.offsetHeight + 20}px + env(safe-area-inset-bottom))` : '';
+      herramientas.style.bottom = indicador.style.bottom = visible ? `calc(${barraObj.offsetHeight + 20}px + env(safe-area-inset-bottom))` : '';
     });
   };
   gestor.alSeleccionar(actualizar);

@@ -12,10 +12,28 @@
 //     libre cercano o al suelo.
 //
 // Los objetos de pared y los apoyados no son obstáculo para los del suelo.
+//
+// CAPAS (fase 6): cada objeto pertenece a una capa (ver capas.ts).
+//   - Los de capas ocultas no se dibujan, no se seleccionan y no cuentan para
+//     choques ni como soporte. Los de capas bloqueadas se ven y cuentan para
+//     choques, pero no se pueden seleccionar ni mover.
+//   - Los choques se calculan entre objetos de capas visibles. Si al mostrar
+//     una capa o pasar un objeto a otra capa quedan objetos solapados, no se
+//     impide: se marcan en rojo translúcido (solapes()). Un objeto solapado se
+//     puede sacar del solape arrastrándolo, pero ningún arrastre o giro puede
+//     meterlo dentro de otro objeto con el que no estuviera ya solapado.
+//   - Objetos apoyados en un mueble de OTRA capa: siguen al mueble cuando se
+//     mueve o gira. Si el mueble se oculta (su capa se oculta), se quedan en
+//     su sitio, visibles, y se avisa (apoyadosSobreOcultos()). Si el mueble se
+//     borra (o se borra su capa), pasan a otro mueble cercano o al suelo,
+//     como siempre. Cambiar el mueble de capa no les afecta.
+//   - Al cargar una escena (o deshacer), cada objeto se coloca teniendo en
+//     cuenta solo los de SU capa, para que guardar y cargar no mueva nada.
 
 import * as THREE from 'three';
 import { alturaCentroDe, superficiesDe, type ItemCatalogo } from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
+import { GestorCapas, type Capa } from './capas';
 import {
   buscarEnCara, limitarAltura, puntoEnPared, validoEnPared, type CaraColgable, type RectPared,
 } from '../vivienda/colgar';
@@ -54,6 +72,8 @@ export interface ObjetoColocado {
   /** Giro alrededor del eje vertical, en grados [0, 360) (en el mundo). */
   rotacion: number;
   colocacion: EstadoColocacion;
+  /** Id de la capa a la que pertenece. */
+  capa: string;
   pared?: EnPared;
   apoyo?: Apoyo;
 }
@@ -76,7 +96,21 @@ export class GestorObjetos {
   /** Caras de pared donde se pueden colgar cosas. */
   readonly caras: CaraColgable[];
 
+  /** Capas de la escena (visibilidad, bloqueo, capa activa). */
+  readonly capas: GestorCapas;
+  /**
+   * Capa de los objetos que se crean ahora (null = la activa). Al cargar una
+   * escena se pone la de cada objeto.
+   */
+  capaNuevos: string | null = null;
+  /** Cargando una escena: cada objeto solo choca con los de su capa (visibles o no). */
+  cargando = false;
+
   private siguienteUid = 1;
+  /** Con qué objetos está solapado cada uno (se recalcula en cada notificar). */
+  private paresSolape = new Map<ObjetoColocado, Set<ObjetoColocado>>();
+  private marcasVisibles = true;
+  private materialSolape = new THREE.MeshBasicMaterial({ color: 0xe11d48, transparent: true, opacity: 0.35, depthWrite: false });
   /** Caja que resalta el objeto seleccionado. */
   private resaltado = new THREE.BoxHelper(new THREE.Object3D(), 0x2f7cf6);
   private oyentesCambio: Oyente[] = [];
@@ -89,8 +123,9 @@ export class GestorObjetos {
   /** Elementos fijos colgados (armarios altos, aire acondicionado): estorban a los muebles más altos que su base. */
   private colgados: { huella: Punto[]; base: number }[];
 
-  constructor(escena: THREE.Scene, espacio: EspacioLibre, caras: CaraColgable[] = [], fijos: Fijo[] = []) {
+  constructor(escena: THREE.Scene, espacio: EspacioLibre, caras: CaraColgable[] = [], fijos: Fijo[] = [], capas = new GestorCapas()) {
     this.escena = escena;
+    this.capas = capas;
     this.espacio = espacio;
     this.caras = caras;
     this.rectsFijos = rectsDeFijos(caras, fijos);
@@ -108,6 +143,7 @@ export class GestorObjetos {
 
   /** Avisa de un cambio. `guardar = false` sirve para cambios intermedios (arrastre). */
   notificar(guardar = true) {
+    this.actualizarSolapes();
     if (this.seleccionado) this.actualizarResaltado();
     for (const fn of this.oyentesSeleccion) fn();
     if (guardar) for (const fn of this.oyentesCambio) fn();
@@ -117,7 +153,9 @@ export class GestorObjetos {
 
   private async crear(item: ItemCatalogo): Promise<ObjetoColocado> {
     const raiz = await crearModelo(item);
-    const obj: ObjetoColocado = { uid: this.siguienteUid++, item, raiz, rotacion: 0, colocacion: 'suelo' };
+    const capa = this.capaNuevos ?? this.capas.activa;
+    const obj: ObjetoColocado = { uid: this.siguienteUid++, item, raiz, rotacion: 0, colocacion: 'suelo', capa };
+    raiz.visible = this.capas.visible(capa);
     raiz.userData.objeto = obj; // para encontrarlo al hacer clic
     return obj;
   }
@@ -243,9 +281,9 @@ export class GestorObjetos {
     this.notificar();
   }
 
-  /** Selecciona un objeto (o ninguno, con null). */
+  /** Selecciona un objeto (o ninguno, con null). Los de capas ocultas o bloqueadas no se pueden seleccionar. */
   seleccionar(obj: ObjetoColocado | null) {
-    this.seleccionado = obj;
+    this.seleccionado = obj && this.editable(obj) ? obj : null;
     this.actualizarResaltado();
     this.notificar(false);
   }
@@ -329,7 +367,7 @@ export class GestorObjetos {
   /** Rectángulos de los objetos colgados (menos `excepto`): los que no se pueden pisar en la pared. */
   rectsPared(excepto?: ObjetoColocado): RectPared[] {
     return this.objetos
-      .filter((o) => o !== excepto && o.colocacion === 'pared' && o.pared)
+      .filter((o) => o !== excepto && o.colocacion === 'pared' && o.pared && this.cuenta(o, excepto))
       .map((o): RectPared => ({ cara: o.pared!.cara, u: o.pared!.u, y: o.pared!.y, ancho: o.item.dimensiones.ancho, alto: o.item.dimensiones.alto }))
       .concat(this.rectsFijos);
   }
@@ -412,7 +450,8 @@ export class GestorObjetos {
 
   /** ¿Puede este objeto hacer de soporte? (los muebles de suelo que están en el suelo) */
   esSoporte(obj: ObjetoColocado): boolean {
-    return obj.item.colocacion === 'suelo' && obj.colocacion === 'suelo' && superficiesDe(obj.item).length > 0;
+    return obj.item.colocacion === 'suelo' && obj.colocacion === 'suelo' && superficiesDe(obj.item).length > 0
+      && (this.cargando || this.capas.visible(obj.capa));
   }
 
   /** Objetos apoyados sobre un mueble. */
@@ -448,7 +487,8 @@ export class GestorObjetos {
     const g = THREE.MathUtils.degToRad(giro);
     const { ancho, fondo } = item.dimensiones;
     const otros = this.objetos
-      .filter((o) => o !== excepto && o.colocacion === 'superficie' && o.apoyo?.soporte === soporte && Math.abs(o.apoyo.nivel - nivel) < 1e-6)
+      .filter((o) => o !== excepto && o.colocacion === 'superficie' && o.apoyo?.soporte === soporte && Math.abs(o.apoyo.nivel - nivel) < 1e-6
+        && this.cuenta(o, excepto) && !this.paresSolape.get(excepto!)?.has(o))
       .map((o) => huellaRectangulo(o.apoyo!.x, o.apoyo!.z, o.item.dimensiones.ancho, o.item.dimensiones.fondo, THREE.MathUtils.degToRad(o.apoyo!.giro)));
     const vale = (px: number, pz: number) => {
       const h = huellaRectangulo(px, pz, ancho, fondo, g);
@@ -575,6 +615,233 @@ export class GestorObjetos {
     }
   }
 
+  // --- Capas -----------------------------------------------------------------------------
+
+  /** ¿Se ve el objeto? (su capa está visible) */
+  visible(obj: ObjetoColocado) { return this.capas.visible(obj.capa); }
+  /** ¿Se puede seleccionar y mover? (su capa está visible y desbloqueada) */
+  editable(obj: ObjetoColocado) { return this.capas.editable(obj.capa); }
+
+  /** ¿Cuenta `o` como obstáculo para `para`? Al cargar, solo los de la misma capa; si no, los de capas visibles. */
+  private cuenta(o: ObjetoColocado, para?: ObjetoColocado) {
+    if (this.cargando) return o.capa === (para?.capa ?? this.capaNuevos ?? this.capas.activa);
+    return this.capas.visible(o.capa);
+  }
+
+  /** Objetos de una capa. */
+  deCapa(capa: string) { return this.objetos.filter((o) => o.capa === capa); }
+
+  /** Por qué no se puede añadir ahora a la capa activa (o null si se puede). */
+  puedeAnadir(): string | null {
+    const c = this.capas.capaActiva();
+    if (!c.visible) return `La capa activa "${c.nombre}" está oculta: muéstrala (👁) o elige otra capa para añadir objetos.`;
+    if (c.bloqueada) return `La capa activa "${c.nombre}" está bloqueada: desbloquéala (🔒) o elige otra capa para añadir objetos.`;
+    return null;
+  }
+
+  /**
+   * Tras cambiar la visibilidad o el bloqueo de las capas: oculta o muestra
+   * sus objetos, deselecciona si el seleccionado ya no se puede editar y
+   * recalcula los solapes.
+   */
+  actualizarCapas() {
+    for (const o of this.objetos) o.raiz.visible = this.visible(o);
+    if (this.seleccionado && !this.editable(this.seleccionado)) this.seleccionado = null;
+    this.actualizarResaltado();
+    this.notificar(false);
+  }
+
+  /**
+   * Pasa un objeto a otra capa (visible y desbloqueada). No se mueve: si
+   * queda solapado con algo, se marca en rojo. Devuelve false si no se puede.
+   */
+  ponerCapa(obj: ObjetoColocado, capa: string): boolean {
+    if (!this.capas.existe(capa) || !this.capas.editable(capa) || !this.objetos.includes(obj)) return false;
+    if (obj.capa === capa) return true;
+    obj.capa = capa;
+    obj.raiz.visible = this.visible(obj);
+    this.notificar();
+    return true;
+  }
+
+  /** Quita objetos de la escena; lo que otros tenían encima pasa a otro mueble cercano o al suelo. */
+  private quitarVarios(lista: ObjetoColocado[]) {
+    const quitar = new Set(lista);
+    for (const o of quitar) {
+      this.objetos.splice(this.objetos.indexOf(o), 1);
+      this.escena.remove(o.raiz);
+    }
+    for (const soporte of quitar) for (const a of this.apoyadosEn(soporte)) this.reubicar(a, soporte);
+    if (this.seleccionado && quitar.has(this.seleccionado)) this.seleccionado = null;
+    this.actualizarResaltado();
+  }
+
+  /** Borra una capa (no Base) con todos sus objetos. Se puede deshacer con el historial. */
+  borrarCapa(id: string): boolean {
+    if (!this.capas.existe(id) || id === 'base') return false;
+    this.quitarVarios(this.deCapa(id));
+    this.capas.quitar(id);
+    this.notificar();
+    return true;
+  }
+
+  /**
+   * Duplica una capa con todos sus objetos, en el mismo sitio. La copia queda
+   * visible, desbloqueada y activa, y la original se OCULTA (si no, todo
+   * quedaría solapado con su copia). Lo apoyado sobre un mueble de la capa
+   * va sobre la copia de ese mueble; lo apoyado en muebles de otras capas, sobre el mismo mueble.
+   */
+  async duplicarCapa(id: string): Promise<Capa | null> {
+    const origen = this.capas.get(id);
+    if (!origen) return null;
+    const fuente = this.deCapa(id);
+    const copia = this.capas.crearCopia(id)!;
+    this.capas.ponerVisible(id, false);
+    const orden = (o: ObjetoColocado) => (o.colocacion === 'suelo' ? 0 : o.colocacion === 'superficie' ? 1 : 2);
+    const copias = new Map<ObjetoColocado, ObjetoColocado>();
+    const anterior = this.capaNuevos;
+    this.capaNuevos = copia.id;
+    try {
+      for (const o of [...fuente].sort((a, b) => orden(a) - orden(b))) {
+        const c = await this.crear(o.item);
+        c.colocacion = o.colocacion;
+        c.raiz.position.copy(o.raiz.position);
+        this.aplicarRotacion(c, o.rotacion);
+        if (o.pared) c.pared = { ...o.pared };
+        if (o.apoyo) {
+          c.apoyo = { ...o.apoyo, soporte: copias.get(o.apoyo.soporte) ?? o.apoyo.soporte };
+          this.colocarApoyado(c);
+        }
+        this.alta(c);
+        copias.set(o, c);
+      }
+    } finally {
+      this.capaNuevos = anterior;
+    }
+    this.actualizarCapas();
+    this.notificar();
+    return copia;
+  }
+
+  /** Quita los objetos de las capas visibles y desbloqueadas (botón Vaciar). Devuelve cuántos. */
+  vaciarEditables(): number {
+    const lista = this.objetos.filter((o) => this.editable(o));
+    this.quitarVarios(lista);
+    this.notificar();
+    return lista.length;
+  }
+
+  /**
+   * Sustituye los objetos de una capa por los que ponga `colocar` (p. ej.
+   * restaurar la disposición original en Base) sin tocar las demás capas. Lo
+   * que otras capas tenían apoyado en un mueble de esta vuelve a apoyarse en
+   * el mismo mueble restaurado (mismo objeto del catálogo, a menos de 0,5 m),
+   * en el mismo sitio si cabe; si no, va a otro mueble cercano o al suelo.
+   */
+  async reemplazarCapa<T>(capa: string, colocar: () => Promise<T>): Promise<T> {
+    const viejos = this.deCapa(capa);
+    const fuera = this.objetos.filter((o) => o.capa !== capa && o.colocacion === 'superficie' && o.apoyo && viejos.includes(o.apoyo.soporte));
+    for (const o of viejos) {
+      this.objetos.splice(this.objetos.indexOf(o), 1);
+      this.escena.remove(o.raiz);
+    }
+    if (this.seleccionado && viejos.includes(this.seleccionado)) this.seleccionado = null;
+    const resultado = await colocar();
+    for (const a of fuera) {
+      const viejo = a.apoyo!.soporte;
+      const nuevo = this.deCapa(capa)
+        .filter((o) => o.item.id === viejo.item.id && o.colocacion === 'suelo')
+        .map((o) => ({ o, d: o.raiz.position.distanceTo(viejo.raiz.position) }))
+        .sort((p, q) => p.d - q.d)[0];
+      const sitio = nuevo && nuevo.d < 0.5
+        ? this.sitioEnSoporte(a.item, nuevo.o, a.apoyo!.nivel, a.apoyo!.x, a.apoyo!.z, a.apoyo!.giro, a)
+        : null;
+      if (nuevo && sitio) this.ponerSobre(a, { ...a.apoyo!, soporte: nuevo.o, ...sitio });
+      else this.reubicar(a, viejo);
+    }
+    this.actualizarCapas();
+    this.notificar();
+    return resultado;
+  }
+
+  /** Objetos visibles apoyados en un mueble de una capa oculta (se quedan en su sitio). */
+  apoyadosSobreOcultos(): ObjetoColocado[] {
+    return this.objetos.filter((o) => this.visible(o) && o.colocacion === 'superficie' && o.apoyo && !this.visible(o.apoyo.soporte));
+  }
+
+  // --- Solapes ---------------------------------------------------------------------------
+
+  /** Objetos (de capas visibles) solapados con algún otro. Se marcan en rojo translúcido. */
+  solapes(): ObjetoColocado[] {
+    return this.objetos.filter((o) => this.paresSolape.has(o));
+  }
+
+  /** Calcula qué objetos visibles se solapan: en el suelo, en la misma pared o sobre la misma tapa. */
+  calcularSolapes(): Map<ObjetoColocado, Set<ObjetoColocado>> {
+    const pares = new Map<ObjetoColocado, Set<ObjetoColocado>>();
+    const anotar = (a: ObjetoColocado, b: ObjetoColocado) => {
+      if (!pares.has(a)) pares.set(a, new Set());
+      if (!pares.has(b)) pares.set(b, new Set());
+      pares.get(a)!.add(b);
+      pares.get(b)!.add(a);
+    };
+    const vis = this.objetos.filter((o) => this.visible(o));
+    // En el suelo: huellas (con 1 mm de holgura por lado, como en los choques)
+    const suelo = vis.filter((o) => o.colocacion === 'suelo').map((o) => {
+      const h = this.huella(o);
+      return { o, h: encoger(huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro) as Punto[], HOLGURA) };
+    });
+    for (let i = 0; i < suelo.length; i++) {
+      for (let j = i + 1; j < suelo.length; j++) {
+        if (convexosSeSolapan(suelo[i].h, suelo[j].h)) anotar(suelo[i].o, suelo[j].o);
+      }
+    }
+    // En la pared: rectángulos en la misma cara
+    const pared = vis.filter((o) => o.colocacion === 'pared' && o.pared);
+    for (let i = 0; i < pared.length; i++) {
+      for (let j = i + 1; j < pared.length; j++) {
+        const a = pared[i], b = pared[j];
+        if (a.pared!.cara !== b.pared!.cara) continue;
+        const du = Math.abs(a.pared!.u - b.pared!.u), dy = Math.abs(a.pared!.y - b.pared!.y);
+        if (du < (a.item.dimensiones.ancho + b.item.dimensiones.ancho) / 2 - HOLGURA
+          && dy < (a.item.dimensiones.alto + b.item.dimensiones.alto) / 2 - HOLGURA) anotar(a, b);
+      }
+    }
+    // Sobre la misma tapa o balda
+    const encima = vis.filter((o) => o.colocacion === 'superficie' && o.apoyo).map((o) => {
+      const a = o.apoyo!;
+      return { o, a, h: encoger(huellaRectangulo(a.x, a.z, o.item.dimensiones.ancho, o.item.dimensiones.fondo, THREE.MathUtils.degToRad(a.giro)) as Punto[], HOLGURA) };
+    });
+    for (let i = 0; i < encima.length; i++) {
+      for (let j = i + 1; j < encima.length; j++) {
+        const p = encima[i], q = encima[j];
+        if (p.a.soporte === q.a.soporte && Math.abs(p.a.nivel - q.a.nivel) < 1e-6 && convexosSeSolapan(p.h, q.h)) anotar(p.o, q.o);
+      }
+    }
+    return pares;
+  }
+
+  private actualizarSolapes() {
+    this.paresSolape = this.calcularSolapes();
+    for (const o of this.objetos) this.marcar(o, this.paresSolape.has(o));
+  }
+
+  /** Pone o quita la caja roja translúcida de un objeto solapado. */
+  private marcar(obj: ObjetoColocado, solapado: boolean) {
+    let marca = obj.raiz.userData.marcaSolape as THREE.Mesh | undefined;
+    if (solapado && !marca) {
+      const { ancho, fondo, alto } = obj.item.dimensiones;
+      marca = new THREE.Mesh(new THREE.BoxGeometry(ancho + 0.02, alto + 0.02, fondo + 0.02), this.materialSolape);
+      marca.name = 'marca-solape';
+      marca.position.y = alto / 2;
+      marca.renderOrder = 10;
+      marca.raycast = () => {}; // no se puede tocar: el clic va al objeto
+      obj.raiz.add(marca);
+      obj.raiz.userData.marcaSolape = marca;
+    }
+    if (marca) marca.visible = solapado && this.marcasVisibles;
+  }
+
   // --- Varios -----------------------------------------------------------------------------
 
   /** Busca el objeto al que pertenece una malla (la que devuelve el raycaster). */
@@ -597,8 +864,10 @@ export class GestorObjetos {
    */
   obstaculos(excepto?: ObjetoColocado): Obstaculo[] {
     const alto = excepto ? excepto.item.dimensiones.alto : Infinity;
+    // Con los que ya estaba solapado no choca (para poder sacarlo del solape)
+    const yaSolapados = excepto ? this.paresSolape.get(excepto) : undefined;
     return this.objetos
-      .filter((o) => o !== excepto && o.colocacion === 'suelo')
+      .filter((o) => o !== excepto && o.colocacion === 'suelo' && this.cuenta(o, excepto) && !yaSolapados?.has(o))
       .map((o) => {
         const h = this.huella(o);
         return huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro) as Punto[];
@@ -620,6 +889,8 @@ export class GestorObjetos {
   /** Oculta (false) o vuelve a mostrar la caja del seleccionado (p. ej. para hacer una captura). */
   mostrarResaltado(visible: boolean) {
     this.resaltado.visible = visible && !!this.seleccionado;
+    this.marcasVisibles = visible;
+    for (const o of this.objetos) this.marcar(o, this.paresSolape.has(o));
   }
 
   private actualizarResaltado() {

@@ -15,6 +15,7 @@ Un PR por parte, cada una publicada al terminarla.
 | Parte | Estado | Detalle |
 |---|---|---|
 | A. Modo cámara | **Hecho** | Candado 🔓/🔒 junto a ↶ ↷ 📷 (también en el móvil). Cerrado: botón naranja y etiqueta *Modo cámara*; clics, arrastres y toques solo mueven la cámara (girar, zoom, desplazar), no se selecciona ni resalta nada, Supr/D/Q/E/Ctrl+Z no hacen nada y los botones de edición se ven apagados y avisan con un mensaje flotante. Al ponerlo se deselecciona. Se recuerda (`localStorage`, clave `casa3d:modoCamara`); por defecto, quitado. |
+| B. Capas | **Hecho** | Lista ordenada de capas con Base fija (no se borra ni renombra, empieza bloqueada, lleva la casa amueblada). Nombre, ojo, candado y color por capa; crear ("Capa 2"…), renombrar, duplicar (con sus objetos), borrar (doble toque, con deshacer), reordenar, mostrar/ocultar, bloquear. Capa activa (destino de añadir y duplicar; avisa si está oculta o bloqueada), indicador siempre visible abajo a la izquierda. Ocultas: no se dibujan, seleccionan ni chocan; bloqueadas: se ven y chocan pero no se cogen. Pasar un objeto de capa desde el panel o la barra del móvil. Solapes entre capas marcados en rojo translúcido con aviso; arrastrar sigue sin meter un objeto en otro. Restaurar solo toca Base. Escena v6 (migración desde v5: todo a Base), autoguardado, Guardar/Cargar y deshacer cubren las capas. |
 
 ### Comprobaciones (parte A)
 
@@ -27,6 +28,22 @@ Un PR por parte, cada una publicada al terminarla.
 - Con el candado tampoco funcionan **deshacer y rehacer** (cambiarían objetos). Los acabados (suelo, pintura), luces, puertas, cortinas y vistas siguen funcionando: no son objetos.
 - *Cargar*, *Vaciar* y *Restaurar* también se bloquean (añaden o quitan objetos). *Guardar* y la imagen 📷, no.
 - Los botones bloqueados no se desactivan del todo (`aria-disabled` y aspecto apagado) para poder avisar al tocarlos.
+
+### Comprobaciones (parte B)
+
+- `npm test`: 273 tests en verde; nuevos en `tests/capas.test.ts` (28): lista de capas, capa activa, visibilidad, bloqueo, solapes entre capas (suelo y pared), sacar del solape sin meterse en otro, pasar a otra capa, apoyados en muebles de otra capa, duplicar, borrar con deshacer y rehacer, Vaciar, restaurar solo Base, migración v5 → v6, ida y vuelta al guardar y cargar. Los tests de migración anteriores pasan a esperar v6.
+- Navegador, escritorio (versión compilada): al empezar Base está bloqueada (el sofá no se selecciona ni se arrastra y se explica por qué); no se puede añadir a Base bloqueada; *＋ Nueva* crea "Capa 2" activa y el catálogo añade a ella; selector de capa con Base desactivada mientras está bloqueada; pasar la mesa a Base y volver; ocultar Base (no se ve ni se selecciona); mesa en el sitio del sofá oculto y al mostrar Base, 2 objetos en rojo con aviso en el panel y aviso flotante; arrastrar la mesa la saca del solape (hacia la mesa de centro no la deja); renombrar, subir y bajar, duplicar (original oculta), borrar con doble toque y deshacer; *Restaurar* devuelve Base a 43 sin tocar las otras capas; al recargar se recuperan las capas y sus objetos; en Modo cámara funcionan el ojo y la capa activa, pero no *Nueva* ni los candados.
+- Navegador, móvil emulado con toques reales: indicador visible; tocarlo abre el menú en *Capas*; *Nueva* y añadir con el dedo; barra del objeto con el selector de capa; la mesa de Capa 2 se arrastra y el sofá de Base (bloqueada) no; el ojo con el dedo. Sin errores de consola. Capturas revisadas.
+
+### Decisiones (parte B)
+
+- **Regla de los apoyados en un mueble de otra capa:** siguen al mueble; si se oculta, se quedan en su sitio (visibles) con aviso; cambiar el mueble de capa no les afecta; si se borra, van a otro mueble o al suelo como siempre.
+- **Duplicar una capa oculta la original** (si no, todo quedaría solapado con su copia) y deja activa la copia.
+- **Pasar un objeto de capa** solo a capas visibles y desbloqueadas (igual que añadir).
+- **Vaciar** quita solo lo de capas visibles y desbloqueadas. **Restaurar** funciona aunque Base esté bloqueada u oculta (es justo para esa capa) y no cambia su visibilidad ni su bloqueo.
+- El **orden** de las capas es solo el de la lista (no cambia nada en 3D). Base también se puede reordenar.
+- Al cargar o deshacer, cada objeto solo choca con los de su capa, para que no se mueva nada (los solapes entre capas se conservan y se marcan).
+- Tocar un objeto de una capa bloqueada (sin arrastrar) muestra un aviso que dice cómo desbloquearla, porque Base empieza bloqueada.
 
 ---
 
