@@ -1,0 +1,17 @@
+{
+  "nombre": "Mueble cafetera (coffee corner)",
+  "categoria": "Cocina",
+  "dimensiones": {
+    "ancho": 0.48,
+    "fondo": 0.33,
+    "alto": 1.345
+  },
+  "superficies": [
+    0.1,
+    0.366,
+    0.795,
+    1.345
+  ],
+  "medidas": "estimadas",
+  "glb": "coffee-corner.glb"
+}

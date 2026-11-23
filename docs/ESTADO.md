@@ -1,10 +1,44 @@
 # Estado del proyecto
 
-Última actualización: 10 de noviembre de 2026, tras los ajustes con las
-fotos de cerca de la cocina y del dormitorio (después de la fase 3c). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 23 de noviembre de 2026, tras el lote 4 del catálogo
+(zapatero y coffee corner). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
+
+---
+
+## Lote 4: zapatero y coffee corner
+
+Dos muebles nuevos en el catálogo a partir de dos fotos de producto con sus
+medidas, con el mismo método que los lotes 1 y 2: script reutilizable
+`scripts/catalogo-lote4.mjs` (`npm run catalogo:lote4`), un `.glb`, un `.json`
+y una miniatura por objeto en su carpeta de categoría, y su tabla en
+[`OBJETOS.md`](OBJETOS.md). **Solo están en el catálogo**: la escena inicial y
+los muebles, acabados y fijos existentes no cambian.
+
+| Objeto | Medidas | Detalle |
+|---|---|---|
+| Zapatero blanco y roble (`almacenaje/zapatero`) | 0,60 × 0,22 × 1,13 m | Tapa, costados y zócalo retranqueado en Roble Canadian con veta; 3 trampillas en blanco brillo con tirador de aluminio en el canto de arriba. Suelo; admite cosas encima (1,13 m). 216 triángulos, 19 KB. |
+| Mueble cafetera (coffee corner) (`cocina/coffee-corner`) | 0,48 × 0,33 × 1,345 m | Tubo negro y madera rústica: baldas de 40 × 30 a 0,10 y 0,366 m, encimera de 48 × 33 a 0,795 m con cajón y tirador de concha, estante de 43 × 12 a 1,345 m sobre los postes de atrás, 3 barras y 8 ganchos en S. Sin la decoración de la foto. Suelo; superficies 0,10 / 0,366 / 0,795 / 1,345 m. 2.504 triángulos, 74 KB. |
+
+### Comprobaciones (lote 4)
+
+- Caja envolvente comprobada al generar (medidas exactas, centrado en la base, frente a +Z).
+- `npm test`: 237 tests en verde; nuevos: medidas, categoría, colocación y superficies de los dos, y en la app una planta encima del zapatero, un jarrón en la encimera del coffee corner y la tele que no cabe en la balda del medio. Los dos entran en las comprobaciones comunes del catálogo (origen, menos de 20.000 triángulos, menos de 300 KB, como mucho 2 texturas).
+- Vistas de frente, de lado, de atrás y en 3/4 como la foto, comparadas con las fotos: ajustados el color del roble y de la madera rústica (más oscura), las juntas entre trampillas y el tirador.
+- Navegador (escritorio y móvil emulado): el buscador encuentra los dos con su miniatura, se añaden al salón, se ven en planta y en la vista interior; sin errores en la consola.
+
+### Decisiones (lote 4)
+
+- "¿Es soporte? no / ¿se puede poner algo encima? sí" del zapatero: se entiende como mueble **de suelo** (no va encima de otro) que **admite cosas encima** (superficie a 1,13 m).
+- Coffee corner: de suelo, y admite cosas en sus 4 niveles. Carpeta y categoría nuevas **`cocina/` · Cocina**; el zapatero va en **Almacenaje**.
+- Coffee corner: las medidas de la foto mandan (encimera 48 × 33 a 79,5 cm, alto 134,5, estante de 43 × 12, baldas 40 × 30 con 30 y 25 cm de hueco); lo demás (balda de abajo a 10 cm, cajón de 11 cm, barras) es estimado. Se dejan los ganchos (vienen con el mueble) y se quita la cinta antivuelco a la pared, que sobresaldría por detrás.
+- Script llamado **lote 4** porque el "lote 3" fue la escena inicial amueblada (sin objetos nuevos).
+
+### Limitaciones (lote 4)
+
+- La app solo mira la distancia entre superficies: en la balda del medio del coffee corner cree que hay 43 cm hasta la encimera, aunque el cajón deja 30 cm. Y el estante de arriba mide solo 12 cm de fondo, pero la app deja apoyar en él objetos más grandes.
 
 ---
 

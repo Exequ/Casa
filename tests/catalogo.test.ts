@@ -49,7 +49,8 @@ const LOTE2 = [
   'pared/cuadro-marco-gris', 'pared/marco-madera', 'exterior/mesa-balcon', 'exterior/silla-balcon',
   'decoracion/planta-pequena', 'tendedero/lavadora',
 ];
-const REALES = [...LOTE1, ...LOTE2];
+const LOTE4 = ['almacenaje/zapatero', 'cocina/coffee-corner'];
+const REALES = [...LOTE1, ...LOTE2, ...LOTE4];
 
 const io = new NodeIO();
 /** Caja envolvente, triángulos y tamaño de un .glb. */
@@ -202,5 +203,36 @@ describe('lote 2: dormitorio, balcón y tendedero', () => {
     // La lavadora, en el tendedero
     const lav = (await gestor.agregar(item('tendedero/lavadora'), 1.1, 5.5))!;
     expect(lav).not.toBeNull();
+  });
+});
+
+describe('lote 4: zapatero y coffee corner', () => {
+  const items = leerCatalogo();
+  const item = (id: string) => items.find((i) => i.id === id)!;
+
+  it('medidas de las fotos, en el suelo y con sus superficies', () => {
+    expect(item('almacenaje/zapatero').dimensiones).toEqual({ ancho: 0.6, fondo: 0.22, alto: 1.13 });
+    expect(item('almacenaje/zapatero').categoria).toBe('Almacenaje');
+    expect(superficiesDe(item('almacenaje/zapatero'))).toEqual([1.13]);
+    expect(item('cocina/coffee-corner').dimensiones).toEqual({ ancho: 0.48, fondo: 0.33, alto: 1.345 });
+    expect(item('cocina/coffee-corner').categoria).toBe('Cocina');
+    // Balda de abajo, balda del medio (25 cm de hueco), encimera a 79,5 cm y estante de arriba a 134,5 cm
+    expect(superficiesDe(item('cocina/coffee-corner'))).toEqual([0.1, 0.366, 0.795, 1.345]);
+    for (const id of LOTE4) expect(item(id).colocacion, id).toBe('suelo');
+  });
+
+  it('en la app: se puede poner algo encima del zapatero y en la encimera del coffee corner', async () => {
+    const vivienda = datos as Vivienda;
+    const gestor = new GestorObjetos(new THREE.Scene(), new EspacioLibre(vivienda), carasColgables(vivienda));
+    const zap = (await gestor.agregar(item('almacenaje/zapatero'), 3, 1.7))!;
+    expect(zap).not.toBeNull();
+    expect(gestor.esSoporte(zap)).toBe(true);
+    expect((await gestor.agregarSobre(item('decoracion/planta-pequena'), zap, 1.13, 3, 1.7))?.raiz.position.y).toBe(1.13);
+    const cafe = (await gestor.agregar(item('cocina/coffee-corner'), 4.5, 0.6))!;
+    expect(cafe).not.toBeNull();
+    expect(gestor.esSoporte(cafe)).toBe(true);
+    expect((await gestor.agregarSobre(item('jarron'), cafe, 0.795, 4.5, 0.6))?.raiz.position.y).toBe(0.795);
+    // En la balda del medio la tele (48 cm) no cabe: la app mide hasta la encimera (43 cm), no hasta el cajón (30 cm)
+    expect(gestor.sitioEnSoporte(item('electronica/television'), cafe, 0.366, 0, 0, 0)).toBeNull();
   });
 });
