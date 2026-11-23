@@ -40,11 +40,15 @@ Todas las medidas están en **metros**, a escala real.
   frigorífico, fregadero, lavavajillas, horno, placa y campana), el **baño**, el
   **armario empotrado** y el **aire acondicionado**. Son parte de la vivienda:
   no se mueven ni se borran y los muebles no pueden atravesarlos.
-- **Ajustes con fotos de cerca (actual):** cocina como en las fotos nuevas
+- **Ajustes con fotos de cerca:** cocina como en las fotos nuevas
   (fregadero junto al frigorífico y luego el lavavajillas, horno y campana
   alineados, pared lisa entre muebles) y dormitorio completo: una mesita con
   lámpara a cada lado de la cama, puf de borreguito, cuadro plateado, y la
   cómoda y sus marcos mirando hacia las mesitas.
+- **Lote 4 (actual):** dos muebles nuevos en el catálogo, sacados de fotos de
+  producto con sus medidas: un **zapatero** blanco brillo y roble de 3
+  trampillas y un **coffee corner** (mueble cafetera) de tubo negro y madera
+  rústica. Solo están en el catálogo: no se colocan en la casa.
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -70,6 +74,7 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run catalogo:ejemplos` | Regenera los objetos de ejemplo del catálogo (mesa, armario y los provisionales de decoración) |
 | `npm run catalogo:lote1` | Regenera los muebles reales del lote 1 (salón y pasillo) y su tabla de `docs/OBJETOS.md`; respeta las medidas corregidas en los `.json` (con `-- --reiniciar`, no) |
 | `npm run catalogo:lote2` | Igual, para el lote 2 (dormitorio, balcón y tendedero) |
+| `npm run catalogo:lote4` | Igual, para el lote 4 (zapatero y coffee corner) |
 | `npm run escena:inicial` | Regenera `data/escena-inicial.json` (la casa amueblada como en las fotos) desde `scripts/escena-inicial.mjs` |
 | `npm run catalogo:miniaturas` | Dibuja las miniaturas PNG del catálogo (necesita Playwright con Chromium); con `-- sofas/sillon` solo esa, con `-- --vistas carpeta` además 3 vistas grandes de cada objeto para revisarlo |
 

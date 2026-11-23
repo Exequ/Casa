@@ -1,8 +1,9 @@
 # Objetos del catálogo
 
 Muebles reales del piso, generados por scripts a partir de las fotos:
-`scripts/catalogo-lote1.mjs` (salón y pasillo) y `scripts/catalogo-lote2.mjs`
-(dormitorio, balcón y tendedero). Los objetos de ejemplo de las fases 1 y 4
+`scripts/catalogo-lote1.mjs` (salón y pasillo), `scripts/catalogo-lote2.mjs`
+(dormitorio, balcón y tendedero) y `scripts/catalogo-lote4.mjs` (zapatero y
+coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 `catalogo/`.
 
@@ -15,7 +16,7 @@ Muebles reales del piso, generados por scripts a partir de las fotos:
 3. Pon `"medidas": "confirmadas"` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`), las
+ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`), las
 medidas de los `.json` existentes se respetan (salvo con `-- --reiniciar`)
 y estas tablas se regeneran con ellas.
 
@@ -75,6 +76,20 @@ y la tarima como referencia.
 | Planta pequeña en maceta blanca (`decoracion/planta-pequena`) | 0,2 × 0,2 × 0,3 | colocación: superficie | Las del encargo (maceta de 13 cm de alto). | Mata redonda de hojas pequeñas verde claro en maceta cilíndrica blanca (en la mesa del balcón y en las mesitas del salón). | estimada | 3032 |
 | Lavadora de carga frontal (`tendedero/lavadora`) | 0,6 × 0,55 × 0,85 | colocación: suelo; superficies: 0,85 m | Las del encargo (medidas estándar). No sale en las fotos. | No sale en las fotos: modelo genérico blanco con puerta redonda y panel de mandos. | estimada | 1240 |
 <!-- fin:lote2 -->
+
+<!-- inicio:lote4 -->
+## Lote 4: zapatero y coffee corner
+
+Hecho a partir de las fotos de producto (con sus medidas) del encargo.
+Las medidas exteriores son las de las fotos; las interiores y los detalles,
+**estimados** a partir de ellas. Solo están en el catálogo: no se colocan en
+la casa.
+
+| Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
+|---|---|---|---|---|---|---:|
+| Zapatero blanco y roble (`almacenaje/zapatero`) | 0,6 × 0,22 × 1,13 | colocación: suelo; superficies: 1,13 m | Las de la foto (60 × 22 × 113 cm). Mías: tapa de 2 cm, costados de 1,6 cm, zócalo retranqueado de 2,2 cm y tres trampillas iguales de unos 36 cm. | Estructura (tapa, costados y zócalo) en Roble Canadian claro con veta; tres trampillas en blanco brillo entre los costados, enrasadas con su canto, con el tirador de aluminio en el canto de arriba de cada una. | estimada | 216 |
+| Mueble cafetera (coffee corner) (`cocina/coffee-corner`) | 0,48 × 0,33 × 1,345 | colocación: suelo; superficies: 0,1 / 0,366 / 0,795 / 1,345 m | Las de la foto: encimera de 48 × 33 a 79,5 cm, estante de 43 × 12 a 134,5 cm (55 cm sobre la encimera), baldas de 40 × 30 con 30 y 25 cm de hueco. Mías: balda de abajo a 10 cm, cajón de 11 cm, tubo de 2,2 cm y barras a 1,275 / 1,19 / 0,92 m. | Tubo negro mate y tableros de madera rústica marrón; cajón con tirador de concha negro; 8 ganchos en S en las dos barras de arriba. Sin la decoración de la foto (cafetera, tazas, botellas, tarros, bolsas) ni la cinta antivuelco a la pared. | estimada | 2504 |
+<!-- fin:lote4 -->
 
 <!-- inicio:z-fijos -->
 ## Elementos fijos

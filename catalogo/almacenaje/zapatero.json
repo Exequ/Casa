@@ -1,0 +1,14 @@
+{
+  "nombre": "Zapatero blanco y roble",
+  "categoria": "Almacenaje",
+  "dimensiones": {
+    "ancho": 0.6,
+    "fondo": 0.22,
+    "alto": 1.13
+  },
+  "superficies": [
+    1.13
+  ],
+  "medidas": "estimadas",
+  "glb": "zapatero.glb"
+}
