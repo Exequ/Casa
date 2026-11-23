@@ -1,7 +1,8 @@
 // Barras flotantes sobre la vista 3D:
 //   - Barra superior: menú (móvil), selector de estancia, vistas (planta,
 //     interior, plano) e interruptores (luces, puertas, cortinas).
-//   - Herramientas (abajo a la derecha): deshacer, rehacer e imagen de la vista.
+//   - Herramientas (abajo a la derecha): deshacer, rehacer, imagen de la vista
+//     y el candado del Modo cámara (con su etiqueta encima cuando está puesto).
 //   - Barra del objeto (móvil): girar (o subir y bajar si es de pared),
 //     duplicar y borrar el objeto seleccionado.
 
@@ -23,6 +24,8 @@ export interface AccionesBarra {
   /** Descargar una imagen de la vista actual. */
   captura(): void;
   duplicar(): void;
+  /** Pone o quita el candado del Modo cámara. */
+  alternarModoCamara(): void;
 }
 
 export interface Barra {
@@ -34,6 +37,10 @@ export interface Barra {
   marcar(cual: Interruptor, activo: boolean): void;
   /** Activa o desactiva los botones de deshacer y rehacer. */
   historial(puedeDeshacer: boolean, puedeRehacer: boolean): void;
+  /** Muestra el candado cerrado (Modo cámara) o abierto. */
+  modoCamara(activo: boolean): void;
+  /** Aviso breve flotante sobre la vista (se va solo). */
+  aviso(texto: string): void;
 }
 
 /** Paso de los botones ▲ ▼ de altura de los objetos de pared (m). */
@@ -104,6 +111,8 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   const btnBorrar = boton('Borrar', 'Borrar', 'peligro');
   const btnSoltar = boton('✕', 'Deseleccionar');
   barraObj.append(nombre, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
+  // Botones que editan objetos: con el Modo cámara se ven apagados y avisan (ver main.ts)
+  for (const b of [btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
   contenedor.append(barraObj);
 
   btnIzq.addEventListener('click', () => gestor.seleccionado && gestor.girar(gestor.seleccionado, 15));
@@ -126,8 +135,24 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   btnDeshacer.addEventListener('click', () => acciones.deshacer());
   btnRehacer.addEventListener('click', () => acciones.rehacer());
   btnCaptura.addEventListener('click', () => acciones.captura());
-  herramientas.append(btnDeshacer, btnRehacer, btnCaptura);
+  btnDeshacer.dataset.edicion = btnRehacer.dataset.edicion = '';
+  // Candado del Modo cámara: cerrado = solo se mueve la cámara
+  const btnCandado = boton('🔓', '', 'candado');
+  btnCandado.setAttribute('aria-pressed', 'false');
+  btnCandado.addEventListener('click', () => acciones.alternarModoCamara());
+  const etiquetaModo = el('span', 'etiqueta-modo', '🔒 Modo cámara');
+  etiquetaModo.hidden = true;
+  etiquetaModo.setAttribute('role', 'status');
+  herramientas.append(etiquetaModo, btnDeshacer, btnRehacer, btnCaptura, btnCandado);
   contenedor.append(herramientas);
+
+  // Aviso flotante (p. ej. al tocar un botón de edición en Modo cámara)
+  const avisoFlotante = el('div', 'aviso-flotante');
+  avisoFlotante.hidden = true;
+  avisoFlotante.setAttribute('role', 'status');
+  avisoFlotante.setAttribute('aria-live', 'polite');
+  document.body.append(avisoFlotante);
+  let temporizadorAviso: number | undefined;
 
   const actualizar = () => {
     const sel = gestor.seleccionado;
@@ -154,6 +179,28 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
     historial(puedeDeshacer, puedeRehacer) {
       btnDeshacer.disabled = !puedeDeshacer;
       btnRehacer.disabled = !puedeRehacer;
+    },
+    modoCamara(activo) {
+      btnCandado.textContent = activo ? '🔒' : '🔓';
+      btnCandado.classList.toggle('activo', activo);
+      btnCandado.setAttribute('aria-pressed', String(activo));
+      const titulo = activo
+        ? 'Modo cámara puesto: solo se mueve la cámara. Toca para volver a editar'
+        : 'Modo cámara: bloquear la edición para mover solo la cámara';
+      btnCandado.title = titulo;
+      btnCandado.setAttribute('aria-label', titulo);
+      etiquetaModo.hidden = !activo;
+      document.body.classList.toggle('modo-camara', activo);
+      for (const b of document.querySelectorAll<HTMLElement>('[data-edicion]')) {
+        if (activo) b.setAttribute('aria-disabled', 'true');
+        else b.removeAttribute('aria-disabled');
+      }
+    },
+    aviso(texto) {
+      avisoFlotante.textContent = texto;
+      avisoFlotante.hidden = false;
+      clearTimeout(temporizadorAviso);
+      temporizadorAviso = window.setTimeout(() => { avisoFlotante.hidden = true; }, 2800);
     },
   };
 }

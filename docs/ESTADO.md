@@ -1,10 +1,32 @@
 # Estado del proyecto
 
-Última actualización: 23 de noviembre de 2026, tras el lote 4 del catálogo
-(zapatero y coffee corner). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 23 de noviembre de 2026, fase 6 (Modo cámara, capas y
+catálogo plegable). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
+
+---
+
+## Fase 6: bloqueo de edición, capas y catálogo
+
+Un PR por parte, cada una publicada al terminarla.
+
+| Parte | Estado | Detalle |
+|---|---|---|
+| A. Modo cámara | **Hecho** | Candado 🔓/🔒 junto a ↶ ↷ 📷 (también en el móvil). Cerrado: botón naranja y etiqueta *Modo cámara*; clics, arrastres y toques solo mueven la cámara (girar, zoom, desplazar), no se selecciona ni resalta nada, Supr/D/Q/E/Ctrl+Z no hacen nada y los botones de edición se ven apagados y avisan con un mensaje flotante. Al ponerlo se deselecciona. Se recuerda (`localStorage`, clave `casa3d:modoCamara`); por defecto, quitado. |
+
+### Comprobaciones (parte A)
+
+- `npm test`: tests nuevos en `tests/modo-camara.test.ts` (estado por defecto, recuerdo entre visitas, almacenamiento roto, teclas bloqueadas y no bloqueadas).
+- Navegador, escritorio: sin candado el clic selecciona; al ponerlo se deselecciona; arrastrar sobre el sofá no lo mueve y gira la cámara; clic sobre un objeto no lo selecciona; rueda = zoom y botón derecho = desplazar; Supr, D, Q, E y Ctrl+Z no cambian nada y avisan; el catálogo y *Restaurar* no actúan; recargar mantiene el candado; quitarlo vuelve a dejar arrastrar.
+- Navegador, móvil emulado (Pixel 7) con toques reales (CDP): arrastrar con el dedo sobre el sofá, la mesa de centro y la cama no los mueve y gira la cámara; pellizco = zoom; el aviso se ve por encima del cajón del menú. Capturas revisadas.
+
+### Decisiones (parte A)
+
+- Con el candado tampoco funcionan **deshacer y rehacer** (cambiarían objetos). Los acabados (suelo, pintura), luces, puertas, cortinas y vistas siguen funcionando: no son objetos.
+- *Cargar*, *Vaciar* y *Restaurar* también se bloquean (añaden o quitan objetos). *Guardar* y la imagen 📷, no.
+- Los botones bloqueados no se desactivan del todo (`aria-disabled` y aspecto apagado) para poder avisar al tocarlos.
 
 ---
 

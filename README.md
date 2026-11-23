@@ -45,10 +45,12 @@ Todas las medidas están en **metros**, a escala real.
   alineados, pared lisa entre muebles) y dormitorio completo: una mesita con
   lámpara a cada lado de la cama, puf de borreguito, cuadro plateado, y la
   cómoda y sus marcos mirando hacia las mesitas.
-- **Lote 4 (actual):** dos muebles nuevos en el catálogo, sacados de fotos de
+- **Lote 4:** dos muebles nuevos en el catálogo, sacados de fotos de
   producto con sus medidas: un **zapatero** blanco brillo y roble de 3
   trampillas y un **coffee corner** (mueble cafetera) de tubo negro y madera
   rústica. Solo están en el catálogo: no se colocan en la casa.
+- **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
+  mover solo la cámara).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -96,9 +98,20 @@ Abre <http://localhost:5173> en el navegador.
 
 Los interruptores (luces, puertas, cortinas) se guardan con la escena.
 
-**Herramientas** (abajo a la derecha): **↶ deshacer**, **↷ rehacer** y
+**Herramientas** (abajo a la derecha): **↶ deshacer**, **↷ rehacer**,
 **📷 imagen**, que descarga un PNG de lo que se ve, sin barras, etiquetas ni
-caja de selección.
+caja de selección, y el **candado 🔓/🔒 del Modo cámara**.
+
+**Modo cámara (candado):** con el candado cerrado (botón naranja y etiqueta
+*Modo cámara* encima), los clics, arrastres y toques **solo mueven la cámara**
+(girar, zoom y desplazar, con los mismos gestos de siempre): no se
+selecciona, mueve, gira, borra, duplica ni añade ningún objeto, no se resaltan
+al pasar el ratón y las teclas de edición (`Supr`, `D`, `Q`/`E`, `Ctrl+Z`…)
+no hacen nada. Los botones de edición (catálogo, girar, duplicar, borrar,
+deshacer, rehacer, cargar, vaciar y restaurar) se ven apagados y, si se tocan,
+avisan. Al ponerlo se deselecciona lo que hubiera. Se recuerda entre visitas;
+por defecto está quitado. Los acabados, las luces, las puertas y las vistas
+siguen funcionando.
 
 **Catálogo** (panel; en el móvil, menú ☰): las categorías se pliegan tocando
 su título y el **buscador** filtra por nombre (sin importar tildes ni mayúsculas).
@@ -257,6 +270,7 @@ src/escena/               Todo lo 3D
   fijos3d.ts              Dibujo 3D de los elementos fijos (un constructor por tipo)
   objetos.ts              Objetos colocados (suelo, pared, sobre muebles): añadir, mover, girar, duplicar, borrar
   historial.ts            Deshacer y rehacer
+  modoCamara.ts           Modo cámara (candado): estado recordado y qué hace cada tecla
   interaccion.ts          Ratón, dedo y teclado: arrastrar por el suelo, por la pared o sobre muebles; atajos
   persistencia.ts         Guardar/cargar JSON, autoguardado y migración de escenas
 src/catalogo/
@@ -730,7 +744,10 @@ ignoran (también con aviso).
   que lo apoyado se mueve y gira con el mueble y qué pasa al borrarlo;
   duplicar; guardar y cargar en v5 (y migrar desde v4); deshacer y rehacer
   (más de 50 pasos, cambios seguidos juntos y añadir, mover, girar, borrar,
-  colgar y apoyar).
+  colgar y apoyar);
+- **Modo cámara** (`tests/modo-camara.test.ts`): apagado por defecto, se
+  recuerda, funciona sin almacenamiento, y con el candado Supr, D, Q/E,
+  deshacer y rehacer quedan bloqueados.
 
 ## Publicación
 

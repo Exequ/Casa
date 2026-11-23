@@ -9,12 +9,16 @@
 //   - Q / E: girar 15° (con Mayúsculas: 1°).  D: duplicar.  Supr: borrar.  Esc: deseleccionar.
 //   - Ctrl+Z: deshacer.  Ctrl+Mayús+Z (o Ctrl+Y): rehacer.
 // El resto de arrastres (en vacío) los gestiona la cámara orbital.
+// Con el Modo cámara (candado) puesto, todo va a la cámara: no se selecciona
+// ni se arrastra nada, no se resalta nada al pasar y las teclas de edición
+// no hacen nada (ver modoCamara.ts).
 
 import * as THREE from 'three';
 import { superficiesDe } from '../catalogo/catalogo';
 import { caraEnRayo, caraMasCercana, type CaraColgable } from '../vivienda/colgar';
 import type { EspacioLibre } from '../vivienda/espacio';
 import type { Escena } from './escena';
+import { accionDeTecla } from './modoCamara';
 import type { GestorObjetos, ObjetoColocado } from './objetos';
 
 export interface OpcionesInteraccion {
@@ -24,9 +28,18 @@ export interface OpcionesInteraccion {
   deshacer: () => void;
   rehacer: () => void;
   duplicar: () => void;
+  /** ¿Está puesto el Modo cámara? (entonces solo se mueve la cámara) */
+  modoCamara: () => boolean;
+  /** Se ha pulsado una tecla de edición con el Modo cámara puesto. */
+  avisarBloqueo: () => void;
 }
 
-export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opciones: OpcionesInteraccion) {
+export interface Interaccion {
+  /** Termina el arrastre en curso, si lo hay (p. ej. al poner el candado). */
+  cancelarArrastre(): void;
+}
+
+export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opciones: OpcionesInteraccion): Interaccion {
   const lienzo = escena.renderer.domElement;
   const raycaster = new THREE.Raycaster();
   const sueloMatematico = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // plano y = 0
@@ -98,7 +111,8 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
   // si se pulsa sobre un objeto, desactivamos la cámara durante el arrastre.
   lienzo.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || !e.isPrimary) return; // solo botón izquierdo / primer dedo
-    const obj = objetoBajoRaton(e);
+    // En Modo cámara no se mira si hay un objeto debajo: el gesto es de la cámara.
+    const obj = opciones.modoCamara() ? null : objetoBajoRaton(e);
     if (!obj) {
       pulsacionEnVacio = { x: e.clientX, y: e.clientY };
       return;
@@ -127,7 +141,7 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
       return;
     }
     // Sin arrastre: cambiamos el cursor al pasar por encima de un objeto.
-    if (e.buttons === 0) lienzo.style.cursor = objetoBajoRaton(e) ? 'grab' : '';
+    if (e.buttons === 0) lienzo.style.cursor = !opciones.modoCamara() && objetoBajoRaton(e) ? 'grab' : '';
   });
 
   const soltar = (e: PointerEvent) => {
@@ -156,31 +170,36 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
     const destino = e.target as HTMLElement;
     if (destino instanceof HTMLInputElement && destino.type !== 'range' && destino.type !== 'checkbox') return;
     if (destino instanceof HTMLTextAreaElement || destino instanceof HTMLSelectElement) return;
-    const tecla = e.key.toLowerCase();
-
-    // Deshacer / rehacer (no hace falta tener nada seleccionado)
-    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-      if (tecla === 'z' && !e.shiftKey) { e.preventDefault(); opciones.deshacer(); return; }
-      if ((tecla === 'z' && e.shiftKey) || tecla === 'y') { e.preventDefault(); opciones.rehacer(); return; }
-      return;
-    }
-    if (e.altKey || arrastre) return;
+    if (arrastre && !(e.ctrlKey || e.metaKey)) return;
 
     const sel = gestor.seleccionado;
-    if (!sel) return;
-    if (e.key === 'Delete' || e.key === 'Backspace') { // Supr (o borrar en Mac)
-      gestor.borrar(sel);
-    } else if (e.key === 'Escape') {
-      gestor.seleccionar(null);
-    } else if (tecla === 'd') {
-      opciones.duplicar();
-    } else if (tecla === 'q' || tecla === 'e') {
-      const sentido = tecla === 'q' ? 1 : -1; // Q = antihorario, E = horario (vistos desde arriba)
-      if (e.shiftKey) gestor.girar(sel, sentido * 1, false); // giro fino de 1°
-      else gestor.girar(sel, sentido * 15); // pasos de 15°
-    } else {
-      return;
+    const accion = accionDeTecla(e, !!sel, opciones.modoCamara());
+    if (!accion) return;
+    switch (accion.tipo) {
+      case 'bloqueada': opciones.avisarBloqueo(); break;
+      case 'deshacer': opciones.deshacer(); break;
+      case 'rehacer': opciones.rehacer(); break;
+      case 'deseleccionar': gestor.seleccionar(null); break;
+      case 'borrar': if (sel) gestor.borrar(sel); break;
+      case 'duplicar': opciones.duplicar(); break;
+      case 'girar':
+        if (!sel) break;
+        if (accion.fino) gestor.girar(sel, accion.sentido * 1, false); // giro fino de 1°
+        else gestor.girar(sel, accion.sentido * 15); // pasos de 15°
+        break;
     }
     e.preventDefault();
   });
+
+  return {
+    cancelarArrastre() {
+      if (!arrastre) return;
+      const { obj, movido, puntero } = arrastre;
+      arrastre = null;
+      if (movido) gestor.asentar(obj);
+      escena.controles.enabled = true;
+      if (lienzo.hasPointerCapture(puntero)) lienzo.releasePointerCapture(puntero);
+      lienzo.style.cursor = '';
+    },
+  };
 }

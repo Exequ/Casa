@@ -130,6 +130,7 @@ export function crearPanel(
     const boton = el('button', 'item-catalogo');
     boton.title = 'Añadir a la vivienda';
     boton.dataset.catalogo = item.id;
+    boton.dataset.edicion = ''; // en Modo cámara no se añade nada
     const textos = el('span', 'item-textos');
     textos.append(
       el('span', 'item-nombre', item.nombre),
@@ -236,6 +237,7 @@ export function crearPanel(
   btnDuplicar.id = 'duplicar';
   const btnBorrar = el('button', 'peligro', 'Borrar (Supr)');
   filaAcciones.append(btnDuplicar, btnBorrar);
+  for (const b of [btnIzq, btnDer, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
 
   conSeleccion.append(nombreSel, posicionSel, bloqueGiro, bloqueAltura, filaAcciones);
   secSeleccion.append(sinSeleccion, conSeleccion);
@@ -302,8 +304,10 @@ export function crearPanel(
   selectorArchivo.accept = '.json,application/json';
   selectorArchivo.hidden = true;
   filaArchivo.append(btnGuardar, btnCargar, btnVaciar, selectorArchivo);
+  btnCargar.dataset.edicion = btnVaciar.dataset.edicion = '';
   const btnRestaurar = el('button', '', 'Restaurar disposición original');
   btnRestaurar.id = 'restaurar';
+  btnRestaurar.dataset.edicion = '';
   btnRestaurar.title = 'Vuelve a poner los muebles como en las fotos del piso (se puede deshacer con ↶)';
   secEscena.append(filaArchivo, btnRestaurar,
     el('p', 'nota', 'Los cambios se guardan solos en este navegador. "Restaurar" vuelve a colocar los muebles como en las fotos; los suelos y colores no cambian.'));
@@ -364,6 +368,7 @@ export function crearPanel(
       <li><kbd>Q</kbd> / <kbd>E</kbd> girar 15° · con <kbd>Mayús</kbd> 1°</li>
       <li><kbd>D</kbd> duplicar · <kbd>Supr</kbd> borrar · <kbd>Esc</kbd> deseleccionar</li>
       <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer · <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>Z</kbd> rehacer</li>
+      <li>🔒 <b>Modo cámara</b> (abajo a la derecha): solo se mueve la cámara, sin tocar los objetos</li>
       <li>Cuadros y espejos: arrastrar a lo largo de la pared o a otra pared</li>
       <li>Jarrones y plantas: arrastrar encima de un mueble para apoyarlos</li>
     </ul>
@@ -372,6 +377,7 @@ export function crearPanel(
       <li><b>Objeto:</b> tócalo para seleccionarlo y arrástralo para moverlo</li>
       <li>Girar, subir o bajar (cuadros), duplicar y borrar: barra inferior</li>
       <li>Deshacer, rehacer e imagen: botones ↶ ↷ 📷 de abajo a la derecha</li>
+      <li>🔒 <b>Modo cámara:</b> los toques solo mueven la cámara, sin tocar los objetos</li>
     </ul>`;
   panel.append(ayuda);
 
