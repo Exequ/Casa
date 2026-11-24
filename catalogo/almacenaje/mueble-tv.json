@@ -7,8 +7,17 @@
     "alto": 0.55
   },
   "superficies": [
-    0.275,
-    0.55
+    {
+      "altura": 0.275,
+      "ancho": 0.79,
+      "fondo": 0.32,
+      "alturaLibre": 0.19
+    },
+    {
+      "altura": 0.55,
+      "ancho": 0.9,
+      "fondo": 0.38
+    }
   ],
   "medidas": "estimadas",
   "glb": "mueble-tv.glb"

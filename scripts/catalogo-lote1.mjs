@@ -411,19 +411,23 @@ const OBJETOS = [
   },
   {
     ruta: 'mesas/mesa-centro', construir: mesaCentro,
-    ficha: { nombre: 'Mesa de centro de madera y cristal', categoria: 'Mesas', superficies: [0.45] },
+    ficha: { nombre: 'Mesa de centro de madera y cristal', categoria: 'Mesas', superficies: [{ altura: 0.45, ancho: 1, fondo: 0.7 }] },
     como: 'Exteriores: las del encargo. Mías: marco de la tapa de 8,5 cm, patas de 5,5 cm.',
     fotos: 'Teca/caoba media con veta; cristal ahumado; celosía de rombos continua en los 4 lados entre el faldón y un travesaño a 0,13 m (abierta por debajo); patas algo más finas abajo.',
   },
   {
     ruta: 'almacenaje/libreria', construir: libreria,
-    ficha: { nombre: 'Librería alta de madera oscura', categoria: 'Almacenaje', superficies: [...BALDAS_LIBRERIA, 2.0] },
+    ficha: { nombre: 'Librería alta de madera oscura', categoria: 'Almacenaje', superficies: [
+      // Baldas: hueco interior (0,77 × 0,34, algo hacia atrás por el fondo) y altura libre hasta la balda de encima
+      ...BALDAS_LIBRERIA.map((altura, i) => ({ altura, ancho: 0.77, fondo: 0.34, desplazamientoZ: -0.02, alturaLibre: [0.26, 0.29, 0.35, 0.47][i] })),
+      { altura: 2, ancho: 0.9, fondo: 0.4 },
+    ] },
     como: 'Exteriores: las del encargo. Baldas medidas en la foto respecto al alto total: 0,37 / 0,66 / 0,98 / 1,36 m y la tapa a 2,00 m.',
     fotos: 'Cuatro baldas (no cinco), cornisa escalonada que vuela por delante y los lados, zócalo con moldura, cajón con panel en relieve y pomo de madera; madera más rojiza.',
   },
   {
     ruta: 'almacenaje/mueble-tv', construir: muebleTv,
-    ficha: { nombre: 'Mueble de TV de listones', categoria: 'Almacenaje', superficies: [0.275, 0.55] },
+    ficha: { nombre: 'Mueble de TV de listones', categoria: 'Almacenaje', superficies: [{ altura: 0.275, ancho: 0.79, fondo: 0.32, alturaLibre: 0.19 }, { altura: 0.55, ancho: 0.9, fondo: 0.38 }] },
     como: 'Exteriores: las del encargo. Estante de listones a 0,275 m medido en la foto.',
     fotos: 'Un solo estante de listones a media altura (no dos) y patas libres por debajo; faldón bajo la tapa; madera teca más oscura.',
   },
@@ -435,7 +439,7 @@ const OBJETOS = [
   },
   {
     ruta: 'mesas/mesa-comedor-cristal', construir: mesaComedor,
-    ficha: { nombre: 'Mesa de comedor de cristal', categoria: 'Mesas', superficies: [0.75] },
+    ficha: { nombre: 'Mesa de comedor de cristal', categoria: 'Mesas', superficies: [{ altura: 0.75, ancho: 1.2, fondo: 0.7 }] },
     como: 'Exteriores: las del encargo. Mías: cristal de 12 mm.',
     fotos: 'Sin bastidor bajo el cristal: patas redondas finas sujetas con pletinas en las esquinas, más abiertas.',
   },
@@ -459,13 +463,13 @@ const OBJETOS = [
   },
   {
     ruta: 'mesas/mesita-alambre', construir: mesitaAlambre,
-    ficha: { nombre: 'Mesita auxiliar de alambre', categoria: 'Mesas', superficies: [0.55] },
+    ficha: { nombre: 'Mesita auxiliar de alambre', categoria: 'Mesas', superficies: [{ altura: 0.55, ancho: 0.38, fondo: 0.38 }] },
     como: '**Corregida con las fotos**: la bandeja es más ancha que la estimada (0,45 m en vez de 0,35; en la foto es casi tan ancha como alta).',
     fotos: 'Varillas rectas cruzadas que forman un reloj de arena, con aros arriba, en la cintura y abajo; bandeja de arriba con borde.',
   },
   {
     ruta: 'mesas/mesita-bandeja', construir: mesitaBandeja,
-    ficha: { nombre: 'Mesita auxiliar de bandeja negra', categoria: 'Mesas', superficies: [0.43] },
+    ficha: { nombre: 'Mesita auxiliar de bandeja negra', categoria: 'Mesas', superficies: [{ altura: 0.43, ancho: 0.36, fondo: 0.36 }] },
     como: 'Exteriores: las del encargo. Mía: superficie útil de la bandeja a 0,43 m.',
     fotos: 'Patas casi rectas unidas abajo por un aspa (no patas cruzadas en X).',
   },

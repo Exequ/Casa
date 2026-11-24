@@ -7,7 +7,11 @@
     "alto": 0.45
   },
   "superficies": [
-    0.43
+    {
+      "altura": 0.43,
+      "ancho": 0.36,
+      "fondo": 0.36
+    }
   ],
   "medidas": "estimadas",
   "glb": "mesita-bandeja.glb"

@@ -183,6 +183,19 @@ button.alternar.activo {
   font-weight: 600;
 }
 .barra-objeto button { padding: 8px 10px; }
+.aviso-apoyo-barra {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: var(--peligro);
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
 
 .cabecera { display: flex; align-items: center; justify-content: space-between; }
 .cerrar { padding: 4px 10px; }

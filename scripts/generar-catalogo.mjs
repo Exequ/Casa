@@ -177,7 +177,7 @@ async function mesa() {
     nombre: 'Mesa de comedor',
     categoria: 'Mesas',
     dimensiones: { ancho, fondo, alto },
-    superficies: [alto],
+    superficies: [{ altura: alto, ancho, fondo }],
     glb: 'mesa.glb',
   }, m);
 }
@@ -220,6 +220,8 @@ async function armario() {
     nombre: 'Armario de 2 puertas',
     categoria: 'Almacenaje',
     dimensiones: { ancho, fondo, alto },
+    // Encima del cuerpo (sin las puertas ni los tiradores, que van por delante)
+    superficies: [{ altura: alto, ancho, fondo: Number(fondoCuerpo.toFixed(3)), desplazamientoZ: Number(zCuerpo.toFixed(3)) }],
     glb: 'armario.glb',
   }, m);
 }

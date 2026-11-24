@@ -43,8 +43,13 @@
 //     habitación de ejemplo; se colocan relativas al centro del salón.
 // Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
 // sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa.
+// Si un objeto apoyado ya no cumple la regla de apoyo (su balda es más
+// pequeña o más baja que él, o el mueble ya no la tiene; p. ej. escenas de
+// antes de que las superficies tuvieran tamaño y altura libre), pasa a otra
+// superficie del mismo mueble donde quepa, a otro mueble cercano o al suelo,
+// y se anota en `movidos` (el panel lo cuenta).
 
-import type { ItemCatalogo } from '../catalogo/catalogo';
+import { zonaEn, motivoNoCabe, type ItemCatalogo } from '../catalogo/catalogo';
 import { distanciaACara } from '../vivienda/colgar';
 import { crearModelo } from '../catalogo/modelos';
 import type { Suelo } from '../vivienda/suelos';
@@ -198,6 +203,8 @@ export function migrar(datos: EscenaGuardada, centroV1: { x: number; z: number }
 export interface ResultadoCarga {
   /** Nombres de objetos que no estaban en el catálogo o no cabían en ninguna parte. */
   omitidos: string[];
+  /** Objetos apoyados que ya no cumplían la regla de apoyo y se han movido (qué y adónde). */
+  movidos: string[];
   /** Suelos y colores de pared ignorados (estancia desconocida o formato no válido). */
   suelosIgnorados: number;
   paredesIgnoradas: number;
@@ -222,18 +229,28 @@ export async function aplicar(
   const suelosIgnorados = estado.suelos.restaurar(escena.suelos);
   const paredesIgnoradas = estado.paredes.restaurar(escena.paredes);
   if (conAjustes) estado.ajustes.aplicar(escena.ajustes);
-  const omitidos = await colocarObjetos(gestor, escena.objetos, catalogo);
+  const movidos: string[] = [];
+  const omitidos = await colocarObjetos(gestor, escena.objetos, catalogo, movidos);
   gestor.actualizarCapas();
   gestor.notificar();
-  return { omitidos, suelosIgnorados, paredesIgnoradas };
+  if (movidos.length) console.info(`Escena: objetos apoyados que ya no cabían y se han movido:\n- ${movidos.join('\n- ')}`);
+  return { omitidos, movidos, suelosIgnorados, paredesIgnoradas };
+}
+
+/** Cómo se dice una superficie en los avisos: "la balda a 0,37 m del Mueble cafetera". */
+function textoSuperficie(soporte: ObjetoColocado, nivel: number): string {
+  const alto = soporte.item.dimensiones.alto;
+  const que = Math.abs(nivel - alto) < 1e-6 ? 'la tapa' : 'la balda';
+  return `${que} a ${String(Math.round(nivel * 100) / 100).replace('.', ',')} m de «${soporte.item.nombre}»`;
 }
 
 /**
  * Coloca los objetos guardados: primero los del suelo (en su orden), luego
  * los apoyados sobre ellos y por último los colgados. Devuelve los que no se
- * han podido poner.
+ * han podido poner. En `movidos` anota los apoyados que no cumplían la regla
+ * de apoyo y se han llevado a otra superficie o al suelo.
  */
-export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuardado[], catalogo: ItemCatalogo[]): Promise<string[]> {
+export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuardado[], catalogo: ItemCatalogo[], movidos: string[] = []): Promise<string[]> {
   const porId = new Map(catalogo.map((item) => [item.id, item]));
   const omitidos: string[] = [];
   const colocados = new Map<number, ObjetoColocado>();
@@ -263,7 +280,21 @@ export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuard
         obj = await gestor.agregar(item, x, z, rot);
       } else if (fase === 'superficie') {
         const soporte = o.soporte !== undefined ? colocados.get(o.soporte) : undefined;
-        if (soporte && o.nivel !== undefined) obj = await gestor.agregarSobre(item, soporte, o.nivel, x, z, rot);
+        if (soporte && o.nivel !== undefined) {
+          obj = await gestor.agregarSobre(item, soporte, o.nivel, x, z, rot);
+          // ¿Ya no cumple la regla de apoyo? A otra superficie donde quepa o al suelo, y se anota.
+          const zona = zonaEn(soporte.item, o.nivel);
+          const giro = ((rot - soporte.rotacion) % 360 + 360) % 360;
+          if (!obj && (!zona || motivoNoCabe(item.dimensiones, giro, zona))) {
+            obj = await gestor.agregarReubicado(item, soporte, o.nivel, x, z, rot);
+            const motivo = !zona ? 'el mueble ya no tiene esa balda'
+              : motivoNoCabe(item.dimensiones, giro, zona) === 'grande' ? 'es más grande que la superficie' : 'es más alto que el hueco';
+            const destino = !obj ? 'no cabía en ninguna parte y se ha quitado'
+              : obj.colocacion === 'superficie' && obj.apoyo ? `pasa a ${textoSuperficie(obj.apoyo.soporte, obj.apoyo.nivel)}` : 'pasa al suelo';
+            movidos.push(`«${item.nombre}»: estaba en ${textoSuperficie(soporte, o.nivel)} (${motivo}); ${destino}`);
+            if (!obj) { omitidos.push(item.nombre); continue; }
+          }
+        }
         // Sin su mueble: al mueble libre más cercano o al suelo
         obj ??= await gestor.agregarSegunTipo(item, x, z, null);
       } else {

@@ -164,7 +164,7 @@ describe('colocación y superficies del lote 1', () => {
     // La librería: un objeto bajo cabe en la balda de abajo; la tele (48 cm), no
     const libreria = (await gestor.agregar(item('almacenaje/libreria'), 1.5, 0.6))!;
     expect(gestor.sitioEnSoporte(item('electronica/television'), libreria, 2, 0, 0, 0)).not.toBeNull(); // encima, sí
-    expect(gestor.sitioEnSoporte(item('electronica/television'), libreria, 0.66, 0, 0, 0)).toBeNull(); // solo 32 cm hasta la siguiente
+    expect(gestor.sitioEnSoporte(item('electronica/television'), libreria, 0.66, 0, 0, 0)).toBeNull(); // solo 29 cm libres
     expect(gestor.sitioEnSoporte(item('jarron'), libreria, 0.66, 0, 0, 0)).not.toBeNull();
     // La lámpara foco va encima de la mesita de alambre, como en la foto
     const mesita = (await gestor.agregar(item('mesas/mesita-alambre'), 4.5, 0.6))!;
@@ -232,7 +232,8 @@ describe('lote 4: zapatero y coffee corner', () => {
     expect(cafe).not.toBeNull();
     expect(gestor.esSoporte(cafe)).toBe(true);
     expect((await gestor.agregarSobre(item('jarron'), cafe, 0.795, 4.5, 0.6))?.raiz.position.y).toBe(0.795);
-    // En la balda del medio la tele (48 cm) no cabe: la app mide hasta la encimera (43 cm), no hasta el cajón (30 cm)
+    // En la balda del medio la tele (48 cm) no cabe: hay 30 cm libres hasta el cajón (ver tests/apoyo.test.ts)
     expect(gestor.sitioEnSoporte(item('electronica/television'), cafe, 0.366, 0, 0, 0)).toBeNull();
+    expect(gestor.sitioEnSoporte(item('jarron'), cafe, 0.366, 0, 0, 0)).not.toBeNull();
   });
 });

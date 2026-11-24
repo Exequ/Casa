@@ -7,7 +7,11 @@
     "alto": 0.72
   },
   "superficies": [
-    0.72
+    {
+      "altura": 0.72,
+      "ancho": 0.5,
+      "fondo": 0.5
+    }
   ],
   "medidas": "estimadas",
   "glb": "mesa-balcon.glb"

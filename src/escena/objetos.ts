@@ -10,6 +10,11 @@
 //     tapas o baldas, sin salirse ni solaparse con lo que ya hay en ella. Se
 //     mueven y giran con el mueble; si el mueble se borra, pasan a otro mueble
 //     libre cercano o al suelo.
+//     REGLA DE APOYO: solo se apoyan en una superficie si su huella (con su
+//     giro) cabe en el ancho × fondo de esa superficie y su alto no pasa de su
+//     altura libre (ver motivoNoCabe en catalogo.ts). Si no cabe en ninguna
+//     superficie de un mueble, el mueble es un obstáculo para él (va por el
+//     suelo) y se explica por qué (motivoNoApoyo / avisoApoyo).
 //
 // Los objetos de pared y los apoyados no son obstáculo para los del suelo.
 //
@@ -29,9 +34,14 @@
 //     como siempre. Cambiar el mueble de capa no les afecta.
 //   - Al cargar una escena (o deshacer), cada objeto se coloca teniendo en
 //     cuenta solo los de SU capa, para que guardar y cargar no mueva nada.
+//   - Las operaciones de capas (mostrar, ocultar, pasar de capa, duplicar) no
+//     mueven nada: los apoyos que no cumplan la regla de apoyo se marcan en
+//     rojo, como los solapes (apoyosInvalidos()).
 
 import * as THREE from 'three';
-import { alturaCentroDe, superficiesDe, type ItemCatalogo } from '../catalogo/catalogo';
+import {
+  alturaCentroDe, medioGirado, motivoNoCabe, superficiesDe, zonaEn, zonasDe, type ItemCatalogo, type MotivoNoCabe, type Superficie,
+} from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
 import { GestorCapas, type Capa } from './capas';
 import {
@@ -80,6 +90,40 @@ export interface ObjetoColocado {
 
 type Oyente = () => void;
 
+/** Por qué no se puede apoyar un objeto en un mueble: no cabe por tamaño, por altura, o no queda sitio libre. */
+export type MotivoNoApoyo = MotivoNoCabe | 'lleno';
+
+/** Aviso de por qué el objeto que se arrastra no se ha podido apoyar en un mueble. */
+export interface AvisoApoyo {
+  objeto: ObjetoColocado;
+  soporte: ObjetoColocado;
+  motivo: MotivoNoApoyo;
+  texto: string;
+}
+
+/** Centímetros, para los avisos ("45 cm", "12,5 cm"). */
+const cm = (metros: number) => `${String(Math.round(metros * 1000) / 10).replace('.', ',')} cm`;
+
+/** Texto que explica por qué `item` (girado `giro` grados respecto al mueble) no se puede apoyar en `soporte`. */
+export function textoNoApoyo(item: ItemCatalogo, soporte: ItemCatalogo, motivo: MotivoNoApoyo, giro: number): string {
+  const zonas = zonasDe(soporte);
+  const cabecera = `«${item.nombre}» no se puede apoyar en «${soporte.nombre}»`;
+  if (motivo === 'lleno') return `${cabecera}: no queda sitio libre en sus superficies.`;
+  if (motivo === 'alto') {
+    const libre = Math.max(...zonas.filter((z) => motivoNoCabe(item.dimensiones, giro, z) !== 'grande').map((z) => z.alturaLibre));
+    return `${cabecera}: es demasiado alto (mide ${cm(item.dimensiones.alto)} y donde cabe de ancho y fondo solo hay ${cm(libre)} libres).`;
+  }
+  const h = medioGirado(item.dimensiones, giro);
+  const mayor = [...zonas].sort((a, b) => b.ancho * b.fondo - a.ancho * a.fondo)[0];
+  return `${cabecera}: es demasiado grande (ocupa ${cm(2 * h.x)} × ${cm(2 * h.z)} con su giro y la superficie mayor mide ${cm(mayor.ancho)} × ${cm(mayor.fondo)}).`;
+}
+
+/** ¿Está la huella (centro x, z; giro en grados) dentro del rectángulo de la superficie? */
+function dentroDeZona(zona: Superficie, x: number, z: number, ancho: number, fondo: number, giro: number): boolean {
+  const h = huellaRectangulo(x, z, ancho, fondo, THREE.MathUtils.degToRad(giro));
+  return h.every(([hx, hz]) => Math.abs(hx - zona.x) <= zona.ancho / 2 + 1e-6 && Math.abs(hz - zona.z) <= zona.fondo / 2 + 1e-6);
+}
+
 /** Holgura para que dos objetos apoyados puedan tocarse (1 mm). */
 const HOLGURA = 0.001;
 /** Paso de la búsqueda de sitio libre sobre un mueble (m). */
@@ -99,6 +143,11 @@ export class GestorObjetos {
   /** Capas de la escena (visibilidad, bloqueo, capa activa). */
   readonly capas: GestorCapas;
   /**
+   * Por qué no se ha podido apoyar el objeto que se arrastra en el mueble que
+   * hay bajo el puntero (lo muestra el panel). null = nada que avisar.
+   */
+  avisoApoyo: AvisoApoyo | null = null;
+  /**
    * Capa de los objetos que se crean ahora (null = la activa). Al cargar una
    * escena se pone la de cada objeto.
    */
@@ -109,6 +158,8 @@ export class GestorObjetos {
   private siguienteUid = 1;
   /** Con qué objetos está solapado cada uno (se recalcula en cada notificar). */
   private paresSolape = new Map<ObjetoColocado, Set<ObjetoColocado>>();
+  /** Objetos visibles apoyados que no cumplen la regla de apoyo (se recalcula en cada notificar). */
+  private invalidos = new Set<ObjetoColocado>();
   private marcasVisibles = true;
   private materialSolape = new THREE.MeshBasicMaterial({ color: 0xe11d48, transparent: true, opacity: 0.35, depthWrite: false });
   /** Caja que resalta el objeto seleccionado. */
@@ -284,6 +335,7 @@ export class GestorObjetos {
   /** Selecciona un objeto (o ninguno, con null). Los de capas ocultas o bloqueadas no se pueden seleccionar. */
   seleccionar(obj: ObjetoColocado | null) {
     this.seleccionado = obj && this.editable(obj) ? obj : null;
+    if (this.avisoApoyo && this.avisoApoyo.objeto !== this.seleccionado) this.avisoApoyo = null;
     this.actualizarResaltado();
     this.notificar(false);
   }
@@ -475,15 +527,13 @@ export class GestorObjetos {
   /**
    * Sitio libre (en coordenadas del mueble) más cercano a (x, z) en la tapa
    * o balda `nivel`, para un objeto con giro `giro` (grados, respecto al
-   * mueble). Null si no cabe: no hay hueco libre, no hay altura hasta la
-   * balda de encima o el objeto es más grande que el mueble.
+   * mueble). Null si no cabe: el mueble no tiene esa balda, el objeto no
+   * cumple la regla de apoyo (más grande que la superficie o más alto que
+   * su altura libre) o no queda hueco libre.
    */
   sitioEnSoporte(item: ItemCatalogo, soporte: ObjetoColocado, nivel: number, x: number, z: number, giro: number, excepto?: ObjetoColocado, radioMax = Infinity): { x: number; z: number } | null {
-    const niveles = superficiesDe(soporte.item);
-    if (!niveles.some((n) => Math.abs(n - nivel) < 1e-6)) return null;
-    const encima = niveles.find((n) => n > nivel + 1e-6);
-    if (encima !== undefined && item.dimensiones.alto > encima - nivel - 0.005) return null;
-    const W = soporte.item.dimensiones.ancho / 2, F = soporte.item.dimensiones.fondo / 2;
+    const zona = zonaEn(soporte.item, nivel);
+    if (!zona || motivoNoCabe(item.dimensiones, giro, zona)) return null;
     const g = THREE.MathUtils.degToRad(giro);
     const { ancho, fondo } = item.dimensiones;
     const otros = this.objetos
@@ -491,21 +541,19 @@ export class GestorObjetos {
         && this.cuenta(o, excepto) && !this.paresSolape.get(excepto!)?.has(o))
       .map((o) => huellaRectangulo(o.apoyo!.x, o.apoyo!.z, o.item.dimensiones.ancho, o.item.dimensiones.fondo, THREE.MathUtils.degToRad(o.apoyo!.giro)));
     const vale = (px: number, pz: number) => {
-      const h = huellaRectangulo(px, pz, ancho, fondo, g);
-      if (!h.every(([hx, hz]) => Math.abs(hx) <= W + 1e-6 && Math.abs(hz) <= F + 1e-6)) return false;
-      const dentro = encoger(h, HOLGURA);
+      if (!dentroDeZona(zona, px, pz, ancho, fondo, giro)) return false;
+      const dentro = encoger(huellaRectangulo(px, pz, ancho, fondo, g), HOLGURA);
       return !otros.some((o) => convexosSeSolapan(dentro, o));
     };
-    // Mitad del tamaño girado, para empezar dentro de la tapa
-    const mx = Math.abs(Math.cos(g)) * ancho / 2 + Math.abs(Math.sin(g)) * fondo / 2;
-    const mz = Math.abs(Math.sin(g)) * ancho / 2 + Math.abs(Math.cos(g)) * fondo / 2;
-    if (mx > W + 1e-6 || mz > F + 1e-6) return null;
-    const x0 = Math.min(W - mx, Math.max(-W + mx, x)), z0 = Math.min(F - mz, Math.max(-F + mz, z));
+    // Hasta dónde puede ir el centro del objeto dentro de la superficie (con su tamaño girado)
+    const medio = medioGirado(item.dimensiones, giro);
+    const hx = Math.max(0, zona.ancho / 2 - medio.x), hz = Math.max(0, zona.fondo / 2 - medio.z);
+    const x0 = Math.min(zona.x + hx, Math.max(zona.x - hx, x)), z0 = Math.min(zona.z + hz, Math.max(zona.z - hz, z));
     if (vale(x0, z0)) return { x: x0, z: z0 };
-    // Rejilla de puntos de la tapa, del más cercano al más lejano
+    // Rejilla de puntos de la superficie, del más cercano al más lejano
     const puntos: [number, number, number][] = [];
-    for (let px = -W + mx; px <= W - mx + 1e-9; px += PASO_SUPERFICIE) {
-      for (let pz = -F + mz; pz <= F - mz + 1e-9; pz += PASO_SUPERFICIE) {
+    for (let px = zona.x - hx; px <= zona.x + hx + 1e-9; px += PASO_SUPERFICIE) {
+      for (let pz = zona.z - hz; pz <= zona.z + hz + 1e-9; pz += PASO_SUPERFICIE) {
         const d = Math.hypot(px - x0, pz - z0);
         if (d <= radioMax) puntos.push([d, px, pz]);
       }
@@ -513,6 +561,40 @@ export class GestorObjetos {
     puntos.sort((p, q) => p[0] - q[0]);
     for (const [, px, pz] of puntos) if (vale(px, pz)) return { x: px, z: pz };
     return null;
+  }
+
+  /**
+   * Por qué no se puede apoyar `item` (con giro `giroMundo`) en ninguna
+   * superficie del mueble: "grande" (su huella no cabe en ninguna), "alto"
+   * (cabe de ancho y fondo en alguna, pero no de alto) o "lleno" (cabría,
+   * pero no queda sitio libre). null si se puede apoyar en alguna.
+   */
+  motivoNoApoyo(item: ItemCatalogo, soporte: ObjetoColocado, giroMundo: number, excepto?: ObjetoColocado): MotivoNoApoyo | null {
+    const giro = normalizar(giroMundo - soporte.rotacion);
+    const zonas = zonasDe(soporte.item);
+    const motivos = zonas.map((z) => motivoNoCabe(item.dimensiones, giro, z));
+    if (motivos.some((m) => m === null)) {
+      return zonas.some((z) => this.sitioEnSoporte(item, soporte, z.altura, z.x, z.z, giro, excepto)) ? null : 'lleno';
+    }
+    return motivos.includes('alto') ? 'alto' : 'grande';
+  }
+
+  /**
+   * ¿Cumple su apoyo la regla? (el mueble tiene esa balda, el objeto cabe en
+   * ella de tamaño y de alto, y está dentro de su superficie). Los que no
+   * están apoyados, sí.
+   */
+  apoyoValido(obj: ObjetoColocado): boolean {
+    const a = obj.apoyo;
+    if (obj.colocacion !== 'superficie' || !a) return true;
+    const zona = zonaEn(a.soporte.item, a.nivel);
+    return !!zona && !motivoNoCabe(obj.item.dimensiones, a.giro, zona)
+      && dentroDeZona(zona, a.x, a.z, obj.item.dimensiones.ancho, obj.item.dimensiones.fondo, a.giro);
+  }
+
+  /** Objetos visibles apoyados que no cumplen la regla de apoyo (marcados en rojo; no se mueven solos). */
+  apoyosInvalidos(): ObjetoColocado[] {
+    return this.objetos.filter((o) => this.invalidos.has(o));
   }
 
   /**
@@ -542,6 +624,35 @@ export class GestorObjetos {
       }
     }
     return null;
+  }
+
+  /**
+   * Para escenas guardadas cuyo apoyo ya no cumple la regla: apoya el objeto
+   * en otra superficie del mismo mueble donde quepa (la de altura más
+   * parecida), si no en el mueble libre más cercano (a menos de 1,5 m) y si
+   * no, en el suelo, en el sitio libre más cercano. Null si no cabe en nada.
+   */
+  async agregarReubicado(item: ItemCatalogo, soporte: ObjetoColocado | undefined, nivel: number, x: number, z: number, giroMundo: number): Promise<ObjetoColocado | null> {
+    if (soporte) {
+      const giro = normalizar(giroMundo - soporte.rotacion);
+      const local = this.aLocal(soporte, x, z);
+      const otras = superficiesDe(soporte.item).filter((n) => Math.abs(n - nivel) > 1e-6).sort((a, b) => Math.abs(a - nivel) - Math.abs(b - nivel));
+      for (const n of otras) {
+        const sitio = this.sitioEnSoporte(item, soporte, n, local.x, local.z, giro);
+        if (sitio) {
+          const obj = await this.crear(item);
+          this.ponerSobre(obj, { soporte, nivel: n, ...sitio, giro });
+          return this.alta(obj);
+        }
+      }
+    }
+    const apoyo = this.buscarApoyo(item, x, z, giroMundo, 1.5, null);
+    if (apoyo && apoyo.soporte !== soporte) {
+      const obj = await this.crear(item);
+      this.ponerSobre(obj, apoyo);
+      return this.alta(obj);
+    }
+    return this.agregar(item, x, z, giroMundo);
   }
 
   /**
@@ -823,10 +934,14 @@ export class GestorObjetos {
 
   private actualizarSolapes() {
     this.paresSolape = this.calcularSolapes();
-    for (const o of this.objetos) this.marcar(o, this.paresSolape.has(o));
+    this.invalidos = new Set(this.objetos.filter((o) => this.visible(o) && !this.apoyoValido(o)));
+    for (const o of this.objetos) this.marcar(o, this.enRojo(o));
   }
 
-  /** Pone o quita la caja roja translúcida de un objeto solapado. */
+  /** ¿Va marcado en rojo? (solapado o con un apoyo que no cumple la regla) */
+  private enRojo(o: ObjetoColocado) { return this.paresSolape.has(o) || this.invalidos.has(o); }
+
+  /** Pone o quita la caja roja translúcida de un objeto solapado (o mal apoyado). */
   private marcar(obj: ObjetoColocado, solapado: boolean) {
     let marca = obj.raiz.userData.marcaSolape as THREE.Mesh | undefined;
     if (solapado && !marca) {
@@ -890,7 +1005,7 @@ export class GestorObjetos {
   mostrarResaltado(visible: boolean) {
     this.resaltado.visible = visible && !!this.seleccionado;
     this.marcasVisibles = visible;
-    for (const o of this.objetos) this.marcar(o, this.paresSolape.has(o));
+    for (const o of this.objetos) this.marcar(o, this.enRojo(o));
   }
 
   private actualizarResaltado() {

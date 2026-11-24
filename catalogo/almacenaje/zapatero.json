@@ -7,7 +7,11 @@
     "alto": 1.13
   },
   "superficies": [
-    1.13
+    {
+      "altura": 1.13,
+      "ancho": 0.6,
+      "fondo": 0.22
+    }
   ],
   "medidas": "estimadas",
   "glb": "zapatero.glb"

@@ -7,7 +7,11 @@
     "alto": 0.55
   },
   "superficies": [
-    0.55
+    {
+      "altura": 0.55,
+      "ancho": 0.38,
+      "fondo": 0.38
+    }
   ],
   "medidas": "estimadas",
   "glb": "mesita-alambre.glb"

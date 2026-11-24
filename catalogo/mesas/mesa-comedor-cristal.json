@@ -7,7 +7,11 @@
     "alto": 0.75
   },
   "superficies": [
-    0.75
+    {
+      "altura": 0.75,
+      "ancho": 1.2,
+      "fondo": 0.7
+    }
   ],
   "medidas": "estimadas",
   "glb": "mesa-comedor-cristal.glb"

@@ -2,7 +2,7 @@
 // materiales habituales, piezas repetidas (marcos) y el proceso de guardar
 // cada objeto y su fila de docs/OBJETOS.md.
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
@@ -74,7 +74,8 @@ export async function procesarLote(objetos, { reiniciar = false, seccion, titulo
     resumen.push({ ...o, ficha, info });
   }
   escribirSeccion(seccion, `## ${titulo}\n\n${introduccion}\n\n${tabla(resumen)}`);
-  console.log(`✔ docs/OBJETOS.md (${titulo})`);
+  escribirSuperficies();
+  console.log(`✔ docs/OBJETOS.md (${titulo} y superficies)`);
   return resumen;
 }
 
@@ -86,7 +87,7 @@ function tabla(resumen) {
     const extra = [
       `colocación: ${ficha.colocacion ?? 'suelo'}`,
       ficha.alturaCentro !== undefined ? `centro a ${m(ficha.alturaCentro)} m` : '',
-      ficha.superficies ? (ficha.superficies.length ? `superficies: ${ficha.superficies.map(m).join(' / ')} m` : 'no admite nada encima') : '',
+      ficha.superficies ? (ficha.superficies.length ? `superficies: ${ficha.superficies.map((s) => m(typeof s === 'number' ? s : s.altura)).join(' / ')} m (ver «Superficies»)` : 'no admite nada encima') : '',
     ].filter(Boolean).join('; ');
     return `| ${ficha.nombre} (\`${ruta}\`) | ${m(d.ancho)} × ${m(d.fondo)} × ${m(d.alto)} | ${extra} | ${como} | ${fotos ?? ''} | ${ficha.medidas === 'confirmadas' ? '**confirmada**' : 'estimada'} | ${info.triangulos} |`;
   });
@@ -111,7 +112,8 @@ coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
 1. Abre el \`.json\` del objeto (por ejemplo \`catalogo/sofas/sofa-3-plazas.json\`).
 2. Cambia \`dimensiones\` (en metros: \`ancho\` = de lado a lado, \`fondo\` = de
    delante atrás, \`alto\`). Si es un mueble con \`superficies\`, cambia también
-   las alturas de sus tapas o baldas; si es de pared, \`alturaCentro\`.
+   sus tapas o baldas (altura, ancho, fondo, desplazamiento y altura libre; ver
+   «Superficies»); si es de pared, \`alturaCentro\`.
 3. Pon \`"medidas": "confirmadas"\` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
@@ -119,6 +121,65 @@ ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\
 medidas de los \`.json\` existentes se respetan (salvo con \`-- --reiniciar\`)
 y estas tablas se regeneran con ellas.
 `;
+
+/** Por qué se ha estimado así cada superficie (lo que se ve en las fotos y en el modelo). */
+const NOTAS_SUPERFICIES = {
+  'almacenaje/libreria': 'Baldas: hueco entre los laterales (0,77) por el fondo útil delante del trasero (0,34), algo hacia atrás; altura libre hasta la cara de abajo de la balda de encima (2,5 cm de balda) y, la de arriba, hasta el techo interior (1,84 m). Tapa: toda la cornisa.',
+  'almacenaje/mueble-tv': 'Estante de listones entre las patas (0,79 × 0,32); altura libre hasta el faldón de la tapa (0,47 m), por donde tiene que entrar lo que se mete. Tapa entera.',
+  'almacenaje/zapatero': 'Tapa entera (las trampillas no admiten nada).',
+  'cocina/coffee-corner': 'Baldas de 40 × 30 de la foto con 25 y 30 cm de hueco (la del medio, hasta el cajón bajo la encimera). Encimera entera de 48 × 33 con 53 cm libres hasta el estante. Estante de arriba de 43 × 12 al fondo, sin límite por encima.',
+  'dormitorio/comoda-alta': 'Tapa entera.',
+  'dormitorio/mesita-noche': 'Tapa entera.',
+  'dormitorio/puf': 'Tapa de borreguito sin las esquinas blandas (4 cm por lado de 0,50 × 0,60).',
+  'exterior/mesa-balcon': 'Tapa redonda de ø0,60 con el borde doblado: se toma un cuadrado de 0,50 (lo que se apoya suele ser redondo).',
+  'mesas/mesa-centro': 'Tapa entera (marco de madera y cristal casi enrasados).',
+  'mesas/mesa-comedor-cristal': 'Cristal entero.',
+  'mesas/mesita-alambre': 'Bandeja redonda de ø0,44 con borde: cuadrado de 0,38 (cabe la lámpara foco girada 45°, como en la foto).',
+  'mesas/mesita-bandeja': 'Bandeja redonda de ø0,42 por dentro del borde: cuadrado de 0,36.',
+  'tendedero/lavadora': 'Tapa sin las esquinas redondeadas ni la puerta y los mandos, que sobresalen 3 cm por delante.',
+  mesa: 'Objeto de ejemplo: tablero entero.',
+  armario: 'Objeto de ejemplo: encima del cuerpo, sin las puertas ni los tiradores.',
+};
+
+/** Todas las fichas del catálogo (id → ficha), leídas de catalogo/. */
+function fichasCatalogo(carpeta = CATALOGO, prefijo = '') {
+  const res = [];
+  for (const e of readdirSync(carpeta, { withFileTypes: true })) {
+    if (e.isDirectory()) res.push(...fichasCatalogo(join(carpeta, e.name), `${prefijo}${e.name}/`));
+    else if (e.name.endsWith('.json')) res.push([`${prefijo}${e.name.slice(0, -5)}`, JSON.parse(readFileSync(join(carpeta, e.name), 'utf8'))]);
+  }
+  return res.sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+/** Sección «Superficies» de docs/OBJETOS.md: cada tapa y balda de los muebles soporte del catálogo. */
+export function escribirSuperficies() {
+  const filas = [];
+  for (const [id, f] of fichasCatalogo()) {
+    if ((f.colocacion ?? 'suelo') !== 'suelo') continue;
+    const lista = Array.isArray(f.superficies) ? f.superficies : [f.dimensiones.alto];
+    if (!lista.length) continue;
+    const ordenadas = lista.map((s) => (typeof s === 'number' ? { altura: s } : s)).sort((a, b) => a.altura - b.altura);
+    ordenadas.forEach((s, i) => {
+      const siguiente = ordenadas[i + 1];
+      const libre = s.alturaLibre ?? (siguiente ? Number((siguiente.altura - s.altura).toFixed(3)) : null);
+      const desp = [s.desplazamientoX ? `x ${m(s.desplazamientoX)}` : '', s.desplazamientoZ ? `z ${m(s.desplazamientoZ)}` : ''].filter(Boolean).join(', ') || '—';
+      filas.push(`| ${i === 0 ? `${f.nombre} (\`${id}\`)` : ''} | ${m(s.altura)} | ${m(s.ancho ?? f.dimensiones.ancho)} × ${m(s.fondo ?? f.dimensiones.fondo)} | ${desp} | ${libre === null ? 'sin límite' : `${m(libre)}${s.alturaLibre === undefined ? ' (hasta la siguiente)' : ''}`} | ${i === 0 ? NOTAS_SUPERFICIES[id] ?? '' : ''} |`);
+    });
+  }
+  escribirSeccion('superficies', `## Superficies de los muebles soporte
+
+Tapas y baldas donde se pueden apoyar objetos (\`superficies\` de cada ficha;
+formato en el README). Un objeto solo se apoya en una si su huella, con su giro,
+cabe en su ancho × fondo y su alto no pasa de su altura libre. Todas las medidas
+son **estimadas** a partir de las fotos y del modelo de cada mueble (las
+exteriores del coffee corner y del zapatero son las de sus fotos de producto).
+El desplazamiento es el del centro de la superficie respecto al del mueble
+(z positivo = hacia el frente). Esta tabla se regenera con los scripts de los lotes.
+
+| Mueble | Altura (m) | Ancho × fondo (m) | Desplazamiento (m) | Altura libre (m) | De dónde sale |
+|---|---:|---|---|---|---|
+${filas.join('\n')}`);
+}
 
 /** Sustituye (o añade) la sección `id` de docs/OBJETOS.md. */
 export function escribirSeccion(id, texto) {

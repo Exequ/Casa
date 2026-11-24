@@ -7,10 +7,30 @@
     "alto": 1.345
   },
   "superficies": [
-    0.1,
-    0.366,
-    0.795,
-    1.345
+    {
+      "altura": 0.1,
+      "ancho": 0.4,
+      "fondo": 0.3,
+      "alturaLibre": 0.25
+    },
+    {
+      "altura": 0.366,
+      "ancho": 0.4,
+      "fondo": 0.3,
+      "alturaLibre": 0.3
+    },
+    {
+      "altura": 0.795,
+      "ancho": 0.48,
+      "fondo": 0.33,
+      "alturaLibre": 0.53
+    },
+    {
+      "altura": 1.345,
+      "ancho": 0.43,
+      "fondo": 0.12,
+      "desplazamientoZ": -0.105
+    }
   ],
   "medidas": "estimadas",
   "glb": "coffee-corner.glb"
