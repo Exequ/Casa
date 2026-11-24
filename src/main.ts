@@ -167,11 +167,13 @@ gestor.alSeleccionar(() => {
   if (n > solapesAntes && !historial.restaurandoAhora()) barra.aviso(`⚠ ${n} objetos se solapan: están marcados en rojo (ver Capas).`);
   solapesAntes = n;
 });
-// Al arrastrar algo sobre un mueble donde no cabe, se avisa de por qué (también en el móvil, con el panel cerrado)
+// Al arrastrar algo sobre un mueble donde no cabe, se avisa de por qué: en el panel y con un aviso
+// flotante (en el móvil no hace falta el flotante: lo dice la barra del objeto, encima de ella)
 let avisoApoyoAntes = '';
+const pantallaEstrecha = window.matchMedia('(max-width: 760px)');
 gestor.alSeleccionar(() => {
   const texto = gestor.avisoApoyo?.texto ?? '';
-  if (texto && texto !== avisoApoyoAntes) barra.aviso(texto);
+  if (texto && texto !== avisoApoyoAntes && !pantallaEstrecha.matches) barra.aviso(texto);
   avisoApoyoAntes = texto;
 });
 suelos.alCambiar(anotarCambio);
