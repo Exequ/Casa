@@ -5,7 +5,8 @@
 //       · cuadros y espejos (pared): se pegan a la pared a la que se apunta
 //         (o a la más cercana al punto del suelo señalado) y corren a lo largo de ella;
 //       · jarrones, plantas... (superficie): se apoyan en el mueble que hay
-//         debajo del puntero, o van por el suelo si no hay ninguno.
+//         debajo del puntero si caben (regla de apoyo), o van por el suelo si
+//         no hay ninguno o no caben (el panel dice por qué).
 //   - Q / E: girar 15° (con Mayúsculas: 1°).  D: duplicar.  Supr: borrar.  Esc: deseleccionar.
 //   - Ctrl+Z: deshacer.  Ctrl+Mayús+Z (o Ctrl+Y): rehacer.
 // El resto de arrastres (en vacío) los gestiona la cámara orbital.
@@ -19,7 +20,7 @@ import { caraEnRayo, caraMasCercana, type CaraColgable } from '../vivienda/colga
 import type { EspacioLibre } from '../vivienda/espacio';
 import type { Escena } from './escena';
 import { accionDeTecla } from './modoCamara';
-import type { GestorObjetos, ObjetoColocado } from './objetos';
+import { textoNoApoyo, type AvisoApoyo, type GestorObjetos, type ObjetoColocado } from './objetos';
 
 export interface OpcionesInteraccion {
   espacio: EspacioLibre;
@@ -94,25 +95,39 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
     if (cerca) gestor.colgar(obj, cerca.cara, cerca.u, false);
   }
 
-  /** Arrastre de un objeto de superficie: sobre el mueble que hay bajo el puntero, o por el suelo. */
+  /**
+   * Arrastre de un objeto de superficie: sobre el mueble que hay bajo el
+   * puntero, en la superficie señalada o, si ahí no cabe (regla de apoyo o
+   * falta de sitio), en la más alta de las de debajo donde quepa y luego en
+   * las demás. Si no cabe en ninguna, el mueble le estorba como a un mueble
+   * del suelo (va por el suelo) y se anota por qué en gestor.avisoApoyo.
+   */
   function arrastrarEnSuperficie(obj: ObjetoColocado, e: PointerEvent) {
     apuntar(e);
     const soportes = gestor.objetos.filter((o) => o !== obj && gestor.esSoporte(o));
     const impacto = raycaster.intersectObjects(soportes.map((o) => o.raiz), true)[0];
     const soporte = impacto ? gestor.objetoDe(impacto.object) : null;
+    let aviso: AvisoApoyo | null = null;
     if (impacto && soporte && soportes.includes(soporte)) {
       // La tapa o balda señalada: la más alta que queda por debajo del punto (y luego las demás)
       const niveles = superficiesDe(soporte.item);
       const debajo = niveles.filter((n) => n <= impacto.point.y + 0.05).reverse();
       const resto = niveles.filter((n) => !debajo.includes(n)).sort((p, q) => Math.abs(p - impacto.point.y) - Math.abs(q - impacto.point.y));
       for (const nivel of [...debajo, ...resto]) {
-        if (gestor.apoyar(obj, soporte, nivel, impacto.point.x, impacto.point.z, false)) return;
+        if (gestor.apoyar(obj, soporte, nivel, impacto.point.x, impacto.point.z, false)) {
+          gestor.avisoApoyo = null;
+          return;
+        }
       }
+      const giro = obj.apoyo?.soporte === soporte ? obj.apoyo.giro + soporte.rotacion : obj.rotacion;
+      const motivo = gestor.motivoNoApoyo(obj.item, soporte, giro, obj) ?? 'lleno';
+      aviso = { objeto: obj, soporte, motivo, texto: textoNoApoyo(obj.item, soporte.item, motivo, ((giro - soporte.rotacion) % 360 + 360) % 360) };
     }
+    gestor.avisoApoyo = aviso;
     const p = raycaster.ray.intersectPlane(sueloMatematico, new THREE.Vector3());
-    if (!p) return;
+    if (!p) { gestor.notificar(false); return; }
     if (obj.colocacion === 'suelo') gestor.mover(obj, p.x, p.z, false);
-    else gestor.bajarAlSuelo(obj, p.x, p.z, false, 0.6);
+    else if (!gestor.bajarAlSuelo(obj, p.x, p.z, false, 0.6)) gestor.notificar(false);
   }
 
   // Escuchamos en fase de captura para actuar ANTES que la cámara orbital:
@@ -126,6 +141,7 @@ export function activarInteraccion(escena: Escena, gestor: GestorObjetos, opcion
       pulsacionEnVacio = { x: e.clientX, y: e.clientY, bloqueado: tocado };
       return;
     }
+    gestor.avisoApoyo = null;
     gestor.seleccionar(obj);
     const punto = puntoEnSuelo(e);
     escena.controles.enabled = false;

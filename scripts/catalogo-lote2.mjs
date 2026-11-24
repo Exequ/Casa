@@ -279,7 +279,7 @@ const OBJETOS = [
   },
   {
     ruta: 'dormitorio/mesita-noche', construir: mesitaNoche,
-    ficha: { nombre: 'Mesita de noche de 3 cajones', categoria: 'Dormitorio', superficies: [0.5] },
+    ficha: { nombre: 'Mesita de noche de 3 cajones', categoria: 'Dormitorio', superficies: [{ altura: 0.5, ancho: 0.45, fondo: 0.38 }] },
     como: 'Las del encargo. Hay dos iguales, una a cada lado de la cama (foto del lado izquierdo).',
     fotos: 'Madera color miel (más clara que el cabecero), tres cajones iguales de frente liso sin tiradores, zócalo retranqueado.',
   },
@@ -291,7 +291,7 @@ const OBJETOS = [
   },
   {
     ruta: 'dormitorio/comoda-alta', construir: comoda,
-    ficha: { nombre: 'Cómoda alta de 6 cajones', categoria: 'Dormitorio', superficies: [1.15] },
+    ficha: { nombre: 'Cómoda alta de 6 cajones', categoria: 'Dormitorio', superficies: [{ altura: 1.15, ancho: 0.6, fondo: 0.42 }] },
     como: 'Las del encargo. En la foto llega casi al alféizar de los cuadros (1,15 m) y es más estrecha que la balconera.',
     fotos: 'Seis cajones de frente liso sin tiradores visibles separados por juntas finas, zócalo bajo; cerezo algo más rojizo en los frentes.',
   },
@@ -309,7 +309,7 @@ const OBJETOS = [
   },
   {
     ruta: 'dormitorio/puf', construir: puf,
-    ficha: { nombre: 'Puf baúl de borreguito', categoria: 'Dormitorio', superficies: [0.43] },
+    ficha: { nombre: 'Puf baúl de borreguito', categoria: 'Dormitorio', superficies: [{ altura: 0.43, ancho: 0.44, fondo: 0.54 }] },
     como: 'Mías, con la mesita (0,45) de referencia en la foto: 0,50 × 0,60 × 0,43.',
     fotos: 'Borreguito blanco roto, esquinas blandas, tapa marcada por una costura, patas ocultas.',
   },
@@ -321,7 +321,7 @@ const OBJETOS = [
   },
   {
     ruta: 'exterior/mesa-balcon', construir: mesaBalcon,
-    ficha: { nombre: 'Mesa redonda plegable de balcón', categoria: 'Balcón', superficies: [0.72] },
+    ficha: { nombre: 'Mesa redonda plegable de balcón', categoria: 'Balcón', superficies: [{ altura: 0.72, ancho: 0.5, fondo: 0.5 }] },
     como: 'Las del encargo (diámetro 0,60, alto 0,72).',
     fotos: 'Metal blanco, tapa con el borde doblado y patas en tijera que se cruzan.',
   },
@@ -339,7 +339,7 @@ const OBJETOS = [
   },
   {
     ruta: 'tendedero/lavadora', construir: lavadora,
-    ficha: { nombre: 'Lavadora de carga frontal', categoria: 'Tendedero', superficies: [0.85] },
+    ficha: { nombre: 'Lavadora de carga frontal', categoria: 'Tendedero', superficies: [{ altura: 0.85, ancho: 0.58, fondo: 0.5, desplazamientoZ: -0.015 }] },
     como: 'Las del encargo (medidas estándar). No sale en las fotos.',
     fotos: 'No sale en las fotos: modelo genérico blanco con puerta redonda y panel de mandos.',
   },

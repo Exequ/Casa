@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-Última actualización: 23 de noviembre de 2026, fase 6 (Modo cámara, capas y
-catálogo plegable). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 24 de noviembre de 2026, fase 6 (Modo cámara, capas,
+catálogo plegable y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
@@ -58,6 +58,42 @@ Un PR por parte, cada una publicada al terminarla.
 - Por defecto las categorías quedan **plegadas** (antes del cambio el código las abría todas; se sigue lo pedido).
 - Durante una búsqueda, abrir o cerrar categorías a mano solo dura mientras se busca; *Desplegar todo* y *Plegar todo* sí cambian el estado que se recuerda.
 - La sección *Capas* también es plegable y recuerda su estado; las demás secciones del panel se dejan como estaban.
+
+---
+
+## Superficies con tamaño y altura libre (regla de apoyo)
+
+Al probar el zapatero y el coffee corner salieron dos límites: la balda del
+medio del coffee corner admitía objetos de 43 cm (había 30 cm hasta el cajón) y
+el estante de arriba (12 cm de fondo) admitía objetos más grandes, porque cada
+superficie ocupaba toda la planta del mueble.
+
+| Tarea | Estado | Detalle |
+|---|---|---|
+| 1. Formato | **Hecho** | Cada elemento de `superficies` es un número (como antes: altura, planta completa y altura libre por defecto) o un objeto `{ altura, ancho, fondo, desplazamientoX, desplazamientoZ, alturaLibre }` con valores por defecto (planta del mueble, 0, hasta la siguiente superficie; la de arriba sin límite). Validación: dentro de la planta, valores positivos, sin alturas repetidas ni campos desconocidos. En el README. |
+| 2. Regla de apoyo | **Hecho** | Solo se apoya si la huella con su giro (respecto al mueble) cabe en ancho × fondo y el alto ≤ altura libre. Al arrastrar: la superficie señalada o la más alta de debajo donde quepa (luego las de encima); si no cabe en ninguna, el mueble le estorba (va por el suelo, pegado a él) y se dice por qué: *demasiado grande*, *demasiado alto* o *sin sitio libre*, en el panel (escritorio), encima de la barra del objeto (móvil) y en un aviso flotante. Al añadir: superficie más alta donde cabe del mueble libre más cercano. |
+| 3. Escenas existentes | **Hecho** | Las guardadas y la escena inicial cargan igual (formato v6 sin cambios). Al cargar, un apoyo que ya no cumple la regla pasa a otra superficie del mismo mueble (la de altura más parecida), a otro mueble cercano o al suelo, y el panel dice qué se movió y adónde (también en la consola). La escena inicial no mueve nada. |
+| 4. Capas | **Hecho** | La regla vale igual entre capas (solo soportes de capas visibles). Mostrar, ocultar, pasar de capa y duplicar no mueven nada: los apoyos que no cumplen la regla se marcan en rojo como los solapes y la sección *Capas* lo avisa (también en Modo cámara; si la capa está bloqueada, dice que hay que desbloquearla para arrastrarlo). |
+| 5. Datos | **Hecho** | Los 15 muebles soporte del catálogo con sus superficies estimadas (tabla «Superficies» de `docs/OBJETOS.md`, generada por los scripts de los lotes). Coffee corner: baldas de 40 × 30 con 25 y 30 cm libres, encimera de 48 × 33 con 53 cm, estante de 43 × 12 al fondo. |
+| 6. Tests y pruebas | **Hecho** | Ver abajo. |
+
+### Comprobaciones (superficies)
+
+- `npm test`: 301 tests en verde; 22 nuevos en `tests/apoyo.test.ts` (formato número y objeto, validación, cabe y no cabe por tamaño y altura, con giro y con el mueble girado, coffee corner y librería, motivo y textos, superficie más alta donde cabe, migración de escenas v5 y v6 con apoyos que ya no caben —a otra balda, a otro mueble, al suelo—, ida y vuelta sin más cambios, escena inicial intacta, regla entre capas y operaciones de capas que no mueven nada y marcan en rojo).
+- Navegador (versión compilada), escritorio con ratón y móvil emulado (iPhone 13) con toques reales (CDP): @@NAVEGADOR@@
+- **Carga en el móvil** (Pixel 7 emulado, CPU ×4, versión compilada, hasta tener la casa amueblada): @@TIEMPOS@@
+
+### Decisiones (superficies)
+
+- **Formato número = como antes:** el encargo decía "sin límite de altura libre", pero también "sigue funcionando igual", y antes la altura sí se limitaba hasta la siguiente balda (por eso la balda del medio admitía 43 cm). Se ha mantenido el comportamiento de antes: un número es `{ altura }` con los valores por defecto. Todos los muebles del catálogo usan ya el formato objeto, así que no les afecta.
+- **Qué balda al arrastrar:** "la más alta donde cabe" se aplica a partir de la balda señalada (la señalada y, si no cabe, la más alta de las de debajo; luego las de encima). Si siempre fuera la más alta del mueble, nunca se podría poner nada en las baldas de abajo de la librería arrastrando.
+- **Tamaño frente a altura:** si no cabe en ninguna, el aviso dice *demasiado grande* cuando su huella no cabe en ninguna superficie y *demasiado alto* cuando cabe de ancho y fondo en alguna pero no de alto. Si cabría pero no queda hueco, *no queda sitio libre*.
+- **El giro no se cambia solo:** la huella se mira con el giro que tenga el objeto (respecto al mueble); si girado 90° cabría, hay que girarlo (⟲ ⟳).
+- **Mesas y bandejas redondas** se modelan con un cuadrado algo mayor que el inscrito (lo que se apoya suele ser redondo): mesita de alambre 38 × 38, de bandeja 36 × 36, mesa del balcón 50 × 50.
+- **Encimera del coffee corner:** una sola altura libre (53 cm, hasta el estante de arriba) aunque el estante solo ocupe el fondo; las barras de las tazas no cuentan.
+- **Mueble de TV:** el estante de listones tiene 19 cm libres (hasta el faldón de la tapa, por donde hay que meter las cosas), no hasta la tapa.
+- **Migración:** se hace al cargar cualquier escena (también el autoguardado), sin cambiar la versión del formato (sigue la 6): el formato del archivo no ha cambiado. Mueve también objetos de capas bloqueadas (como ya pasaba con los choques al cargar).
+- **Operaciones de capas:** con estas reglas ninguna puede crear por sí sola un apoyo inválido (la regla solo depende del objeto, su giro y la balda, no de las capas); el marcado en rojo cubre los que lleguen de fuera (p. ej. una ficha corregida a mano con la app abierta) y se ha probado forzando ese caso.
 
 ---
 
@@ -478,7 +514,8 @@ planta (no 0,45 × 0,45): con tres patas abiertas la planta no es cuadrada.
    provisionales de la fase 4.
 2. Confirmar las medidas de `docs/OBJETOS.md` (muebles y elementos fijos) y, si hace falta, ajustarlas.
 3. Posibles mejoras: que las lámparas den luz, reparto automático de lo apoyado, historial que sobreviva a recargar,
-   vista de paseo en primera persona.
+   vista de paseo en primera persona, superficies redondas (hoy son rectángulos) y altura libre por zonas
+   (p. ej. la encimera del coffee corner delante y debajo del estante).
 
 ---
 

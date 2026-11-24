@@ -138,13 +138,20 @@ function coffeeCorner() {
 const OBJETOS = [
   {
     ruta: 'almacenaje/zapatero', construir: zapatero,
-    ficha: { nombre: 'Zapatero blanco y roble', categoria: 'Almacenaje', superficies: [1.13] },
+    ficha: { nombre: 'Zapatero blanco y roble', categoria: 'Almacenaje', superficies: [{ altura: 1.13, ancho: 0.6, fondo: 0.22 }] },
     como: 'Las de la foto (60 × 22 × 113 cm). Mías: tapa de 2 cm, costados de 1,6 cm, zócalo retranqueado de 2,2 cm y tres trampillas iguales de unos 36 cm.',
     fotos: 'Estructura (tapa, costados y zócalo) en Roble Canadian claro con veta; tres trampillas en blanco brillo entre los costados, enrasadas con su canto, con el tirador de aluminio en el canto de arriba de cada una.',
   },
   {
     ruta: 'cocina/coffee-corner', construir: coffeeCorner,
-    ficha: { nombre: 'Mueble cafetera (coffee corner)', categoria: 'Cocina', superficies: [0.1, 0.366, 0.795, 1.345] },
+    ficha: { nombre: 'Mueble cafetera (coffee corner)', categoria: 'Cocina', superficies: [
+      // Baldas de 40 × 30 con 25 y 30 cm de hueco (hasta la balda de encima y hasta el cajón), encimera
+      // entera hasta el estante de arriba (53 cm) y estante de 43 × 12 al fondo, sin nada encima
+      { altura: 0.1, ancho: 0.4, fondo: 0.3, alturaLibre: 0.25 },
+      { altura: 0.366, ancho: 0.4, fondo: 0.3, alturaLibre: 0.3 },
+      { altura: 0.795, ancho: 0.48, fondo: 0.33, alturaLibre: 0.53 },
+      { altura: 1.345, ancho: 0.43, fondo: 0.12, desplazamientoZ: -0.105 },
+    ] },
     como: 'Las de la foto: encimera de 48 × 33 a 79,5 cm, estante de 43 × 12 a 134,5 cm (55 cm sobre la encimera), baldas de 40 × 30 con 30 y 25 cm de hueco. Mías: balda de abajo a 10 cm, cajón de 11 cm, tubo de 2,2 cm y barras a 1,275 / 1,19 / 0,92 m.',
     fotos: 'Tubo negro mate y tableros de madera rústica marrón; cajón con tirador de concha negro; 8 ganchos en S en las dos barras de arriba. Sin la decoración de la foto (cafetera, tazas, botellas, tarros, bolsas) ni la cinta antivuelco a la pared.',
   },

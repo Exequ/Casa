@@ -7,11 +7,39 @@
     "alto": 2
   },
   "superficies": [
-    0.37,
-    0.66,
-    0.98,
-    1.36,
-    2
+    {
+      "altura": 0.37,
+      "ancho": 0.77,
+      "fondo": 0.34,
+      "desplazamientoZ": -0.02,
+      "alturaLibre": 0.26
+    },
+    {
+      "altura": 0.66,
+      "ancho": 0.77,
+      "fondo": 0.34,
+      "desplazamientoZ": -0.02,
+      "alturaLibre": 0.29
+    },
+    {
+      "altura": 0.98,
+      "ancho": 0.77,
+      "fondo": 0.34,
+      "desplazamientoZ": -0.02,
+      "alturaLibre": 0.35
+    },
+    {
+      "altura": 1.36,
+      "ancho": 0.77,
+      "fondo": 0.34,
+      "desplazamientoZ": -0.02,
+      "alturaLibre": 0.47
+    },
+    {
+      "altura": 2,
+      "ancho": 0.9,
+      "fondo": 0.4
+    }
   ],
   "medidas": "estimadas",
   "glb": "libreria.glb"

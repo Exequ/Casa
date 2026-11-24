@@ -7,7 +7,11 @@
     "alto": 1.15
   },
   "superficies": [
-    1.15
+    {
+      "altura": 1.15,
+      "ancho": 0.6,
+      "fondo": 0.42
+    }
   ],
   "medidas": "estimadas",
   "glb": "comoda-alta.glb"

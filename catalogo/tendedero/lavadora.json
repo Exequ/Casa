@@ -7,7 +7,12 @@
     "alto": 0.85
   },
   "superficies": [
-    0.85
+    {
+      "altura": 0.85,
+      "ancho": 0.58,
+      "fondo": 0.5,
+      "desplazamientoZ": -0.015
+    }
   ],
   "medidas": "estimadas",
   "glb": "lavadora.glb"

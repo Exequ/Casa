@@ -22,6 +22,34 @@ export const COLOCACIONES: Colocacion[] = ['suelo', 'pared', 'superficie'];
 /** Altura del centro de un objeto de pared si la ficha no dice otra (m). */
 export const ALTURA_CENTRO_PARED = 1.5;
 
+/**
+ * Una tapa o balda de un mueble, en formato objeto (en la ficha). Medidas en
+ * metros; el desplazamiento es el del centro de la superficie respecto al
+ * centro del mueble, en sus ejes (X = ancho, Z = fondo; +Z = hacia el frente).
+ */
+export interface SuperficieFicha {
+  altura: number;
+  /** Por defecto, el ancho del mueble. */
+  ancho?: number;
+  /** Por defecto, el fondo del mueble. */
+  fondo?: number;
+  desplazamientoX?: number;
+  desplazamientoZ?: number;
+  /** Alto máximo de lo que se apoya. Por defecto, hasta la siguiente superficie del mueble (la de arriba, sin límite). */
+  alturaLibre?: number;
+}
+
+/** Una tapa o balda ya resuelta (con los valores por defecto puestos). x y z: centro respecto al del mueble. */
+export interface Superficie {
+  altura: number;
+  ancho: number;
+  fondo: number;
+  x: number;
+  z: number;
+  /** Infinity = sin límite. */
+  alturaLibre: number;
+}
+
 /** Formato de la ficha JSON de un objeto del catálogo. */
 export interface FichaObjeto {
   nombre: string;
@@ -35,11 +63,14 @@ export interface FichaObjeto {
   /** Solo "pared": altura del centro del objeto sobre el suelo (m). Por defecto 1,50. */
   alturaCentro?: number;
   /**
-   * Solo muebles de suelo: alturas (m) de sus tapas o baldas, donde se pueden
-   * apoyar objetos de "superficie". Por defecto, el borde superior del mueble.
-   * `[]` = no se puede apoyar nada encima (sofás, sillas, lámparas...).
+   * Solo muebles de suelo: sus tapas o baldas, donde se pueden apoyar objetos
+   * de "superficie". Cada una es un número (su altura en m: ocupa toda la
+   * planta del mueble, con la altura libre por defecto, como siempre) o un
+   * objeto SuperficieFicha (con su tamaño, posición y altura libre). Por defecto, el
+   * borde superior del mueble. `[]` = no se puede apoyar nada encima (sofás,
+   * sillas, lámparas...).
    */
-  superficies?: number[];
+  superficies?: (number | SuperficieFicha)[];
   /** "estimadas" (sacadas de fotos) o "confirmadas" (medidas de verdad). Solo informativo. */
   medidas?: 'estimadas' | 'confirmadas';
 }
@@ -60,8 +91,64 @@ export const alturaCentroDe = (item: FichaObjeto) => item.alturaCentro ?? ALTURA
 
 /** Alturas donde se pueden apoyar cosas sobre un mueble, de abajo arriba ([] si no es un mueble de suelo). */
 export function superficiesDe(item: FichaObjeto): number[] {
+  return zonasDe(item).map((z) => z.altura);
+}
+
+/**
+ * Tapas y baldas de un mueble con todos sus datos (los que falten, con sus
+ * valores por defecto), de abajo arriba. [] si no es un mueble de suelo.
+ *   - número: su altura; toda la planta del mueble y la altura libre por
+ *     defecto (igual que antes de que hubiera el formato objeto);
+ *   - objeto: ancho y fondo (por defecto, los del mueble), centro desplazado
+ *     (por defecto 0) y alturaLibre.
+ * La alturaLibre por defecto es la distancia hasta la siguiente superficie
+ * del mueble; la de más arriba no tiene límite.
+ */
+export function zonasDe(item: FichaObjeto): Superficie[] {
   if ((item.colocacion ?? 'suelo') !== 'suelo') return [];
-  return [...(Array.isArray(item.superficies) ? item.superficies : [item.dimensiones.alto])].sort((a, b) => a - b);
+  const d = item.dimensiones;
+  const lista = Array.isArray(item.superficies) ? item.superficies : [d.alto];
+  const ordenadas = lista
+    .map((s): SuperficieFicha => (typeof s === 'number' ? { altura: s } : s))
+    .sort((a, b) => a.altura - b.altura);
+  return ordenadas.map((s, i): Superficie => {
+    const siguiente = ordenadas.slice(i + 1).find((o) => o.altura > s.altura + 1e-9);
+    return {
+      altura: s.altura,
+      ancho: s.ancho ?? d.ancho,
+      fondo: s.fondo ?? d.fondo,
+      x: s.desplazamientoX ?? 0,
+      z: s.desplazamientoZ ?? 0,
+      alturaLibre: s.alturaLibre ?? (siguiente ? siguiente.altura - s.altura : Infinity),
+    };
+  });
+}
+
+/** La tapa o balda de un mueble que está a la altura `nivel` (o undefined si no tiene). */
+export function zonaEn(item: FichaObjeto, nivel: number): Superficie | undefined {
+  return zonasDe(item).find((z) => Math.abs(z.altura - nivel) < 1e-6);
+}
+
+/** Por qué no se puede apoyar un objeto en una superficie. */
+export type MotivoNoCabe = 'grande' | 'alto';
+
+/**
+ * REGLA DE APOYO: un objeto se puede apoyar en una superficie si su huella,
+ * girada `giro` grados respecto al mueble, cabe dentro de su ancho × fondo y
+ * su alto no pasa de su altura libre. Devuelve null si cabe, o el motivo
+ * (primero el tamaño: "grande"; luego la altura: "alto").
+ */
+export function motivoNoCabe(dim: { ancho: number; fondo: number; alto: number }, giro: number, zona: Superficie): MotivoNoCabe | null {
+  const { x, z } = medioGirado(dim, giro);
+  if (2 * x > zona.ancho + 1e-6 || 2 * z > zona.fondo + 1e-6) return 'grande';
+  if (dim.alto > zona.alturaLibre + 1e-6) return 'alto';
+  return null;
+}
+
+/** Mitad del tamaño en planta (x, z) de un objeto girado `giro` grados. */
+export function medioGirado(dim: { ancho: number; fondo: number }, giro: number): { x: number; z: number } {
+  const g = (giro * Math.PI) / 180, c = Math.abs(Math.cos(g)), s = Math.abs(Math.sin(g));
+  return { x: (c * dim.ancho + s * dim.fondo) / 2, z: (s * dim.ancho + c * dim.fondo) / 2 };
 }
 
 // Vite sustituye estas dos líneas por el contenido real de la carpeta.
@@ -87,11 +174,38 @@ export function validarFicha(f: Partial<FichaObjeto>): string | null {
     return '"alturaCentro" debe ser un número (m) mayor que la mitad del alto y menor que 3';
   }
   if (f.superficies !== undefined) {
-    if (!Array.isArray(f.superficies) || !f.superficies.every((h) => typeof h === 'number' && h > 0 && h <= d.alto + 1e-9)) {
-      return '"superficies" debe ser una lista de alturas (m) entre 0 y el alto del objeto';
-    }
+    const error = validarSuperficies(f.superficies, d);
+    if (error) return error;
     if ((f.colocacion ?? 'suelo') !== 'suelo') return '"superficies" solo vale en objetos de suelo';
   }
+  return null;
+}
+
+/** Comprueba la lista "superficies" de una ficha. Devuelve el error o null. */
+function validarSuperficies(lista: unknown, d: { ancho: number; fondo: number; alto: number }): string | null {
+  const formato = '"superficies" debe ser una lista de alturas (m) entre 0 y el alto del objeto, o de objetos { altura, ancho, fondo, desplazamientoX, desplazamientoZ, alturaLibre }';
+  if (!Array.isArray(lista)) return formato;
+  const alturas: number[] = [];
+  const positivo = (v: unknown) => v === undefined || (typeof v === 'number' && v > 0);
+  const numero = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));
+  for (const s of lista) {
+    const h = typeof s === 'number' ? s : s && typeof s === 'object' ? (s as SuperficieFicha).altura : undefined;
+    if (typeof h !== 'number' || !(h > 0 && h <= d.alto + 1e-9)) return formato;
+    alturas.push(h);
+    if (typeof s === 'number') continue;
+    const o = s as SuperficieFicha;
+    const conocidos = ['altura', 'ancho', 'fondo', 'desplazamientoX', 'desplazamientoZ', 'alturaLibre'];
+    const extra = Object.keys(o).find((k) => !conocidos.includes(k));
+    if (extra) return `superficie a ${h} m: campo desconocido "${extra}"`;
+    if (!positivo(o.ancho) || !positivo(o.fondo) || !positivo(o.alturaLibre) || !numero(o.desplazamientoX) || !numero(o.desplazamientoZ)) {
+      return `superficie a ${h} m: ancho, fondo y alturaLibre deben ser mayores que 0, y los desplazamientos, números (m)`;
+    }
+    const ancho = o.ancho ?? d.ancho, fondo = o.fondo ?? d.fondo;
+    if (Math.abs(o.desplazamientoX ?? 0) + ancho / 2 > d.ancho / 2 + 1e-6 || Math.abs(o.desplazamientoZ ?? 0) + fondo / 2 > d.fondo / 2 + 1e-6) {
+      return `superficie a ${h} m: se sale de la planta del mueble (${d.ancho} × ${d.fondo} m)`;
+    }
+  }
+  if (new Set(alturas.map((h) => Math.round(h * 1e6))).size !== alturas.length) return '"superficies": dos superficies no pueden estar a la misma altura';
   return null;
 }
 

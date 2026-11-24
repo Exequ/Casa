@@ -7,7 +7,11 @@
     "alto": 0.5
   },
   "superficies": [
-    0.5
+    {
+      "altura": 0.5,
+      "ancho": 0.45,
+      "fondo": 0.38
+    }
   ],
   "medidas": "estimadas",
   "glb": "mesita-noche.glb"

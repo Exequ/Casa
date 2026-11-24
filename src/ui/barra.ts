@@ -121,7 +121,11 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   selectorCapa.setAttribute('aria-label', 'Capa del objeto');
   selectorCapa.dataset.edicion = '';
   selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
-  barraObj.append(nombre, selectorCapa, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
+  // Por qué no se ha podido apoyar (o por qué su apoyo no vale): encima de la barra, mientras dure
+  const avisoApoyo = el('p', 'aviso-apoyo-barra');
+  avisoApoyo.setAttribute('role', 'status');
+  avisoApoyo.hidden = true;
+  barraObj.append(avisoApoyo, nombre, selectorCapa, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
   // Botones que editan objetos: con el Modo cámara se ven apagados y avisan (ver main.ts)
   for (const b of [btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
   contenedor.append(barraObj);
@@ -195,13 +199,18 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
       rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
       selectorCapa.value = sel.capa;
     }
+    const aviso = !sel ? '' : gestor.avisoApoyo?.objeto === sel ? gestor.avisoApoyo.texto
+      : !gestor.apoyoValido(sel) ? 'No cabe en esta balda (demasiado grande o demasiado alto): arrástralo a otra superficie o al suelo.' : '';
+    avisoApoyo.textContent = aviso;
+    avisoApoyo.hidden = !aviso;
     nombre.textContent = !sel ? ''
       : enPared && sel.pared ? `${sel.item.nombre} · centro a ${m(sel.pared.y)} m`
         : `${sel.item.nombre} · ${Math.round(sel.rotacion)}°`;
     // Las herramientas suben para no quedar debajo de la barra del objeto (en el móvil)
     requestAnimationFrame(() => {
       const visible = barraObj.offsetParent !== null && barraObj.classList.contains('visible');
-      herramientas.style.bottom = indicador.style.bottom = visible ? `calc(${barraObj.offsetHeight + 20}px + env(safe-area-inset-bottom))` : '';
+      const extra = avisoApoyo.hidden ? 0 : avisoApoyo.offsetHeight + 6;
+      herramientas.style.bottom = indicador.style.bottom = visible ? `calc(${barraObj.offsetHeight + extra + 20}px + env(safe-area-inset-bottom))` : '';
     });
   };
   gestor.alSeleccionar(actualizar);

@@ -244,6 +244,9 @@ export function crearPanel(
   const conSeleccion = el('div');
   const nombreSel = el('p', 'sel-nombre');
   const posicionSel = el('p', 'nota');
+  // Por qué no se ha podido apoyar al arrastrarlo sobre un mueble (o por qué su apoyo no vale)
+  const avisoApoyo = el('p', 'nota mensaje error aviso-apoyo');
+  avisoApoyo.setAttribute('role', 'status');
 
   // Rotación: botones de 15° + deslizador y número para giro libre.
   const filaBotones = el('div', 'fila');
@@ -297,7 +300,7 @@ export function crearPanel(
   filaCapa.append(el('span', '', 'Capa'), selectorCapa);
   selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
 
-  conSeleccion.append(nombreSel, posicionSel, filaCapa, bloqueGiro, bloqueAltura, filaAcciones);
+  conSeleccion.append(nombreSel, posicionSel, avisoApoyo, filaCapa, bloqueGiro, bloqueAltura, filaAcciones);
   secSeleccion.append(sinSeleccion, conSeleccion);
   panel.append(secSeleccion);
 
@@ -329,6 +332,10 @@ export function crearPanel(
     const donde = sel.colocacion === 'pared' ? ' · en la pared'
       : sel.colocacion === 'superficie' && sel.apoyo ? ` · sobre ${sel.apoyo.soporte.item.nombre.toLowerCase()} (${m(sel.apoyo.nivel)} m)` : '';
     posicionSel.textContent = `Posición: x ${m(p.x)} m · z ${m(p.z)} m${donde}`;
+    const aviso = gestor.avisoApoyo?.objeto === sel ? gestor.avisoApoyo.texto
+      : !gestor.apoyoValido(sel) ? 'No cabe en esta balda (es demasiado grande o demasiado alto para ella): está marcado en rojo. Arrástralo a otra superficie o al suelo.' : '';
+    avisoApoyo.hidden = !aviso;
+    avisoApoyo.textContent = aviso;
     rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
     selectorCapa.value = sel.capa;
     const enPared = sel.colocacion === 'pared' && !!sel.pared;

@@ -57,6 +57,8 @@ export function crearPanelCapas(
   const avisoSolapes = el('p', 'nota aviso-capas error');
   avisoSolapes.setAttribute('role', 'status');
   const avisoApoyados = el('p', 'nota aviso-capas');
+  const avisoNoCaben = el('p', 'nota aviso-capas error aviso-no-caben');
+  avisoNoCaben.setAttribute('role', 'status');
   const lista = el('ul', 'lista-capas');
   lista.setAttribute('aria-label', 'Capas');
 
@@ -78,7 +80,7 @@ export function crearPanelCapas(
   btnNueva.setAttribute('aria-label', 'Nueva capa');
   const acciones = el('div', 'fila acciones-capa');
   acciones.append(btnNueva, btnDuplicar, btnRenombrar, btnSubir, btnBajar, btnBorrar);
-  detalles.append(avisoSolapes, avisoApoyados, lista, acciones,
+  detalles.append(avisoSolapes, avisoNoCaben, avisoApoyados, lista, acciones,
     el('p', 'nota', 'Toca una capa para hacerla activa: los objetos nuevos van a ella. Ojo = mostrar u ocultar; candado = bloquear (se ven pero no se mueven). Base tiene la casa amueblada como en las fotos.'));
 
   /** Id de la capa que se está renombrando (con un campo de texto en su fila). */
@@ -170,6 +172,12 @@ export function crearPanelCapas(
     const solapes = gestor.solapes().length;
     avisoSolapes.hidden = solapes === 0;
     avisoSolapes.textContent = `⚠ ${solapes} objetos se solapan (marcados en rojo). Apártalos, pásalos a otra capa u oculta una capa.`;
+    // Apoyos que no cumplen la regla (balda más pequeña o más baja que el objeto): no se mueven solos
+    const noCaben = gestor.apoyosInvalidos();
+    avisoNoCaben.hidden = noCaben.length === 0;
+    const nombres = [...new Set(noCaben.map((o) => `«${o.item.nombre}» en «${o.apoyo!.soporte.item.nombre}»`))].join(', ');
+    const bloqueados = noCaben.some((o) => !gestor.editable(o));
+    avisoNoCaben.textContent = `⚠ ${noCaben.length === 1 ? '1 objeto apoyado no cabe' : `${noCaben.length} objetos apoyados no caben`} en su balda (demasiado grande o demasiado alto; marcado en rojo): ${nombres}. Arrástralo a otra superficie o al suelo${bloqueados ? ' (antes, desbloquea su capa)' : ''}.`;
     const apoyados = gestor.apoyadosSobreOcultos().length;
     avisoApoyados.hidden = apoyados === 0;
     avisoApoyados.textContent = apoyados === 1

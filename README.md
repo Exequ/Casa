@@ -53,6 +53,10 @@ Todas las medidas están en **metros**, a escala real.
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
   para probar variantes: mostrar, ocultar, bloquear, duplicar…) y **catálogo
   plegable** (plegar o desplegar todo de una vez).
+- **Superficies con tamaño y altura libre:** cada tapa o balda de un mueble
+  tiene su ancho × fondo (y su posición) y su altura libre; un jarrón, una
+  planta o una lámpara solo se apoyan donde caben de verdad (p. ej. 30 cm en
+  la balda del medio del coffee corner, 12 cm de fondo en su estante de arriba).
 
 **App publicada:** <https://exequ.github.io/Casa/> (ver [Publicación](#publicación)).
 Estado detallado: [`docs/ESTADO.md`](docs/ESTADO.md).
@@ -137,6 +141,14 @@ en capas, como en un programa de dibujo:
 - **Pasar un objeto a otra capa:** desplegable *Capa* del panel del objeto
   seleccionado (en el móvil, en su barra). Solo a capas visibles y
   desbloqueadas. El objeto no se mueve.
+- **Regla de apoyo entre capas:** igual que dentro de una capa; solo cuentan
+  como soporte los muebles de capas visibles. Mostrar u ocultar una capa,
+  pasar un objeto a otra o duplicar una capa **no mueve nada**: si algún objeto
+  apoyado no cumple la regla (porque se corrigió la ficha de su mueble, por
+  ejemplo), se marca en **rojo translúcido** como los solapes y la sección
+  *Capas* lo avisa; se arregla arrastrándolo a otra superficie o al suelo (si
+  su capa está bloqueada, hay que desbloquearla antes). Esto vale también en
+  Modo cámara (donde se puede mostrar y ocultar capas, pero no arrastrar).
 - **Solapes:** los choques se calculan entre objetos de capas visibles. Si al
   mostrar una capa o pasar un objeto a otra quedan objetos solapados, no se
   impide: se marcan en **rojo translúcido** y la sección *Capas* avisa. Un
@@ -209,9 +221,21 @@ con todas las categorías plegadas.
 
 **Jarrones, plantas, lámparas... (objetos de superficie):**
 
-- Al arrastrarlos sobre un mueble se apoyan en la tapa o balda más cercana
-  al puntero, dentro del mueble y sin solaparse con lo que ya haya. Si no hay
-  mueble debajo (o no caben), van por el suelo como un mueble más.
+- **Regla de apoyo:** un objeto solo se apoya en una tapa o balda si su huella
+  (con su giro) cabe en el ancho × fondo de esa superficie y su alto no pasa
+  de su **altura libre** (lo que hay hasta la balda o el cajón de encima). Los
+  tamaños y alturas de cada mueble están en
+  [`docs/OBJETOS.md`](docs/OBJETOS.md#superficies-de-los-muebles-soporte).
+- Al arrastrarlos sobre un mueble se apoyan en la tapa o balda señalada o, si
+  ahí no caben, en la más alta de las de debajo donde quepan (y si no, en la
+  más cercana de las de encima), sin salirse de ella ni solaparse con lo que
+  ya haya. Si no caben en ninguna superficie del mueble, no se apoyan: el
+  mueble les estorba como a un mueble del suelo (se quedan pegados a él) y
+  el panel (y un aviso flotante, también en el móvil) dice por qué: **demasiado
+  grande**, **demasiado alto** o **sin sitio libre**. Si no hay mueble debajo,
+  van por el suelo como un mueble más.
+- Al añadirlos desde el catálogo van a la superficie más alta donde caben del
+  mueble libre más cercano (o al suelo).
 - **Se mueven y giran con el mueble.** Si se borra el mueble, pasan a otro
   mueble libre cercano o, si no hay, al suelo.
 - Los objetos de pared y los apoyados no estorban a los muebles del suelo
@@ -623,10 +647,26 @@ Si algo no coincide, corrige la medida en píxeles en
    - `alturaCentro` (opcional, solo `"pared"`): altura del centro del objeto
      sobre el suelo, en metros. Por defecto 1,50.
    - `superficies` (opcional, solo muebles de suelo: mesas, cómodas,
-     estanterías, mueble de TV): lista de alturas en metros de sus tapas o
-     baldas donde se pueden apoyar objetos. Por defecto, el borde superior del
-     mueble. Se supone que cada tapa o balda ocupa toda la planta del mueble.
+     estanterías, mueble de TV): lista de sus tapas o baldas donde se pueden
+     apoyar objetos. Por defecto, el borde superior del mueble, entero.
      **`[]`** = no se puede apoyar nada encima (sofás, sillas, lámparas...).
+     Cada elemento puede ser (se pueden mezclar):
+     - **un número**: la altura de la tapa o balda (m). Ocupa toda la planta
+       del mueble y su altura libre es la de por defecto (abajo). Es el formato
+       de siempre y funciona igual.
+     - **un objeto** con:
+
+       | Campo | Qué es | Por defecto |
+       | --- | --- | --- |
+       | `altura` | Altura de la superficie (m), entre 0 y el alto del mueble | (obligatorio) |
+       | `ancho`, `fondo` | Tamaño de la superficie (m), en los ejes del mueble | los del mueble |
+       | `desplazamientoX`, `desplazamientoZ` | Centro de la superficie respecto al centro del mueble (m; +Z = hacia el frente) | 0 |
+       | `alturaLibre` | Alto máximo de lo que se apoya (m) | hasta la siguiente superficie del mueble; la de más arriba, sin límite |
+
+     La superficie no puede salirse de la planta del mueble ni haber dos a la
+     misma altura. **Regla:** un objeto solo se apoya en una superficie si su
+     huella, con su giro, cabe en su `ancho` × `fondo` y su alto es menor o
+     igual que su `alturaLibre`.
    - `medidas` (opcional, informativo): `"estimadas"` o `"confirmadas"`.
 
    La **miniatura** del panel es un `.png` con el mismo nombre que el `.json`
@@ -639,9 +679,16 @@ Si algo no coincide, corrige la medida en píxeles en
    // Cuadro
    { "nombre": "Cuadro 40 × 30", "categoria": "Decoración de pared", "colocacion": "pared",
      "alturaCentro": 1.5, "dimensiones": { "ancho": 0.4, "fondo": 0.03, "alto": 0.3 }, "glb": "cuadro.glb" }
-   // Estantería con tres baldas
+   // Estantería con tres baldas (formato número: planta completa)
    { "nombre": "Estantería", "categoria": "Almacenaje", "superficies": [0.35, 0.75, 1.2],
      "dimensiones": { "ancho": 0.8, "fondo": 0.35, "alto": 1.2 }, "glb": "estanteria.glb" }
+   // Coffee corner (formato objeto): baldas con hueco limitado y un estante estrecho al fondo
+   { "nombre": "Mueble cafetera", "categoria": "Cocina", "dimensiones": { "ancho": 0.48, "fondo": 0.33, "alto": 1.345 },
+     "superficies": [
+       { "altura": 0.366, "ancho": 0.4, "fondo": 0.3, "alturaLibre": 0.3 },
+       { "altura": 0.795, "ancho": 0.48, "fondo": 0.33, "alturaLibre": 0.53 },
+       { "altura": 1.345, "ancho": 0.43, "fondo": 0.12, "desplazamientoZ": -0.105 }
+     ], "glb": "coffee-corner.glb" }
    ```
 
    Los `.json` antiguos (sin estos campos) siguen funcionando: son muebles de
@@ -761,7 +808,12 @@ volver a cargar no mueve nada (aunque haya solapes entre capas).
 
 Si algún objeto no cabe donde estaba (paredes u otros muebles), se mueve al
 sitio libre más cercano; si no cabe en ninguna parte, se omite y se avisa en
-el panel. Los suelos y colores de estancias que no existen o mal escritos se
+el panel. Si un objeto **apoyado ya no cumple la regla de apoyo** (escenas de
+antes de que las superficies tuvieran tamaño y altura libre, o fichas
+corregidas después), al cargar pasa a otra superficie del mismo mueble donde
+quepa (la de altura más parecida), si no a otro mueble cercano y si no al
+suelo; el panel dice qué se ha movido y adónde (y la consola, con detalle).
+El formato del archivo no cambia (sigue siendo la versión 6). Los suelos y colores de estancias que no existen o mal escritos se
 ignoran (también con aviso).
 
 ## Tests
@@ -827,6 +879,15 @@ ignoran (también con aviso).
 - **plegado del catálogo** (`tests/catalogo-plegado.test.ts`): por defecto
   abierto y con todo plegado; la cabecera; desplegar y plegar todo; el
   buscador y la vuelta al estado de antes; recuerdo entre visitas;
+- **regla de apoyo** (`tests/apoyo.test.ts`): formato número y objeto con sus
+  valores por defecto y su validación; cabe y no cabe por tamaño y por altura,
+  con giro (también con el mueble girado); el coffee corner (30 cm en la balda
+  del medio, 12 cm de fondo arriba) y la librería (hueco de las baldas, altura
+  libre, superficie más alta donde cabe); por qué no se puede apoyar
+  (grande, alto, lleno); migración de escenas con apoyos que ya no caben (a
+  otra balda, a otro mueble o al suelo, anotado) y que la escena inicial no
+  mueve nada; con capas: la regla entre capas, y que mostrar, ocultar, pasar de
+  capa, duplicar y bloquear no mueven nada y marcan en rojo;
 - **Modo cámara** (`tests/modo-camara.test.ts`): apagado por defecto, se
   recuerda, funciona sin almacenamiento, y con el candado Supr, D, Q/E,
   deshacer y rehacer quedan bloqueados.

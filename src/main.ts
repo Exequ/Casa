@@ -167,6 +167,13 @@ gestor.alSeleccionar(() => {
   if (n > solapesAntes && !historial.restaurandoAhora()) barra.aviso(`⚠ ${n} objetos se solapan: están marcados en rojo (ver Capas).`);
   solapesAntes = n;
 });
+// Al arrastrar algo sobre un mueble donde no cabe, se avisa de por qué (también en el móvil, con el panel cerrado)
+let avisoApoyoAntes = '';
+gestor.alSeleccionar(() => {
+  const texto = gestor.avisoApoyo?.texto ?? '';
+  if (texto && texto !== avisoApoyoAntes) barra.aviso(texto);
+  avisoApoyoAntes = texto;
+});
 suelos.alCambiar(anotarCambio);
 paredes.alCambiar(anotarCambio);
 
@@ -275,6 +282,7 @@ function puntoParaNuevo(): { x: number; z: number; estancia: string; id: string 
 function textoCarga(r: ResultadoCarga): string {
   const partes = [`${gestor.objetos.length} objetos`];
   if (r.omitidos.length) partes.push(`no caben o no existen: ${r.omitidos.join(', ')}`);
+  if (r.movidos.length) partes.push(`${r.movidos.length === 1 ? 'se ha movido 1 objeto apoyado que ya no cabía' : `se han movido ${r.movidos.length} objetos apoyados que ya no cabían`}: ${r.movidos.join(' · ')}`);
   if (r.suelosIgnorados) partes.push(`${r.suelosIgnorados} suelos no válidos ignorados`);
   if (r.paredesIgnoradas) partes.push(`${r.paredesIgnoradas} colores de pared no válidos ignorados`);
   return partes.join('; ');
@@ -453,7 +461,9 @@ escena.encuadrar(total, false, false, true);
 // autoguardado, se respeta, aunque esté vacío (después de "Vaciar").
 const guardada = leerAutoguardado();
 aplicar(estado, guardada ?? escenaInicial, catalogo, centroV1)
-  .then((r) => { if (r.omitidos.length) panel.avisar(`Al ${guardada ? 'recuperar la última escena' : 'amueblar la casa'}: ${textoCarga(r)}.`, true); })
+  .then((r) => {
+    if (r.omitidos.length || r.movidos.length) panel.avisar(`Al ${guardada ? 'recuperar la última escena' : 'amueblar la casa'}: ${textoCarga(r)}.`, r.omitidos.length > 0);
+  })
   .catch((e) => console.warn('Escena no válida', e))
   .finally(() => historial.iniciar());
 
