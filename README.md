@@ -49,6 +49,10 @@ Todas las medidas están en **metros**, a escala real.
   producto con sus medidas: un **zapatero** blanco brillo y roble de 3
   trampillas y un **coffee corner** (mueble cafetera) de tubo negro y madera
   rústica. Solo están en el catálogo: no se colocan en la casa.
+- **Lote 5:** música en el catálogo: un **tocadiscos** negro con tapa
+  ahumada y una **pareja de altavoces** de madera (de fotos de producto con
+  sus medidas) y **packs de 5 y 10 vinilos** de colores, de pie o tumbados
+  (diseño propio). Son de superficie; solo están en el catálogo.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
   para probar variantes: mostrar, ocultar, bloquear, duplicar…) y **catálogo
@@ -83,6 +87,7 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run catalogo:lote1` | Regenera los muebles reales del lote 1 (salón y pasillo) y su tabla de `docs/OBJETOS.md`; respeta las medidas corregidas en los `.json` (con `-- --reiniciar`, no) |
 | `npm run catalogo:lote2` | Igual, para el lote 2 (dormitorio, balcón y tendedero) |
 | `npm run catalogo:lote4` | Igual, para el lote 4 (zapatero y coffee corner) |
+| `npm run catalogo:lote5` | Igual, para el lote 5 (tocadiscos, altavoces y packs de vinilos) |
 | `npm run escena:inicial` | Regenera `data/escena-inicial.json` (la casa amueblada como en las fotos) desde `scripts/escena-inicial.mjs` |
 | `npm run catalogo:miniaturas` | Dibuja las miniaturas PNG del catálogo (necesita Playwright con Chromium); con `-- sofas/sillon` solo esa, con `-- --vistas carpeta` además 3 vistas grandes de cada objeto para revisarlo |
 
@@ -316,6 +321,8 @@ scripts/
   generar-catalogo.mjs    Crea los objetos de ejemplo del catálogo
   catalogo-lote1.mjs      Crea los muebles reales del lote 1 (salón y pasillo) y su tabla en docs/OBJETOS.md
   catalogo-lote2.mjs      Crea los del lote 2 (dormitorio, balcón y tendedero)
+  catalogo-lote4.mjs      Crea los del lote 4 (zapatero y coffee corner)
+  catalogo-lote5.mjs      Crea los del lote 5 (tocadiscos, altavoces y packs de vinilos)
   escena-inicial.mjs      Disposición de los muebles según las fotos → data/escena-inicial.json
   miniaturas.mjs          Dibuja las miniaturas PNG del catálogo (y vistas de comprobación)
   lib/modelo3d.mjs        Librería para modelar objetos con piezas de three.js y guardarlos en .glb

@@ -2,8 +2,9 @@
 
 Muebles reales del piso, generados por scripts a partir de las fotos:
 `scripts/catalogo-lote1.mjs` (salón y pasillo), `scripts/catalogo-lote2.mjs`
-(dormitorio, balcón y tendedero) y `scripts/catalogo-lote4.mjs` (zapatero y
-coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
+(dormitorio, balcón y tendedero), `scripts/catalogo-lote4.mjs` (zapatero y
+coffee corner, de fotos de producto) y `scripts/catalogo-lote5.mjs`
+(tocadiscos, altavoces y packs de vinilos). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 `catalogo/`.
 
@@ -17,7 +18,7 @@ coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
 3. Pon `"medidas": "confirmadas"` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`), las
+ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`, `lote5`), las
 medidas de los `.json` existentes se respetan (salvo con `-- --reiniciar`)
 y estas tablas se regeneran con ellas.
 
@@ -91,6 +92,26 @@ la casa.
 | Zapatero blanco y roble (`almacenaje/zapatero`) | 0,6 × 0,22 × 1,13 | colocación: suelo; superficies: 1,13 m (ver «Superficies») | Las de la foto (60 × 22 × 113 cm). Mías: tapa de 2 cm, costados de 1,6 cm, zócalo retranqueado de 2,2 cm y tres trampillas iguales de unos 36 cm. | Estructura (tapa, costados y zócalo) en Roble Canadian claro con veta; tres trampillas en blanco brillo entre los costados, enrasadas con su canto, con el tirador de aluminio en el canto de arriba de cada una. | estimada | 216 |
 | Mueble cafetera (coffee corner) (`cocina/coffee-corner`) | 0,48 × 0,33 × 1,345 | colocación: suelo; superficies: 0,1 / 0,366 / 0,795 / 1,345 m (ver «Superficies») | Las de la foto: encimera de 48 × 33 a 79,5 cm, estante de 43 × 12 a 134,5 cm (55 cm sobre la encimera), baldas de 40 × 30 con 30 y 25 cm de hueco. Mías: balda de abajo a 10 cm, cajón de 11 cm, tubo de 2,2 cm y barras a 1,275 / 1,19 / 0,92 m. | Tubo negro mate y tableros de madera rústica marrón; cajón con tirador de concha negro; 8 ganchos en S en las dos barras de arriba. Sin la decoración de la foto (cafetera, tazas, botellas, tarros, bolsas) ni la cinta antivuelco a la pared. | estimada | 2504 |
 <!-- fin:lote4 -->
+
+<!-- inicio:lote5 -->
+## Lote 5: tocadiscos, altavoces y vinilos
+
+Tocadiscos y altavoces a partir de las fotos de producto del encargo, con
+sus medidas; los packs de vinilos, diseño propio sin foto (medidas de una
+funda estándar de LP). Todos son de **superficie** (mesas y muebles donde
+quepan) y no admiten nada encima. Los vinilos, en dos fichas por pack: de pie
+y tumbados (la app solo gira en horizontal). Solo están en el catálogo: no se
+colocan en la casa.
+
+| Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
+|---|---|---|---|---|---|---:|
+| Tocadiscos negro con tapa (`electronica/tocadiscos`) | 0,358 × 0,373 × 0,097 | colocación: superficie | Las del encargo (37,3 de largo × 35,8 de ancho × 9,7 cm de alto, con la tapa bajada): 35,8 de ancho y 37,3 de fondo. Mías: patas de 1,2 cm, cuerpo hasta 6,4 cm, plato de ø29,6 cm. | Cuerpo negro mate con banda frontal, botón de velocidad a la izquierda y tres a la derecha; plato de aluminio con alfombrilla de fieltro negro, brazo recto plateado con cápsula blanca, adaptador de 45 y selector de tamaño; tapa de metacrilato ahumado **cerrada** (en las fotos está abierta; las medidas son con ella bajada). Sin los rótulos de la marca. | estimada | 2428 |
+| Altavoces de estantería (pareja) (`electronica/altavoces`) | 0,48 × 0,1 × 0,5 | colocación: superficie | Las del encargo para los dos juntos: 48 de ancho × 10 de fondo × 50 cm de alto. Mías: dos cajas de 22 cm de ancho separadas 4 cm. (Más altas y planas que las de la foto; ver ESTADO). | Madera clara con veta y frontal gris oscuro. El de la izquierda con la rejilla de tela gris y la raya plateada; el de la derecha con tweeter, reflector, puerto de graves, woofer con tornillos y el panel de mandos con tres ruedas en el costado de fuera. Sin el mando a distancia ni los rótulos de la marca. | estimada | 4700 |
+| Pack de 5 vinilos de pie (`decoracion/vinilos-5-de-pie`) | 0,025 × 0,315 × 0,315 | colocación: superficie | Mías (sin foto): funda estándar de LP de 12" de 31,5 × 31,5 cm y 5 mm por vinilo, × 5 = 2,5 cm de ancho (en fila). | Sin foto: diseño propio. 5 fundas pegadas, una de cada color (rojo, amarillo, azul, verde, rosa), con una rendija fina entre ellas y un disco negro con etiqueta de color en las dos caras de fuera. De canto, con los lomos hacia delante. | estimada | 1180 |
+| Pack de 5 vinilos tumbados (`decoracion/vinilos-5-tumbados`) | 0,315 × 0,315 × 0,025 | colocación: superficie | Mías (sin foto): funda estándar de LP de 12" de 31,5 × 31,5 cm y 5 mm por vinilo, × 5 = 2,5 cm de alto (apilados). | Sin foto: diseño propio. 5 fundas pegadas, una de cada color (rojo, amarillo, azul, verde, rosa), con una rendija fina entre ellas y un disco negro con etiqueta de color en las dos caras de fuera. Apiladas en horizontal. | estimada | 1180 |
+| Pack de 10 vinilos de pie (`decoracion/vinilos-10-de-pie`) | 0,05 × 0,315 × 0,315 | colocación: superficie | Mías (sin foto): funda estándar de LP de 12" de 31,5 × 31,5 cm y 5 mm por vinilo, × 10 = 5 cm de ancho (en fila). | Sin foto: diseño propio. 10 fundas pegadas, una de cada color (rojo, amarillo, azul, verde, rosa, naranja, morado, negro, turquesa, blanco), con una rendija fina entre ellas y un disco negro con etiqueta de color en las dos caras de fuera. De canto, con los lomos hacia delante. | estimada | 1720 |
+| Pack de 10 vinilos tumbados (`decoracion/vinilos-10-tumbados`) | 0,315 × 0,315 × 0,05 | colocación: superficie | Mías (sin foto): funda estándar de LP de 12" de 31,5 × 31,5 cm y 5 mm por vinilo, × 10 = 5 cm de alto (apilados). | Sin foto: diseño propio. 10 fundas pegadas, una de cada color (rojo, amarillo, azul, verde, rosa, naranja, morado, negro, turquesa, blanco), con una rendija fina entre ellas y un disco negro con etiqueta de color en las dos caras de fuera. Apiladas en horizontal. | estimada | 1720 |
+<!-- fin:lote5 -->
 
 <!-- inicio:superficies -->
 ## Superficies de los muebles soporte

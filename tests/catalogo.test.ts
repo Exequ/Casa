@@ -50,7 +50,9 @@ const LOTE2 = [
   'decoracion/planta-pequena', 'tendedero/lavadora',
 ];
 const LOTE4 = ['almacenaje/zapatero', 'cocina/coffee-corner'];
-const REALES = [...LOTE1, ...LOTE2, ...LOTE4];
+const VINILOS = ['decoracion/vinilos-5-de-pie', 'decoracion/vinilos-5-tumbados', 'decoracion/vinilos-10-de-pie', 'decoracion/vinilos-10-tumbados'];
+const LOTE5 = ['electronica/tocadiscos', 'electronica/altavoces', ...VINILOS];
+const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5];
 
 const io = new NodeIO();
 /** Caja envolvente, triángulos y tamaño de un .glb. */
@@ -235,5 +237,54 @@ describe('lote 4: zapatero y coffee corner', () => {
     // En la balda del medio la tele (48 cm) no cabe: hay 30 cm libres hasta el cajón (ver tests/apoyo.test.ts)
     expect(gestor.sitioEnSoporte(item('electronica/television'), cafe, 0.366, 0, 0, 0)).toBeNull();
     expect(gestor.sitioEnSoporte(item('jarron'), cafe, 0.366, 0, 0, 0)).not.toBeNull();
+  });
+});
+
+describe('lote 5: tocadiscos, altavoces y vinilos', () => {
+  const items = leerCatalogo();
+  const item = (id: string) => items.find((i) => i.id === id)!;
+
+  it('medidas del encargo, de superficie y sin nada encima', () => {
+    // 37,3 de largo (fondo) × 35,8 de ancho × 9,7 de alto, con la tapa bajada
+    expect(item('electronica/tocadiscos').dimensiones).toEqual({ ancho: 0.358, fondo: 0.373, alto: 0.097 });
+    expect(item('electronica/altavoces').dimensiones).toEqual({ ancho: 0.48, fondo: 0.1, alto: 0.5 });
+    for (const id of ['electronica/tocadiscos', 'electronica/altavoces']) expect(item(id).categoria, id).toBe('Electrónica');
+    // Funda de LP de 31,5 cm y 5 mm por vinilo: de pie, el pack crece a lo ancho; tumbado, a lo alto
+    expect(item('decoracion/vinilos-5-de-pie').dimensiones).toEqual({ ancho: 0.025, fondo: 0.315, alto: 0.315 });
+    expect(item('decoracion/vinilos-5-tumbados').dimensiones).toEqual({ ancho: 0.315, fondo: 0.315, alto: 0.025 });
+    expect(item('decoracion/vinilos-10-de-pie').dimensiones).toEqual({ ancho: 0.05, fondo: 0.315, alto: 0.315 });
+    expect(item('decoracion/vinilos-10-tumbados').dimensiones).toEqual({ ancho: 0.315, fondo: 0.315, alto: 0.05 });
+    for (const id of VINILOS) expect(item(id).categoria, id).toBe('Decoración');
+    for (const id of LOTE5) {
+      expect(item(id).colocacion, id).toBe('superficie');
+      expect(item(id).superficies, id).toBeUndefined();
+    }
+  });
+
+  it('cada vinilo de un pack es de un color distinto', async () => {
+    for (const [id, n] of [['decoracion/vinilos-5-de-pie', 5], ['decoracion/vinilos-10-tumbados', 10]] as const) {
+      const doc = await io.readBinary(new Uint8Array(readFileSync(join(CATALOGO, `${id}.glb`))));
+      const fundas = doc.getRoot().listMaterials().filter((m) => m.getName().startsWith('funda-'));
+      expect(fundas.length, id).toBe(n);
+      expect(new Set(fundas.map((m) => m.getBaseColorFactor().slice(0, 3).join())).size, id).toBe(n);
+    }
+  });
+
+  it('en la app: en el mueble de TV, la mesa de centro y la librería; los vinilos no admiten nada encima', async () => {
+    const vivienda = datos as Vivienda;
+    const gestor = new GestorObjetos(new THREE.Scene(), new EspacioLibre(vivienda), carasColgables(vivienda));
+    const mueble = (await gestor.agregar(item('almacenaje/mueble-tv'), 3, 1.7))!;
+    expect((await gestor.agregarSobre(item('electronica/tocadiscos'), mueble, 0.55, 3, 1.7))?.raiz.position.y).toBe(0.55);
+    const mesa = (await gestor.agregar(item('mesas/mesa-centro'), 3, 0.6))!;
+    expect((await gestor.agregarSobre(item('electronica/altavoces'), mesa, 0.45, 2.76, 0.6))?.raiz.position.y).toBe(0.45);
+    // Librería: de pie (31,5 cm) caben en la balda de 0,98 m (35 cm libres), no en la de 0,66 (29 cm);
+    // tumbados, también en la de abajo (26 cm)
+    const libreria = (await gestor.agregar(item('almacenaje/libreria'), 1.5, 0.6))!;
+    expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-de-pie'), libreria, 0.98, 0, 0, 0)).not.toBeNull();
+    expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-de-pie'), libreria, 0.66, 0, 0, 0)).toBeNull();
+    expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-tumbados'), libreria, 0.37, 0, 0, 0)).not.toBeNull();
+    const pack = (await gestor.agregarSobre(item('decoracion/vinilos-5-tumbados'), mesa, 0.45, 3.3, 0.6))!;
+    expect(pack).not.toBeNull();
+    expect(gestor.esSoporte(pack)).toBe(false);
   });
 });

@@ -1,0 +1,12 @@
+{
+  "nombre": "Pack de 10 vinilos tumbados",
+  "categoria": "Decoración",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.315,
+    "fondo": 0.315,
+    "alto": 0.05
+  },
+  "medidas": "estimadas",
+  "glb": "vinilos-10-tumbados.glb"
+}
