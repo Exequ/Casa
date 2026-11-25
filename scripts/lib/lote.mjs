@@ -1,4 +1,4 @@
-// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs):
+// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs, catalogo-lote5.mjs):
 // materiales habituales, piezas repetidas (marcos) y el proceso de guardar
 // cada objeto y su fila de docs/OBJETOS.md.
 
@@ -102,8 +102,9 @@ const CABECERA = `# Objetos del catálogo
 
 Muebles reales del piso, generados por scripts a partir de las fotos:
 \`scripts/catalogo-lote1.mjs\` (salón y pasillo), \`scripts/catalogo-lote2.mjs\`
-(dormitorio, balcón y tendedero) y \`scripts/catalogo-lote4.mjs\` (zapatero y
-coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
+(dormitorio, balcón y tendedero), \`scripts/catalogo-lote4.mjs\` (zapatero y
+coffee corner, de fotos de producto) y \`scripts/catalogo-lote5.mjs\`
+(tocadiscos, altavoces y packs de vinilos). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 \`catalogo/\`.
 
@@ -117,7 +118,7 @@ coffee corner, de fotos de producto). Los objetos de ejemplo de las fases 1 y 4
 3. Pon \`"medidas": "confirmadas"\` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`), las
+ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`, \`lote5\`), las
 medidas de los \`.json\` existentes se respetan (salvo con \`-- --reiniciar\`)
 y estas tablas se regeneran con ellas.
 `;

@@ -1,0 +1,12 @@
+{
+  "nombre": "Tocadiscos negro con tapa",
+  "categoria": "Electrónica",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.358,
+    "fondo": 0.373,
+    "alto": 0.097
+  },
+  "medidas": "estimadas",
+  "glb": "tocadiscos.glb"
+}

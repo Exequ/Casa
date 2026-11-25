@@ -1,0 +1,12 @@
+{
+  "nombre": "Pack de 10 vinilos de pie",
+  "categoria": "Decoración",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.05,
+    "fondo": 0.315,
+    "alto": 0.315
+  },
+  "medidas": "estimadas",
+  "glb": "vinilos-10-de-pie.glb"
+}
