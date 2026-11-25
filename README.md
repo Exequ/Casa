@@ -50,8 +50,8 @@ Todas las medidas están en **metros**, a escala real.
   trampillas y un **coffee corner** (mueble cafetera) de tubo negro y madera
   rústica. Solo están en el catálogo: no se colocan en la casa.
 - **Lote 5:** música en el catálogo: un **tocadiscos** negro con tapa
-  ahumada y una **pareja de altavoces** de madera (de fotos de producto con
-  sus medidas) y **packs de 5 y 10 vinilos** de colores, de pie o tumbados
+  ahumada y los dos **altavoces** de madera de una pareja, por separado (de
+  fotos de producto con sus medidas) y **packs de 5 y 10 vinilos** de colores, de pie o tumbados
   (diseño propio). Son de superficie; solo están en el catálogo.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias

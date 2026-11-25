@@ -1,4 +1,4 @@
-// Lote 5: música. Tocadiscos y pareja de altavoces (de fotos de producto, con
+// Lote 5: música. Tocadiscos y altavoces izquierdo y derecho (de fotos de producto, con
 // sus medidas) y packs de 5 y 10 vinilos (diseño propio, sin foto).
 //
 // Uso:  npm run catalogo:lote5                 (no toca las medidas ya corregidas a mano)
@@ -84,79 +84,79 @@ function tocadiscos() {
 }
 
 /**
- * Pareja de altavoces de estantería juntos: caja de madera clara con frontal
- * gris oscuro. El de la izquierda con la rejilla de tela gris puesta (raya
- * plateada a media altura); el de la derecha sin ella: tweeter arriba a la
- * derecha, reflector y puerto de graves a la izquierda, woofer abajo, y en su
- * costado de fuera el panel de mandos hundido con tres ruedas.
- * Medidas del encargo: 48 de ancho (los dos), 10 de fondo y 50 de alto.
+ * Un altavoz de estantería de la pareja de la foto (14,6 × 19,6 × 23,4 cm cada
+ * uno): caja de madera clara con frontal gris oscuro.
+ * - `activo = false` (el izquierdo de la foto): con la rejilla de tela gris
+ *   puesta, raya plateada a media altura y plaquita abajo.
+ * - `activo = true` (el derecho): sin rejilla. Tweeter arriba a la derecha,
+ *   reflector y puerto de graves arriba a la izquierda, woofer abajo con
+ *   cuatro tornillos, y en el costado derecho el panel de mandos con tres ruedas.
+ * Posiciones medidas en la foto respecto al ancho y al alto del frontal.
  */
-function altavoces() {
-  const W = 0.48, D = 0.1, H = 0.5;
-  const m = new Modelo('altavoces', { ancho: W, fondo: D, alto: H });
+function altavoz(activo) {
+  const W = 0.146, D = 0.196, H = 0.234;
+  const m = new Modelo(activo ? 'altavoz-derecho' : 'altavoz-izquierdo', { ancho: W, fondo: D, alto: H });
   const madera = m.material('madera-clara', { color: 0xa86b33, rugosidad: 0.5, textura: 'madera' });
   const frontal = m.material('frontal-gris', { color: 0x3e4044, rugosidad: 0.5, metalico: 0.2 });
-  const rejilla = m.material('rejilla-tela', { color: 0x5a5c5f, rugosidad: 0.95, textura: 'tela' });
   const negro = m.material('altavoz-negro', { color: 0x1a1a1b, rugosidad: 0.7 });
-  const cono = m.material('cono', { color: 0x2c2c2e, rugosidad: 0.85 });
-  const hueco = m.material('hueco', { color: 0x080808, rugosidad: 1 });
   const plata = m.material('plata', MAT.plata);
 
-  const hueco2 = 0.04, A = (W - hueco2) / 2; // 22 cm cada uno
-  const pared = 0.012; // marco de madera alrededor del frontal
-  const zB = D / 2 - 0.01; // cara del frontal; delante solo vuelan el labio de madera, la rejilla y los altavoces
-  const lado5 = 0.005; // el de la derecha: costado 5 mm más adentro, donde asoman las ruedas de los mandos
-  /** Caja de madera (aristas redondeadas) de xa a xb con el labio delante y el frontal gris dentro. */
-  const caja = (xa, xb) => {
-    const w = xb - xa, x0 = (xa + xb) / 2;
-    m.cajaRedonda(madera, [w, H, zB + D / 2], 0.006, [x0, H / 2, (zB - D / 2) / 2], undefined, 2);
-    const labio = 0.004, zl = zB + labio / 2;
-    for (const sy of [-1, 1]) m.caja(madera, [w - 0.004, pared, labio], [x0, H / 2 + sy * (H / 2 - pared / 2 - 0.002), zl]);
-    for (const sx of [-1, 1]) m.caja(madera, [pared, H - 2 * pared - 0.004, labio], [x0 + sx * (w / 2 - pared / 2 - 0.002), H / 2, zl]);
-    m.caja(frontal, [w - 2 * pared - 0.004, H - 2 * pared - 0.004, 0.003], [x0, H / 2, zB]);
-    return { x0, w };
-  };
-  // Izquierdo: rejilla de tela gris que tapa el frontal, con la raya plateada y la plaquita
-  const izq = caja(-W / 2, -hueco2 / 2);
-  const zR = (zB + 0.001 + D / 2) / 2, gR = D / 2 - zB - 0.001;
-  m.cajaRedonda(rejilla, [izq.w - 0.006, H - 0.006, gR], 0.003, [izq.x0, H / 2, zR], undefined, 2);
-  m.caja(plata, [izq.w * 0.72, 0.003, 0.001], [izq.x0, H * 0.6, D / 2 - 0.0003]);
-  m.caja(plata, [0.04, 0.006, 0.001], [izq.x0, 0.045, D / 2 - 0.0003]);
+  const pared = 0.007; // marco de madera alrededor del frontal
+  const zB = D / 2 - 0.008; // cara del frontal; delante solo vuelan el labio de madera, la rejilla y los altavoces
+  const lado = activo ? 0.004 : 0; // el activo: costado 4 mm más adentro, donde asoman las ruedas de los mandos
+  const xb = W / 2 - lado, w = xb + W / 2, x0 = (xb - W / 2) / 2;
+  // Caja de madera (aristas redondeadas), labio de madera delante y frontal gris dentro
+  m.cajaRedonda(madera, [w, H, zB + D / 2], 0.005, [x0, H / 2, (zB - D / 2) / 2], undefined, 2);
+  const labio = 0.003, zl = zB + labio / 2;
+  for (const sy of [-1, 1]) m.caja(madera, [w - 0.003, pared, labio], [x0, H / 2 + sy * (H / 2 - pared / 2 - 0.0015), zl]);
+  for (const sx of [-1, 1]) m.caja(madera, [pared, H - 2 * pared - 0.003, labio], [x0 + sx * (w / 2 - pared / 2 - 0.0015), H / 2, zl]);
+  m.caja(frontal, [w - 2 * pared - 0.003, H - 2 * pared - 0.003, 0.003], [x0, H / 2, zB]);
 
-  // Derecho: sin rejilla
-  const der = caja(hueco2 / 2, W / 2 - lado5);
-  const xD = der.x0, zF = zB + 0.0015; // delante del frontal
+  if (!activo) {
+    // Rejilla de tela gris que tapa el frontal, con la raya plateada y la plaquita
+    const rejilla = m.material('rejilla-tela', { color: 0x5a5c5f, rugosidad: 0.95, textura: 'tela' });
+    const zR = (zB + 0.001 + D / 2) / 2, gR = D / 2 - zB - 0.001;
+    m.cajaRedonda(rejilla, [w - 0.005, H - 0.005, gR], 0.0025, [x0, H / 2, zR], undefined, 2);
+    m.caja(plata, [w * 0.72, 0.002, 0.001], [x0, H * 0.53, D / 2 - 0.0003]);
+    m.caja(plata, [0.026, 0.004, 0.001], [x0, 0.018, D / 2 - 0.0003]);
+    return m;
+  }
+
+  const cono = m.material('cono', { color: 0x2c2c2e, rugosidad: 0.85 });
+  const hueco = m.material('hueco', { color: 0x080808, rugosidad: 1 });
+  const zF = zB + 0.0015; // delante del frontal
   const disco = (mat, r, alto, x, y, z, seg = 32) => m.cilindro(mat, [r, r, alto], [x, y, z], [PI / 2, 0, 0], seg);
   /** Cúpula (media esfera) que sale del frontal hacia delante, con su punta en zPunta. */
   const cupula = (mat, r, x, y, zPunta, seg = 20) => m.esfera(mat, r, [x, y, zPunta - r], { thetaLargo: PI / 2, segmentos: seg }, [PI / 2, 0, 0]);
-  // Woofer: aro negro, suspensión, cono hundido y tapa central
-  const wy = 0.16, wx = xD;
-  disco(negro, 0.09, 0.003, wx, wy, zF, 40);
-  m.aro(negro, 0.072, 0.0045, [wx, wy, zF + 0.0015], [0, 0, 0]);
-  m.pieza(cono, new THREE.CylinderGeometry(0.068, 0.025, 0.018, 36, 1, true), [wx, wy, zF + 0.001 - 0.009], [PI / 2, 0, 0]);
-  disco(cono, 0.068, 0.001, wx, wy, zF - 0.017, 36); // fondo del cono
-  cupula(negro, 0.026, wx, wy, D / 2 - 0.002);
+  // Woofer abajo: aro negro, suspensión, cono hundido y tapa central
+  const wx = x0, wy = 0.088;
+  disco(negro, 0.057, 0.003, wx, wy, zF, 40);
+  m.aro(negro, 0.046, 0.0035, [wx, wy, zF + 0.0015], [0, 0, 0]);
+  m.pieza(cono, new THREE.CylinderGeometry(0.043, 0.016, 0.014, 32, 1, true), [wx, wy, zF + 0.001 - 0.007], [PI / 2, 0, 0]);
+  disco(cono, 0.043, 0.001, wx, wy, zF - 0.013, 32); // fondo del cono
+  cupula(negro, 0.017, wx, wy, D / 2 - 0.002);
   // Tweeter arriba a la derecha con su aro, la cúpula y el puente
-  const ty = 0.37, tx = xD + 0.035;
-  disco(negro, 0.05, 0.003, tx, ty, zF, 32);
-  disco(cono, 0.036, 0.003, tx, ty, zF + 0.001, 28);
-  cupula(negro, 0.014, tx, ty, D / 2 - 0.001, 16);
-  m.caja(negro, [0.07, 0.004, 0.003], [tx, ty, zF + 0.003]);
-  // Reflector redondo y puerto de graves a la izquierda
-  const px = xD - 0.06;
-  cupula(negro, 0.02, px, 0.415, D / 2, 16);
-  m.aro(negro, 0.027, 0.004, [px, 0.33, zF + 0.001], [0, 0, 0]);
-  disco(hueco, 0.026, 0.001, px, 0.33, zF + 0.0005, 24);
-  // Tornillos (cuatro alrededor del woofer y cuatro del tweeter)
-  for (const [x, y] of [[wx - 0.065, wy - 0.075], [wx + 0.065, wy - 0.075], [wx - 0.065, wy + 0.075], [wx + 0.065, wy + 0.075],
-    [tx - 0.035, ty - 0.035], [tx + 0.035, ty - 0.035], [tx - 0.035, ty + 0.035], [tx + 0.035, ty + 0.035]]) {
-    disco(hueco, 0.004, 0.002, x, y, zF + 0.001, 10);
+  const tx = x0 + 0.028, ty = 0.186;
+  disco(negro, 0.034, 0.003, tx, ty, zF, 32);
+  disco(cono, 0.024, 0.003, tx, ty, zF + 0.001, 28);
+  cupula(negro, 0.01, tx, ty, D / 2 - 0.001, 16);
+  m.caja(negro, [0.046, 0.003, 0.003], [tx, ty, zF + 0.003]);
+  // Reflector redondo y, debajo, el puerto de graves, arriba a la izquierda
+  const px = x0 - 0.035;
+  cupula(negro, 0.012, px, 0.203, D / 2, 16);
+  m.aro(negro, 0.018, 0.003, [px, 0.16, zF + 0.001], [0, 0, 0]);
+  disco(hueco, 0.017, 0.001, px, 0.16, zF + 0.0005, 24);
+  // Tornillos: cuatro en las esquinas del woofer y cuatro alrededor del tweeter
+  const tw = 0.047, tt = 0.025;
+  for (const [x, y] of [[wx - tw, wy - tw], [wx + tw, wy - tw], [wx - tw, wy + tw], [wx + tw, wy + tw],
+    [tx - tt, ty - tt], [tx + tt, ty - tt], [tx - tt, ty + tt], [tx + tt, ty + tt]]) {
+    disco(hueco, 0.003, 0.002, x, y, zF + 0.001, 10);
   }
-  m.caja(plata, [0.04, 0.006, 0.001], [xD, 0.045, zF]);
-  // Panel de mandos oscuro en el costado de fuera, con tres ruedas que asoman hasta el borde
-  const xLado = W / 2 - lado5;
-  m.caja(hueco, [0.001, 0.2, 0.05], [xLado + 0.0005, 0.33, -0.005]);
-  for (const y of [0.27, 0.33, 0.39]) m.cilindro(negro, [0.011, 0.011, lado5], [xLado + lado5 / 2, y, -0.005], [0, 0, PI / 2], 16);
+  m.caja(plata, [0.026, 0.004, 0.001], [wx, 0.018, zF]);
+  // Panel de mandos oscuro en el costado derecho, con tres ruedas que asoman hasta el borde
+  const zP = D / 2 - 0.07;
+  m.caja(hueco, [0.001, 0.105, 0.036], [xb + 0.0005, 0.167, zP]);
+  for (const y of [0.141, 0.167, 0.193]) m.cilindro(negro, [0.0085, 0.0085, lado], [xb + lado / 2, y, zP], [0, 0, PI / 2], 16);
   return m;
 }
 
@@ -217,10 +217,16 @@ const OBJETOS = [
     fotos: 'Cuerpo negro mate con banda frontal, botón de velocidad a la izquierda y tres a la derecha; plato de aluminio con alfombrilla de fieltro negro, brazo recto plateado con cápsula blanca, adaptador de 45 y selector de tamaño; tapa de metacrilato ahumado **cerrada** (en las fotos está abierta; las medidas son con ella bajada). Sin los rótulos de la marca.',
   },
   {
-    ruta: 'electronica/altavoces', construir: altavoces,
-    ficha: { nombre: 'Altavoces de estantería (pareja)', categoria: 'Electrónica', colocacion: 'superficie' },
-    como: 'Las del encargo para los dos juntos: 48 de ancho × 10 de fondo × 50 cm de alto. Mías: dos cajas de 22 cm de ancho separadas 4 cm. (Más altas y planas que las de la foto; ver ESTADO).',
-    fotos: 'Madera clara con veta y frontal gris oscuro. El de la izquierda con la rejilla de tela gris y la raya plateada; el de la derecha con tweeter, reflector, puerto de graves, woofer con tornillos y el panel de mandos con tres ruedas en el costado de fuera. Sin el mando a distancia ni los rótulos de la marca.',
+    ruta: 'electronica/altavoz-izquierdo', construir: () => altavoz(false),
+    ficha: { nombre: 'Altavoz de estantería izquierdo (con rejilla)', categoria: 'Electrónica', colocacion: 'superficie' },
+    como: 'Las reales de cada altavoz de la pareja: 14,6 de ancho × 19,6 de fondo × 23,4 cm de alto. Mías: marco de madera de 7 mm y rejilla de 7 mm.',
+    fotos: 'El de la izquierda de la foto: madera clara con veta, rejilla de tela gris con la raya plateada a media altura y plaquita abajo. Sin el rótulo de la marca.',
+  },
+  {
+    ruta: 'electronica/altavoz-derecho', construir: () => altavoz(true),
+    ficha: { nombre: 'Altavoz de estantería derecho (activo)', categoria: 'Electrónica', colocacion: 'superficie' },
+    como: 'Las reales de cada altavoz de la pareja: 14,6 de ancho × 19,6 de fondo × 23,4 cm de alto. Posiciones del frontal medidas en la foto: woofer de ø11,4 cm abajo, tweeter de ø6,8 cm arriba a la derecha.',
+    fotos: 'El de la derecha de la foto: madera clara con veta y frontal gris oscuro sin rejilla; tweeter, reflector, puerto de graves, woofer con tornillos y el panel de mandos con tres ruedas en el costado derecho. Sin el mando a distancia ni el rótulo de la marca.',
   },
   VINILOS(5, false), VINILOS(5, true), VINILOS(10, false), VINILOS(10, true),
 ];
@@ -231,7 +237,8 @@ await procesarLote(OBJETOS, {
   titulo: 'Lote 5: tocadiscos, altavoces y vinilos',
   introduccion: `Tocadiscos y altavoces a partir de las fotos de producto del encargo, con
 sus medidas; los packs de vinilos, diseño propio sin foto (medidas de una
-funda estándar de LP). Todos son de **superficie** (mesas y muebles donde
+funda estándar de LP). Los altavoces son la pareja de la foto, en dos fichas
+para poder ponerlos por separado. Todos son de **superficie** (mesas y muebles donde
 quepan) y no admiten nada encima. Los vinilos, en dos fichas por pack: de pie
 y tumbados (la app solo gira en horizontal). Solo están en el catálogo: no se
 colocan en la casa.`,
