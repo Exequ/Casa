@@ -51,7 +51,8 @@ const LOTE2 = [
 ];
 const LOTE4 = ['almacenaje/zapatero', 'cocina/coffee-corner'];
 const VINILOS = ['decoracion/vinilos-5-de-pie', 'decoracion/vinilos-5-tumbados', 'decoracion/vinilos-10-de-pie', 'decoracion/vinilos-10-tumbados'];
-const LOTE5 = ['electronica/tocadiscos', 'electronica/altavoces', ...VINILOS];
+const ALTAVOCES = ['electronica/altavoz-izquierdo', 'electronica/altavoz-derecho'];
+const LOTE5 = ['electronica/tocadiscos', ...ALTAVOCES, ...VINILOS];
 const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5];
 
 const io = new NodeIO();
@@ -165,6 +166,8 @@ describe('colocación y superficies del lote 1', () => {
     expect(gestor.apoyar(tele, sofa, 0.85, sofa.raiz.position.x, sofa.raiz.position.z)).toBe(false);
     // La librería: un objeto bajo cabe en la balda de abajo; la tele (48 cm), no
     const libreria = (await gestor.agregar(item('almacenaje/libreria'), 1.5, 0.6))!;
+    // Los altavoces (23,4 cm de alto) caben en la balda de abajo (26 cm libres)
+    for (const id of ALTAVOCES) expect(gestor.sitioEnSoporte(item(id), libreria, 0.37, 0, 0, 0), id).not.toBeNull();
     expect(gestor.sitioEnSoporte(item('electronica/television'), libreria, 2, 0, 0, 0)).not.toBeNull(); // encima, sí
     expect(gestor.sitioEnSoporte(item('electronica/television'), libreria, 0.66, 0, 0, 0)).toBeNull(); // solo 29 cm libres
     expect(gestor.sitioEnSoporte(item('jarron'), libreria, 0.66, 0, 0, 0)).not.toBeNull();
@@ -247,8 +250,10 @@ describe('lote 5: tocadiscos, altavoces y vinilos', () => {
   it('medidas del encargo, de superficie y sin nada encima', () => {
     // 37,3 de largo (fondo) × 35,8 de ancho × 9,7 de alto, con la tapa bajada
     expect(item('electronica/tocadiscos').dimensiones).toEqual({ ancho: 0.358, fondo: 0.373, alto: 0.097 });
-    expect(item('electronica/altavoces').dimensiones).toEqual({ ancho: 0.48, fondo: 0.1, alto: 0.5 });
-    for (const id of ['electronica/tocadiscos', 'electronica/altavoces']) expect(item(id).categoria, id).toBe('Electrónica');
+    // Cada altavoz de la pareja, por separado: 146 de ancho × 196 de fondo × 234 mm de alto
+    for (const id of ALTAVOCES) expect(item(id).dimensiones, id).toEqual({ ancho: 0.146, fondo: 0.196, alto: 0.234 });
+    expect(items.find((i) => i.id === 'electronica/altavoces'), 'la pareja en un solo objeto ya no existe').toBeUndefined();
+    for (const id of ['electronica/tocadiscos', ...ALTAVOCES]) expect(item(id).categoria, id).toBe('Electrónica');
     // Funda de LP de 31,5 cm y 5 mm por vinilo: de pie, el pack crece a lo ancho; tumbado, a lo alto
     expect(item('decoracion/vinilos-5-de-pie').dimensiones).toEqual({ ancho: 0.025, fondo: 0.315, alto: 0.315 });
     expect(item('decoracion/vinilos-5-tumbados').dimensiones).toEqual({ ancho: 0.315, fondo: 0.315, alto: 0.025 });
@@ -270,16 +275,21 @@ describe('lote 5: tocadiscos, altavoces y vinilos', () => {
     }
   });
 
-  it('en la app: en el mueble de TV, la mesa de centro y la librería; los vinilos no admiten nada encima', async () => {
+  it('en la app: en el mueble de TV, la mesa de centro y la librería, los altavoces de uno en uno; los vinilos no admiten nada encima', async () => {
     const vivienda = datos as Vivienda;
     const gestor = new GestorObjetos(new THREE.Scene(), new EspacioLibre(vivienda), carasColgables(vivienda));
     const mueble = (await gestor.agregar(item('almacenaje/mueble-tv'), 3, 1.7))!;
     expect((await gestor.agregarSobre(item('electronica/tocadiscos'), mueble, 0.55, 3, 1.7))?.raiz.position.y).toBe(0.55);
     const mesa = (await gestor.agregar(item('mesas/mesa-centro'), 3, 0.6))!;
-    expect((await gestor.agregarSobre(item('electronica/altavoces'), mesa, 0.45, 2.76, 0.6))?.raiz.position.y).toBe(0.45);
+    // Un altavoz a cada lado del tocadiscos en el mueble de TV (0,90 m de ancho), y otro par en la mesa de centro
+    expect((await gestor.agregarSobre(item('electronica/altavoz-izquierdo'), mueble, 0.55, 2.62, 1.7))?.raiz.position.y).toBe(0.55);
+    expect((await gestor.agregarSobre(item('electronica/altavoz-derecho'), mueble, 0.55, 3.38, 1.7))?.raiz.position.y).toBe(0.55);
+    expect((await gestor.agregarSobre(item('electronica/altavoz-izquierdo'), mesa, 0.45, 2.6, 0.6))?.raiz.position.y).toBe(0.45);
+    expect((await gestor.agregarSobre(item('electronica/altavoz-derecho'), mesa, 0.45, 2.8, 0.6))?.raiz.position.y).toBe(0.45);
     // Librería: de pie (31,5 cm) caben en la balda de 0,98 m (35 cm libres), no en la de 0,66 (29 cm);
     // tumbados, también en la de abajo (26 cm)
     const libreria = (await gestor.agregar(item('almacenaje/libreria'), 1.5, 0.6))!;
+    for (const id of ALTAVOCES) expect(gestor.sitioEnSoporte(item(id), libreria, 0.37, 0, 0, 0), id).not.toBeNull();
     expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-de-pie'), libreria, 0.98, 0, 0, 0)).not.toBeNull();
     expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-de-pie'), libreria, 0.66, 0, 0, 0)).toBeNull();
     expect(gestor.sitioEnSoporte(item('decoracion/vinilos-10-tumbados'), libreria, 0.37, 0, 0, 0)).not.toBeNull();

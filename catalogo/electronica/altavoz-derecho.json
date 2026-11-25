@@ -1,0 +1,12 @@
+{
+  "nombre": "Altavoz de estantería derecho (activo)",
+  "categoria": "Electrónica",
+  "colocacion": "superficie",
+  "dimensiones": {
+    "ancho": 0.146,
+    "fondo": 0.196,
+    "alto": 0.234
+  },
+  "medidas": "estimadas",
+  "glb": "altavoz-derecho.glb"
+}

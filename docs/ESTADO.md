@@ -100,7 +100,7 @@ superficie ocupaba toda la planta del mueble.
 
 ## Lote 5: tocadiscos, altavoces y vinilos
 
-Seis objetos nuevos en el catálogo con el mismo método que los lotes
+Siete objetos nuevos en el catálogo con el mismo método que los lotes
 anteriores: script reutilizable `scripts/catalogo-lote5.mjs`
 (`npm run catalogo:lote5`), un `.glb`, un `.json` y una miniatura por objeto en
 su carpeta de categoría, y su tabla en [`OBJETOS.md`](OBJETOS.md). **Solo
@@ -111,27 +111,27 @@ por código (sin licencias de terceros).
 | Objeto | Medidas | Detalle |
 |---|---|---|
 | Tocadiscos negro con tapa (`electronica/tocadiscos`) | 0,358 × 0,373 × 0,097 m | De las 2 fotos: cuerpo negro con banda frontal y 4 botones, plato de aluminio con fieltro, brazo recto con cápsula blanca, adaptador de 45, tapa ahumada **cerrada**. Superficie. 2.428 triángulos, 70 KB. |
-| Altavoces de estantería (pareja) (`electronica/altavoces`) | 0,48 × 0,10 × 0,50 m | De la foto: dos cajas de madera clara de 22 cm con frontal gris; la izquierda con rejilla de tela, la derecha con tweeter, reflector, puerto, woofer y panel de mandos en el costado. Superficie. 4.700 triángulos, 122 KB. |
+| Altavoz de estantería izquierdo (con rejilla) (`electronica/altavoz-izquierdo`) | 0,146 × 0,196 × 0,234 m | El de la izquierda de la foto: madera clara con veta, rejilla de tela gris con raya plateada. Superficie. 684 triángulos, 28 KB. |
+| Altavoz de estantería derecho (activo) (`electronica/altavoz-derecho`) | 0,146 × 0,196 × 0,234 m | El de la derecha de la foto: frontal gris oscuro con tweeter, reflector, puerto de graves y woofer con tornillos; panel de mandos con tres ruedas en el costado derecho. Superficie. 3.992 triángulos, 100 KB. |
 | Pack de 5 / 10 vinilos de pie (`decoracion/vinilos-5-de-pie`, `vinilos-10-de-pie`) | 0,025 / 0,05 × 0,315 × 0,315 m | Diseño propio: fundas de LP pegadas, una de cada color, con disco negro y etiqueta en las caras de fuera; lomos hacia delante. Superficie. 1.180 / 1.720 triángulos. |
 | Pack de 5 / 10 vinilos tumbados (`decoracion/vinilos-5-tumbados`, `vinilos-10-tumbados`) | 0,315 × 0,315 × 0,025 / 0,05 m | Los mismos, apilados. Superficie. |
 
 ### Comprobaciones (lote 5)
 
 - Caja envolvente comprobada al generar (medidas exactas, centrado en la base, frente a +Z).
-- `npm test`: 310 tests en verde; nuevos: medidas, categoría y colocación de los 6, un color distinto por funda en cada pack, y en la app el tocadiscos en el mueble de TV, los altavoces y un pack sobre la mesa de centro (que no admite nada encima) y los vinilos en la librería (de pie caben en la balda de 0,98 m y no en la de 0,66; tumbados, también en la de abajo). Entran en las comprobaciones comunes del catálogo (menos de 20.000 triángulos, menos de 300 KB, como mucho 2 texturas).
+- `npm test`: 310 tests en verde; nuevos: medidas, categoría y colocación de los 7, un color distinto por funda en cada pack, y en la app el tocadiscos en el mueble de TV con un altavoz a cada lado, otro par de altavoces y un pack sobre la mesa de centro (que no admite nada encima), los altavoces en la balda de abajo de la librería y los vinilos en la librería (de pie caben en la balda de 0,98 m y no en la de 0,66; tumbados, también en la de abajo). Entran en las comprobaciones comunes del catálogo (menos de 20.000 triángulos, menos de 300 KB, como mucho 2 texturas).
 - Vistas de frente, de lado, de atrás y en 3/4 como las fotos: oscurecidos la rejilla, el frontal y la tapa ahumada, y la madera algo más tostada; el negro de los vinilos no queda en una punta (disco negro sobre funda negra no se leía).
-- Navegador (escritorio y móvil emulado Pixel 7): el buscador encuentra los 6 con su miniatura, se añaden en una capa nueva, se apoyan solos sobre la mesa de centro del salón y se ven en la vista interior. Única advertencia en consola, la de siempre (`toNonIndexed` de techos y fijos), no de estos objetos.
+- Navegador (escritorio y móvil emulado Pixel 7): el buscador encuentra los 7 con su miniatura, se añaden en una capa nueva, se apoyan solos sobre la mesa de centro del salón y se ven en la vista interior. Única advertencia en consola, la de siempre (`toNonIndexed` de techos y fijos), no de estos objetos.
 
 ### Decisiones (lote 5)
 
 - **Tocadiscos:** «37,3 l × 35,8 an × 9,7 al» → 0,373 de fondo, 0,358 de ancho, 0,097 de alto. Esa altura es con la tapa bajada, así que la tapa va **cerrada** (las fotos la muestran abierta); abierta mediría unos 40 cm y no cabría bajo muchas baldas.
-- **Altavoces:** se respetan las medidas del encargo (48 de ancho × 10 de fondo × 50 de alto) para **la pareja en un solo objeto**, porque 48 cm de ancho solo encaja con los dos juntos: dos cajas de 22 cm separadas 4 cm. Ojo: los de la foto (Edifier R1280T) miden unos 14,6 × 19,6 × 23,4 cm **cada uno**, así que con estas medidas salen más altos y planos que en la foto. Si las medidas eran otras, basta con corregir `dimensiones` en `catalogo/electronica/altavoces.json` (la app estira el modelo).
+- **Altavoces:** **corregidos** tras la primera versión (que era la pareja en un solo objeto de 48 × 10 × 50 cm, con unas medidas equivocadas). Ahora son **dos fichas, una por altavoz**, para ponerlos de uno en uno: el izquierdo con la rejilla y el derecho activo con los mandos, como en la foto. Medidas reales de cada uno: 146 de ancho × 196 de fondo × 234 mm de alto. La ficha antigua `electronica/altavoces` se ha quitado (una escena guardada que la tuviera la pierde al cargar).
 - **Vinilos:** funda estándar de 31,5 × 31,5 cm y **5 mm por vinilo** (funda, funda interior y disco): 2,5 cm el de 5 y 5 cm el de 10. Como la app solo gira en horizontal, «de pie» y «tumbados» son **dos fichas por pack** (4 en total). Colores: rojo, amarillo, azul, verde y rosa (pack de 5) y además naranja, morado, negro, turquesa y blanco (pack de 10). Categoría **Decoración**.
 - Sin los rótulos de la marca ni el mando a distancia de la foto de los altavoces. Tocadiscos y altavoces en **Electrónica**.
 
 ### Limitaciones (lote 5)
 
-- Los altavoces son un solo objeto: no se pueden separar a cada lado del tocadiscos.
 - La tapa del tocadiscos no se abre.
 
 ---
