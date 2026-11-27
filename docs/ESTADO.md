@@ -1,8 +1,8 @@
 # Estado del proyecto
 
-Última actualización: 27 de noviembre de 2026, lote 6 del catálogo
-(alfombra de cuadros), tras la fase 6 (Modo cámara, capas, catálogo plegable
-y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 27 de noviembre de 2026, alfombras debajo de los
+muebles (y lote 6, alfombra de cuadros), tras la fase 6 (Modo cámara, capas,
+catálogo plegable y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
@@ -98,6 +98,42 @@ superficie ocupaba toda la planta del mueble.
 
 ---
 
+## Alfombras debajo de los muebles
+
+Con el lote 6, la alfombra era un mueble de suelo más: no se podía poner donde
+hubiera muebles, los apartaba y no se podía poner ningún mueble encima. Ahora
+las alfombras tienen su propio comportamiento (campo nuevo `"alfombra": true`
+en la ficha, documentado en el README):
+
+| Qué | Antes | Ahora |
+|---|---|---|
+| Añadir o soltar la alfombra donde hay muebles | Se iba al hueco libre más cercano | Se queda justo ahí, **debajo** de los muebles |
+| Arrastrar o girar la alfombra | Chocaba con los muebles | Se mueve libremente por debajo; **lo de encima no se mueve** |
+| Poner o arrastrar un mueble u objeto encima | Lo apartaba (chocaba) | Libre, se queda donde se suelta (en el suelo) |
+| Solapes (marca roja) | Alfombra y mueble solapados | Nunca: la alfombra no cuenta |
+| Lo que hay encima | Objetos de superficie apoyados a 1 cm, que iban con ella | Todo en el suelo; la alfombra no es soporte |
+| Paredes, puertas y fijos | La limitaban | Siguen limitándola |
+
+Cambios: `src/catalogo/catalogo.ts` (campo `alfombra`, validación y sin
+superficies), `src/escena/objetos.ts` (fuera de los obstáculos y de los
+solapes), `src/ui/panel.ts` (texto «bajo los muebles»), la ficha de la
+alfombra (sin `superficies`) y su script.
+
+### Comprobaciones (alfombras)
+
+- `npm test`: 324 tests en verde. Nuevo `tests/alfombra.test.ts` (9 tests): ficha y validación; la alfombra se pone justo donde se pide bajo una mesa y un sillón; un mueble se pone encima donde se pide; la alfombra se arrastra y gira por debajo sin mover la mesa, el sillón ni la planta de la mesa; un mueble se arrastra y gira encima y un objeto se suelta en el suelo encima; dos alfombras se pisan y las paredes la limitan; los muebles siguen chocando entre sí; en la casa amueblada bajo la mesa de centro, y guardar y cargar no mueve nada. Con el código anterior fallan 6 de los 9. `npm run build` sin errores.
+- Navegador, con el ratón (escritorio) y con el dedo (móvil emulado Pixel 7), sobre la casa amueblada con Base desbloqueada, en planta: la alfombra se añade en el centro del salón, bajo las sillas del comedor, sin mover nada; se arrastra por debajo de los muebles (0,83 m con el ratón, 0,45 m con el dedo) y ningún mueble cambia de sitio; una silla del comedor se arrastra hasta encima de la alfombra y se queda ahí (con el ratón, justo en el punto soltado), sin mover la alfombra ni nada más; nada se marca en rojo. Se ve bien en la vista interior. Única advertencia en consola, la de siempre (`toNonIndexed`).
+
+### Decisiones (alfombras)
+
+- **Lo de encima va en el suelo** (y no apoyado a 1 cm), para que al mover la alfombra no se mueva nada. Los muebles quedan a ras de suelo, con 1 cm de las patas «hundido» en el pelo de la alfombra (no se nota).
+- La alfombra **ya no es soporte**: el «sí» de «¿es soporte?» del lote 6 se cumple de otra forma (se puede poner cualquier cosa encima). Sale de la lista de muebles soporte y de la tabla «Superficies».
+- Las paredes, puertas y fijos (encimeras, baño, armario) **siguen limitándola**: no se mete bajo la encimera de la cocina ni atraviesa paredes.
+- Dos alfombras pueden pisarse (alfombra sobre alfombra).
+- Al hacer clic sobre un mueble que está encima de la alfombra, se coge el mueble; la alfombra se coge por la parte que se ve.
+
+---
+
 ## Lote 6: alfombra de cuadros
 
 Un objeto nuevo en el catálogo a partir de la foto de producto (con sus
@@ -110,24 +146,24 @@ aportó modelo 3D: está modelada por código (sin licencias de terceros).
 
 | Objeto | Medidas | Detalle |
 |---|---|---|
-| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,40 × 2,00 × 0,01 m | 5 × 7 casillas (28 × 28,6 cm), rosa claro y rojo burdeos alternos con rosa en las esquinas, tejido con trama. Suelo; admite cosas encima (superficie a 1 cm, toda la alfombra). 420 triángulos, 33 KB. |
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,40 × 2,00 × 0,01 m | 5 × 7 casillas (28 × 28,6 cm), rosa claro y rojo burdeos alternos con rosa en las esquinas, tejido con trama. Suelo, debajo de los muebles (ver «Alfombras debajo de los muebles»). 420 triángulos, 33 KB. |
 
 ### Comprobaciones (lote 6)
 
 - Caja envolvente comprobada al generar (medidas exactas, centrada en la base, frente a +Z).
-- `npm test`: 315 tests en verde; nuevos: medidas, categoría, colocación y superficie; 2 materiales y 35 casillas; y en la app la alfombra en el salón con una planta y un pack de vinilos encima. Entra en las comprobaciones comunes del catálogo y en la lista de muebles soporte de `tests/apoyo.test.ts`.
+- `npm test` (entonces 315 tests) en verde; nuevos: medidas, categoría y colocación; 2 materiales y 35 casillas; y en la app la alfombra en el salón. Entra en las comprobaciones comunes del catálogo.
 - Vistas desde arriba, en 3/4, de lado y de atrás comparadas con la foto: los colores se han ajustado midiendo los píxeles de la vista de arriba (rosa #f2d2c7 y rojo #962b38 frente a #f2d4cc y #962b3a en la foto).
-- Navegador (escritorio y móvil emulado Pixel 7): el buscador la encuentra con su miniatura, se añade al salón en una capa nueva, se le pone una planta encima y se ve en planta y en la vista interior; sin errores nuevos en la consola.
+- Navegador (escritorio y móvil emulado Pixel 7): el buscador la encuentra con su miniatura, se añade al salón en una capa nueva y se ve en planta y en la vista interior; sin errores nuevos en la consola.
 
 ### Decisiones (lote 6)
 
 - 140 de ancho × 200 de fondo (el lado largo, de delante atrás, como en la foto) y **1 cm de grosor** (estimado, pelo corto).
-- «¿Es soporte? sí»: superficie a 1 cm en toda la alfombra, sin límite de altura por encima, para objetos de superficie (plantas, vinilos, lámparas…).
+- «¿Es soporte? sí»: en la primera versión, superficie a 1 cm para objetos de superficie; **sustituido** por el comportamiento de alfombra (cualquier cosa encima, en el suelo; ver arriba).
 - Carpeta y categoría nuevas **`alfombras/` · Alfombras**, pensando en futuras alfombras.
 
 ### Limitaciones (lote 6)
 
-- **Los muebles de suelo no se pueden poner encima de la alfombra.** Para la app es un objeto de suelo más: un sofá o una mesa no pueden solaparse con ella (al añadir o arrastrar uno encima, lo aparta), y solo admite encima los objetos de superficie. Que los muebles pisen una alfombra pide cambiar la regla de solapes de la app (que no se toca en este lote).
+- ~~Los muebles de suelo no se podían poner encima de la alfombra~~: **resuelto** (ver «Alfombras debajo de los muebles»).
 
 ---
 

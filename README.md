@@ -54,8 +54,9 @@ Todas las medidas están en **metros**, a escala real.
   fotos de producto con sus medidas) y **packs de 5 y 10 vinilos** de colores, de pie o tumbados
   (diseño propio). Son de superficie; solo están en el catálogo.
 - **Lote 6:** una **alfombra** de cuadros rosa claro y rojo de 140 × 200 cm
-  (de foto de producto), en la nueva categoría *Alfombras*. Admite cosas de
-  superficie encima; solo está en el catálogo.
+  (de foto de producto), en la nueva categoría *Alfombras*. Va **debajo de
+  los muebles**: se pone y se mueve aunque haya muebles encima, y los muebles
+  se mueven libremente por encima. Solo está en el catálogo.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
   para probar variantes: mostrar, ocultar, bloquear, duplicar…) y **catálogo
@@ -249,6 +250,19 @@ con todas las categorías plegadas.
   mueble libre cercano o, si no hay, al suelo.
 - Los objetos de pared y los apoyados no estorban a los muebles del suelo
   (un objeto de superficie que esté en el suelo, sí).
+
+**Alfombras** (fichas con `"alfombra": true`):
+
+- Van en el suelo **debajo de los muebles**: no chocan con ningún mueble ni
+  objeto, y ninguno choca con ellas. Se pueden añadir o soltar debajo de
+  muebles que ya están, aunque no haya hueco libre, y arrastrar y girar
+  libremente por debajo.
+- Los muebles y los objetos se ponen, se arrastran y se giran por encima con
+  total libertad. Lo que hay encima sigue en el suelo: **no se mueve con la
+  alfombra** (no es un soporte).
+- Solo las limitan las paredes, las puertas y los fijos (cocina, baño,
+  armario), como a cualquier mueble. Nunca se marcan en rojo por solaparse,
+  y dos alfombras pueden pisarse.
 
 **Cómo se comportan los muebles:**
 
@@ -679,6 +693,9 @@ Si algo no coincide, corrige la medida en píxeles en
      misma altura. **Regla:** un objeto solo se apoya en una superficie si su
      huella, con su giro, cabe en su `ancho` × `fondo` y su alto es menor o
      igual que su `alturaLibre`.
+   - `alfombra` (opcional, solo objetos de suelo): `true` si es una alfombra
+     (va debajo de los muebles sin chocar con nada; ver «Alfombras» arriba).
+     No lleva `superficies`: lo que va encima está en el suelo.
    - `medidas` (opcional, informativo): `"estimadas"` o `"confirmadas"`.
 
    La **miniatura** del panel es un `.png` con el mismo nombre que el `.json`

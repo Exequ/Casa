@@ -1,18 +1,12 @@
 {
   "nombre": "Alfombra de cuadros rosa claro y rojo",
   "categoria": "Alfombras",
+  "alfombra": true,
   "dimensiones": {
     "ancho": 1.4,
     "fondo": 2,
     "alto": 0.01
   },
-  "superficies": [
-    {
-      "altura": 0.01,
-      "ancho": 1.4,
-      "fondo": 2
-    }
-  ],
   "medidas": "estimadas",
   "glb": "alfombra-cuadros-rosa-rojo.glb"
 }

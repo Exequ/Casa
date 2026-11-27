@@ -57,6 +57,7 @@ export async function procesarLote(objetos, { reiniciar = false, seccion, titulo
       nombre: o.ficha.nombre,
       categoria: o.ficha.categoria,
       ...(o.ficha.colocacion ? { colocacion: o.ficha.colocacion } : {}),
+      ...(o.ficha.alfombra ? { alfombra: true } : {}),
       ...(o.ficha.alturaCentro !== undefined ? { alturaCentro: o.ficha.alturaCentro } : {}),
       dimensiones: modelo.dimensiones,
       ...(o.ficha.superficies ? { superficies: o.ficha.superficies } : {}),
@@ -87,6 +88,7 @@ function tabla(resumen) {
     const extra = [
       `colocación: ${ficha.colocacion ?? 'suelo'}`,
       ficha.alturaCentro !== undefined ? `centro a ${m(ficha.alturaCentro)} m` : '',
+      ficha.alfombra ? 'alfombra: debajo de los muebles, sin chocar con nada' : '',
       ficha.superficies ? (ficha.superficies.length ? `superficies: ${ficha.superficies.map((s) => m(typeof s === 'number' ? s : s.altura)).join(' / ')} m (ver «Superficies»)` : 'no admite nada encima') : '',
     ].filter(Boolean).join('; ');
     return `| ${ficha.nombre} (\`${ruta}\`) | ${m(d.ancho)} × ${m(d.fondo)} × ${m(d.alto)} | ${extra} | ${como} | ${fotos ?? ''} | ${ficha.medidas === 'confirmadas' ? '**confirmada**' : 'estimada'} | ${info.triangulos} |`;
@@ -126,7 +128,6 @@ y estas tablas se regeneran con ellas.
 
 /** Por qué se ha estimado así cada superficie (lo que se ve en las fotos y en el modelo). */
 const NOTAS_SUPERFICIES = {
-  'alfombras/alfombra-cuadros-rosa-rojo': 'Toda la alfombra, a 1 cm del suelo, sin límite por encima.',
   'almacenaje/libreria': 'Baldas: hueco entre los laterales (0,77) por el fondo útil delante del trasero (0,34), algo hacia atrás; altura libre hasta la cara de abajo de la balda de encima (2,5 cm de balda) y, la de arriba, hasta el techo interior (1,84 m). Tapa: toda la cornisa.',
   'almacenaje/mueble-tv': 'Estante de listones entre las patas (0,79 × 0,32); altura libre hasta el faldón de la tapa (0,47 m), por donde tiene que entrar lo que se mete. Tapa entera.',
   'almacenaje/zapatero': 'Tapa entera (las trampillas no admiten nada).',
@@ -158,7 +159,7 @@ function fichasCatalogo(carpeta = CATALOGO, prefijo = '') {
 export function escribirSuperficies() {
   const filas = [];
   for (const [id, f] of fichasCatalogo()) {
-    if ((f.colocacion ?? 'suelo') !== 'suelo') continue;
+    if ((f.colocacion ?? 'suelo') !== 'suelo' || f.alfombra) continue;
     const lista = Array.isArray(f.superficies) ? f.superficies : [f.dimensiones.alto];
     if (!lista.length) continue;
     const ordenadas = lista.map((s) => (typeof s === 'number' ? { altura: s } : s)).sort((a, b) => a.altura - b.altura);
