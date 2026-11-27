@@ -120,13 +120,15 @@ colocan en la casa.
 ## Lote 6: alfombra de cuadros
 
 Hecha a partir de la foto de producto del encargo, con sus medidas
-(140 × 200 cm); el grosor (1 cm) es **estimado**. Va en el suelo y admite cosas
-encima (superficie a 1 cm, toda la alfombra). Solo está en el catálogo: no se
-coloca en la casa.
+(140 × 200 cm); el grosor (1 cm) es **estimado**. Es una **alfombra**
+(`"alfombra": true`): va en el suelo, debajo de los muebles, sin chocar con
+nada; los muebles y objetos se ponen y se mueven libremente encima (siguen en
+el suelo y no se mueven con ella). Solo está en el catálogo: no se coloca en
+la casa.
 
 | Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
 |---|---|---|---|---|---|---:|
-| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; superficies: 0,01 m (ver «Superficies») | Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo). Mío: 1 cm de grosor (pelo corto). | Tablero de 5 × 7 casillas casi cuadradas (28 × 28,6 cm), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos. | estimada | 420 |
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada | Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo). Mío: 1 cm de grosor (pelo corto). | Tablero de 5 × 7 casillas casi cuadradas (28 × 28,6 cm), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos. | estimada | 420 |
 <!-- fin:lote6 -->
 
 <!-- inicio:superficies -->
@@ -142,7 +144,6 @@ El desplazamiento es el del centro de la superficie respecto al del mueble
 
 | Mueble | Altura (m) | Ancho × fondo (m) | Desplazamiento (m) | Altura libre (m) | De dónde sale |
 |---|---:|---|---|---|---|
-| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 0,01 | 1,4 × 2 | — | sin límite | Toda la alfombra, a 1 cm del suelo, sin límite por encima. |
 | Librería alta de madera oscura (`almacenaje/libreria`) | 0,37 | 0,77 × 0,34 | z -0,02 | 0,26 | Baldas: hueco entre los laterales (0,77) por el fondo útil delante del trasero (0,34), algo hacia atrás; altura libre hasta la cara de abajo de la balda de encima (2,5 cm de balda) y, la de arriba, hasta el techo interior (1,84 m). Tapa: toda la cornisa. |
 |  | 0,66 | 0,77 × 0,34 | z -0,02 | 0,29 |  |
 |  | 0,98 | 0,77 × 0,34 | z -0,02 | 0,35 |  |

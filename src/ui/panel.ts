@@ -2,7 +2,7 @@
 // con el plano y ayuda. En el móvil es un cajón que se abre con el botón ☰.
 // Es HTML normal construido a mano; los estilos están en src/ui/estilos.css.
 
-import type { ItemCatalogo } from '../catalogo/catalogo';
+import { esAlfombra, type ItemCatalogo } from '../catalogo/catalogo';
 import type { GestorObjetos } from '../escena/objetos';
 import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
@@ -159,7 +159,7 @@ export function crearPanel(
     const textos = el('span', 'item-textos');
     textos.append(
       el('span', 'item-nombre', item.nombre),
-      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${DONDE[item.colocacion] ?? ''}`),
+      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${esAlfombra(item) ? ' · bajo los muebles' : DONDE[item.colocacion] ?? ''}`),
     );
     if (item.urlMiniatura) {
       const img = el('img', 'item-miniatura');
@@ -330,7 +330,8 @@ export function crearPanel(
     nombreSel.textContent = sel.item.nombre;
     const p = sel.raiz.position;
     const donde = sel.colocacion === 'pared' ? ' · en la pared'
-      : sel.colocacion === 'superficie' && sel.apoyo ? ` · sobre ${sel.apoyo.soporte.item.nombre.toLowerCase()} (${m(sel.apoyo.nivel)} m)` : '';
+      : sel.colocacion === 'superficie' && sel.apoyo ? ` · sobre ${sel.apoyo.soporte.item.nombre.toLowerCase()} (${m(sel.apoyo.nivel)} m)`
+      : esAlfombra(sel.item) ? ' · bajo los muebles' : '';
     posicionSel.textContent = `Posición: x ${m(p.x)} m · z ${m(p.z)} m${donde}`;
     const aviso = gestor.avisoApoyo?.objeto === sel ? gestor.avisoApoyo.texto
       : !gestor.apoyoValido(sel) ? 'No cabe en esta balda (es demasiado grande o demasiado alto para ella): está marcado en rojo. Arrástralo a otra superficie o al suelo.' : '';

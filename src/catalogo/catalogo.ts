@@ -71,9 +71,19 @@ export interface FichaObjeto {
    * sillas, lámparas...).
    */
   superficies?: (number | SuperficieFicha)[];
+  /**
+   * Solo objetos de suelo: es una ALFOMBRA (plana, a ras de suelo). Va debajo
+   * de los muebles: no choca con ningún objeto ni ninguno choca con ella (solo
+   * la limitan paredes, puertas y fijos), nunca se marca como solapada, y lo
+   * que queda encima sigue en el suelo (no se mueve con ella). Por defecto, false.
+   */
+  alfombra?: boolean;
   /** "estimadas" (sacadas de fotos) o "confirmadas" (medidas de verdad). Solo informativo. */
   medidas?: 'estimadas' | 'confirmadas';
 }
+
+/** ¿Es una alfombra? (va debajo de los muebles, sin chocar con nada) */
+export const esAlfombra = (item: FichaObjeto) => item.alfombra === true;
 
 /** Un objeto del catálogo ya listo para usar en la app (con los valores por defecto puestos). */
 export interface ItemCatalogo extends FichaObjeto {
@@ -102,10 +112,10 @@ export function superficiesDe(item: FichaObjeto): number[] {
  *   - objeto: ancho y fondo (por defecto, los del mueble), centro desplazado
  *     (por defecto 0) y alturaLibre.
  * La alturaLibre por defecto es la distancia hasta la siguiente superficie
- * del mueble; la de más arriba no tiene límite.
+ * del mueble; la de más arriba no tiene límite. Las alfombras no tienen.
  */
 export function zonasDe(item: FichaObjeto): Superficie[] {
-  if ((item.colocacion ?? 'suelo') !== 'suelo') return [];
+  if ((item.colocacion ?? 'suelo') !== 'suelo' || esAlfombra(item)) return []; // lo que va encima de una alfombra está en el suelo
   const d = item.dimensiones;
   const lista = Array.isArray(item.superficies) ? item.superficies : [d.alto];
   const ordenadas = lista
@@ -177,6 +187,11 @@ export function validarFicha(f: Partial<FichaObjeto>): string | null {
     const error = validarSuperficies(f.superficies, d);
     if (error) return error;
     if ((f.colocacion ?? 'suelo') !== 'suelo') return '"superficies" solo vale en objetos de suelo';
+  }
+  if (f.alfombra !== undefined) {
+    if (typeof f.alfombra !== 'boolean') return '"alfombra" debe ser true o false';
+    if (f.alfombra && (f.colocacion ?? 'suelo') !== 'suelo') return '"alfombra" solo vale en objetos de suelo';
+    if (f.alfombra && Array.isArray(f.superficies) && f.superficies.length) return 'una alfombra no admite "superficies": lo que va encima está en el suelo';
   }
   return null;
 }

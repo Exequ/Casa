@@ -18,6 +18,13 @@
 //
 // Los objetos de pared y los apoyados no son obstáculo para los del suelo.
 //
+// ALFOMBRAS (fichas con "alfombra": true): objetos de suelo planos que van
+// DEBAJO de los muebles. No chocan con ningún objeto ni ninguno choca con
+// ellas (solo las limitan paredes, puertas y fijos), así que se pueden poner
+// bajo muebles que ya están y mover libremente, y los muebles se mueven por
+// encima sin estorbo. Nunca se marcan como solapadas. No son soporte: lo que
+// queda encima sigue en el suelo y no se mueve con la alfombra.
+//
 // CAPAS (fase 6): cada objeto pertenece a una capa (ver capas.ts).
 //   - Los de capas ocultas no se dibujan, no se seleccionan y no cuentan para
 //     choques ni como soporte. Los de capas bloqueadas se ven y cuentan para
@@ -40,7 +47,7 @@
 
 import * as THREE from 'three';
 import {
-  alturaCentroDe, medioGirado, motivoNoCabe, superficiesDe, zonaEn, zonasDe, type ItemCatalogo, type MotivoNoCabe, type Superficie,
+  alturaCentroDe, esAlfombra, medioGirado, motivoNoCabe, superficiesDe, zonaEn, zonasDe, type ItemCatalogo, type MotivoNoCabe, type Superficie,
 } from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
 import { GestorCapas, type Capa } from './capas';
@@ -898,7 +905,8 @@ export class GestorObjetos {
     };
     const vis = this.objetos.filter((o) => this.visible(o));
     // En el suelo: huellas (con 1 mm de holgura por lado, como en los choques)
-    const suelo = vis.filter((o) => o.colocacion === 'suelo').map((o) => {
+    // (las alfombras van debajo de todo: nunca se solapan con nada)
+    const suelo = vis.filter((o) => o.colocacion === 'suelo' && !esAlfombra(o.item)).map((o) => {
       const h = this.huella(o);
       return { o, h: encoger(huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro) as Punto[], HOLGURA) };
     });
@@ -976,13 +984,16 @@ export class GestorObjetos {
    * Huellas de los objetos que están en el suelo, menos `excepto` (los
    * obstáculos para él), y de los elementos fijos colgados más bajos que su
    * parte de arriba. (Los fijos del suelo ya los tiene en cuenta EspacioLibre.)
+   * Las alfombras no son obstáculo para nadie, y para una alfombra no lo es
+   * ningún objeto (va debajo de los muebles).
    */
   obstaculos(excepto?: ObjetoColocado): Obstaculo[] {
     const alto = excepto ? excepto.item.dimensiones.alto : Infinity;
+    const debajo = !!excepto && esAlfombra(excepto.item);
     // Con los que ya estaba solapado no choca (para poder sacarlo del solape)
     const yaSolapados = excepto ? this.paresSolape.get(excepto) : undefined;
     return this.objetos
-      .filter((o) => o !== excepto && o.colocacion === 'suelo' && this.cuenta(o, excepto) && !yaSolapados?.has(o))
+      .filter((o) => !debajo && o !== excepto && o.colocacion === 'suelo' && !esAlfombra(o.item) && this.cuenta(o, excepto) && !yaSolapados?.has(o))
       .map((o) => {
         const h = this.huella(o);
         return huellaRectangulo(h.x, h.z, h.ancho, h.fondo, h.giro) as Punto[];

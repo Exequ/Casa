@@ -39,7 +39,8 @@ function alfombra() {
 const OBJETOS = [
   {
     ruta: 'alfombras/alfombra-cuadros-rosa-rojo', construir: alfombra,
-    ficha: { nombre: 'Alfombra de cuadros rosa claro y rojo', categoria: 'Alfombras', superficies: [{ altura: GROSOR, ancho: 1.4, fondo: 2 }] },
+    // Alfombra: va debajo de los muebles y no choca con nada; lo que queda encima sigue en el suelo
+    ficha: { nombre: 'Alfombra de cuadros rosa claro y rojo', categoria: 'Alfombras', alfombra: true },
     como: 'Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo). Mío: 1 cm de grosor (pelo corto).',
     fotos: 'Tablero de 5 × 7 casillas casi cuadradas (28 × 28,6 cm), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos.',
   },
@@ -50,7 +51,9 @@ await procesarLote(OBJETOS, {
   seccion: 'lote6',
   titulo: 'Lote 6: alfombra de cuadros',
   introduccion: `Hecha a partir de la foto de producto del encargo, con sus medidas
-(140 × 200 cm); el grosor (1 cm) es **estimado**. Va en el suelo y admite cosas
-encima (superficie a 1 cm, toda la alfombra). Solo está en el catálogo: no se
-coloca en la casa.`,
+(140 × 200 cm); el grosor (1 cm) es **estimado**. Es una **alfombra**
+(\`"alfombra": true\`): va en el suelo, debajo de los muebles, sin chocar con
+nada; los muebles y objetos se ponen y se mueven libremente encima (siguen en
+el suelo y no se mueven con ella). Solo está en el catálogo: no se coloca en
+la casa.`,
 });

@@ -305,11 +305,12 @@ describe('lote 6: alfombra de cuadros', () => {
   const item = (id: string) => items.find((i) => i.id === id)!;
   const ALFOMBRA = 'alfombras/alfombra-cuadros-rosa-rojo';
 
-  it('140 × 200 cm, en el suelo y admite cosas encima en toda su superficie', () => {
+  it('140 × 200 cm, en el suelo, es alfombra (va bajo los muebles) y no es soporte', () => {
     expect(item(ALFOMBRA).dimensiones).toEqual({ ancho: 1.4, fondo: 2, alto: 0.01 });
     expect(item(ALFOMBRA).categoria).toBe('Alfombras');
     expect(item(ALFOMBRA).colocacion).toBe('suelo');
-    expect(superficiesDe(item(ALFOMBRA))).toEqual([0.01]);
+    expect(item(ALFOMBRA).alfombra).toBe(true);
+    expect(superficiesDe(item(ALFOMBRA))).toEqual([]); // lo que va encima está en el suelo (ver tests/alfombra.test.ts)
   });
 
   it('5 × 7 casillas de dos colores (rosa claro y rojo), en un modelo ligero', async () => {
@@ -321,14 +322,15 @@ describe('lote 6: alfombra de cuadros', () => {
     expect(triangulos).toBe(35 * 12); // una caja por casilla
   });
 
-  it('en la app: en el salón, con una planta y un pack de vinilos encima', async () => {
+  it('en la app: en el salón, con la mesa de centro encima y una planta en el suelo sobre ella', async () => {
     const vivienda = datos as Vivienda;
     const gestor = new GestorObjetos(new THREE.Scene(), new EspacioLibre(vivienda), carasColgables(vivienda));
     const alf = (await gestor.agregar(item(ALFOMBRA), 3, 1.7))!;
     expect(alf).not.toBeNull();
-    expect(gestor.esSoporte(alf)).toBe(true);
-    const x = alf.raiz.position.x, z = alf.raiz.position.z;
-    expect((await gestor.agregarSobre(item('decoracion/planta-pequena'), alf, 0.01, x - 0.4, z))?.raiz.position.y).toBe(0.01);
-    expect((await gestor.agregarSobre(item('decoracion/vinilos-10-tumbados'), alf, 0.01, x + 0.4, z))?.raiz.position.y).toBe(0.01);
+    expect(gestor.esSoporte(alf)).toBe(false);
+    const mesa = (await gestor.agregar(item('mesas/mesa-centro'), 3, 1.7))!;
+    expect([mesa.raiz.position.x, mesa.raiz.position.z]).toEqual([3, 1.7]);
+    const planta = (await gestor.agregar(item('decoracion/planta-pequena'), 3.62, 1.7))!; // junto a la mesa, sobre la alfombra
+    expect([planta.raiz.position.x, planta.raiz.position.y, planta.raiz.position.z]).toEqual([3.62, 0, 1.7]);
   });
 });
