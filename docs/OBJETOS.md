@@ -3,8 +3,9 @@
 Muebles reales del piso, generados por scripts a partir de las fotos:
 `scripts/catalogo-lote1.mjs` (salón y pasillo), `scripts/catalogo-lote2.mjs`
 (dormitorio, balcón y tendedero), `scripts/catalogo-lote4.mjs` (zapatero y
-coffee corner, de fotos de producto) y `scripts/catalogo-lote5.mjs`
-(tocadiscos, altavoces y packs de vinilos). Los objetos de ejemplo de las fases 1 y 4
+coffee corner, de fotos de producto), `scripts/catalogo-lote5.mjs`
+(tocadiscos, altavoces y packs de vinilos) y `scripts/catalogo-lote6.mjs`
+(alfombra de cuadros). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 `catalogo/`.
 
@@ -18,7 +19,7 @@ coffee corner, de fotos de producto) y `scripts/catalogo-lote5.mjs`
 3. Pon `"medidas": "confirmadas"` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`, `lote5`), las
+ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`, `lote5`, `lote6`), las
 medidas de los `.json` existentes se respetan (salvo con `-- --reiniciar`)
 y estas tablas se regeneran con ellas.
 
@@ -115,6 +116,19 @@ colocan en la casa.
 | Pack de 10 vinilos tumbados (`decoracion/vinilos-10-tumbados`) | 0,315 × 0,315 × 0,05 | colocación: superficie | Mías (sin foto): funda estándar de LP de 12" de 31,5 × 31,5 cm y 5 mm por vinilo, × 10 = 5 cm de alto (apilados). | Sin foto: diseño propio. 10 fundas pegadas, una de cada color (rojo, amarillo, azul, verde, rosa, naranja, morado, negro, turquesa, blanco), con una rendija fina entre ellas y un disco negro con etiqueta de color en las dos caras de fuera. Apiladas en horizontal. | estimada | 1720 |
 <!-- fin:lote5 -->
 
+<!-- inicio:lote6 -->
+## Lote 6: alfombra de cuadros
+
+Hecha a partir de la foto de producto del encargo, con sus medidas
+(140 × 200 cm); el grosor (1 cm) es **estimado**. Va en el suelo y admite cosas
+encima (superficie a 1 cm, toda la alfombra). Solo está en el catálogo: no se
+coloca en la casa.
+
+| Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
+|---|---|---|---|---|---|---:|
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; superficies: 0,01 m (ver «Superficies») | Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo). Mío: 1 cm de grosor (pelo corto). | Tablero de 5 × 7 casillas casi cuadradas (28 × 28,6 cm), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos. | estimada | 420 |
+<!-- fin:lote6 -->
+
 <!-- inicio:superficies -->
 ## Superficies de los muebles soporte
 
@@ -128,6 +142,7 @@ El desplazamiento es el del centro de la superficie respecto al del mueble
 
 | Mueble | Altura (m) | Ancho × fondo (m) | Desplazamiento (m) | Altura libre (m) | De dónde sale |
 |---|---:|---|---|---|---|
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 0,01 | 1,4 × 2 | — | sin límite | Toda la alfombra, a 1 cm del suelo, sin límite por encima. |
 | Librería alta de madera oscura (`almacenaje/libreria`) | 0,37 | 0,77 × 0,34 | z -0,02 | 0,26 | Baldas: hueco entre los laterales (0,77) por el fondo útil delante del trasero (0,34), algo hacia atrás; altura libre hasta la cara de abajo de la balda de encima (2,5 cm de balda) y, la de arriba, hasta el techo interior (1,84 m). Tapa: toda la cornisa. |
 |  | 0,66 | 0,77 × 0,34 | z -0,02 | 0,29 |  |
 |  | 0,98 | 0,77 × 0,34 | z -0,02 | 0,35 |  |

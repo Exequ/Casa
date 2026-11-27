@@ -1,8 +1,8 @@
 # Estado del proyecto
 
-Última actualización: 25 de noviembre de 2026, lote 5 del catálogo
-(tocadiscos, altavoces y packs de vinilos), tras la fase 6 (Modo cámara, capas,
-catálogo plegable y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
+Última actualización: 27 de noviembre de 2026, lote 6 del catálogo
+(alfombra de cuadros), tras la fase 6 (Modo cámara, capas, catálogo plegable
+y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
 **App:** <https://exequ.github.io/Casa/> (se publica sola en cada cambio de `main`).
@@ -95,6 +95,39 @@ superficie ocupaba toda la planta del mueble.
 - **Mueble de TV:** el estante de listones tiene 19 cm libres (hasta el faldón de la tapa, por donde hay que meter las cosas), no hasta la tapa.
 - **Migración:** se hace al cargar cualquier escena (también el autoguardado), sin cambiar la versión del formato (sigue la 6): el formato del archivo no ha cambiado. Mueve también objetos de capas bloqueadas (como ya pasaba con los choques al cargar).
 - **Operaciones de capas:** con estas reglas ninguna puede crear por sí sola un apoyo inválido (la regla solo depende del objeto, su giro y la balda, no de las capas); el marcado en rojo cubre los que lleguen de fuera (p. ej. una ficha corregida a mano con la app abierta) y se ha probado forzando ese caso.
+
+---
+
+## Lote 6: alfombra de cuadros
+
+Un objeto nuevo en el catálogo a partir de la foto de producto (con sus
+medidas), con el mismo método que los lotes anteriores: script reutilizable
+`scripts/catalogo-lote6.mjs` (`npm run catalogo:lote6`), `.glb`, `.json` y
+miniatura en la carpeta nueva `catalogo/alfombras/` (categoría **Alfombras**),
+y su tabla en [`OBJETOS.md`](OBJETOS.md). **Solo está en el catálogo**: la
+escena inicial y los muebles, acabados y fijos existentes no cambian. No se
+aportó modelo 3D: está modelada por código (sin licencias de terceros).
+
+| Objeto | Medidas | Detalle |
+|---|---|---|
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,40 × 2,00 × 0,01 m | 5 × 7 casillas (28 × 28,6 cm), rosa claro y rojo burdeos alternos con rosa en las esquinas, tejido con trama. Suelo; admite cosas encima (superficie a 1 cm, toda la alfombra). 420 triángulos, 33 KB. |
+
+### Comprobaciones (lote 6)
+
+- Caja envolvente comprobada al generar (medidas exactas, centrada en la base, frente a +Z).
+- `npm test`: 315 tests en verde; nuevos: medidas, categoría, colocación y superficie; 2 materiales y 35 casillas; y en la app la alfombra en el salón con una planta y un pack de vinilos encima. Entra en las comprobaciones comunes del catálogo y en la lista de muebles soporte de `tests/apoyo.test.ts`.
+- Vistas desde arriba, en 3/4, de lado y de atrás comparadas con la foto: los colores se han ajustado midiendo los píxeles de la vista de arriba (rosa #f2d2c7 y rojo #962b38 frente a #f2d4cc y #962b3a en la foto).
+- Navegador (escritorio y móvil emulado Pixel 7): el buscador la encuentra con su miniatura, se añade al salón en una capa nueva, se le pone una planta encima y se ve en planta y en la vista interior; sin errores nuevos en la consola.
+
+### Decisiones (lote 6)
+
+- 140 de ancho × 200 de fondo (el lado largo, de delante atrás, como en la foto) y **1 cm de grosor** (estimado, pelo corto).
+- «¿Es soporte? sí»: superficie a 1 cm en toda la alfombra, sin límite de altura por encima, para objetos de superficie (plantas, vinilos, lámparas…).
+- Carpeta y categoría nuevas **`alfombras/` · Alfombras**, pensando en futuras alfombras.
+
+### Limitaciones (lote 6)
+
+- **Los muebles de suelo no se pueden poner encima de la alfombra.** Para la app es un objeto de suelo más: un sofá o una mesa no pueden solaparse con ella (al añadir o arrastrar uno encima, lo aparta), y solo admite encima los objetos de superficie. Que los muebles pisen una alfombra pide cambiar la regla de solapes de la app (que no se toca en este lote).
 
 ---
 
