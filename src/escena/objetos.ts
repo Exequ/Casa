@@ -23,7 +23,9 @@
 // ellas (solo las limitan paredes, puertas y fijos), así que se pueden poner
 // bajo muebles que ya están y mover libremente, y los muebles se mueven por
 // encima sin estorbo. Nunca se marcan como solapadas. No son soporte: lo que
-// queda encima sigue en el suelo y no se mueve con la alfombra.
+// queda encima sigue en el suelo y no se mueve con la alfombra. Si se pisan
+// dos alfombras, la añadida después queda encima (cada una 1 mm más gruesa
+// que la anterior, para que no parpadeen al dibujarse; ver apilarAlfombras).
 //
 // CAPAS (fase 6): cada objeto pertenece a una capa (ver capas.ts).
 //   - Los de capas ocultas no se dibujan, no se seleccionan y no cuentan para
@@ -47,7 +49,7 @@
 
 import * as THREE from 'three';
 import {
-  alturaCentroDe, esAlfombra, medioGirado, motivoNoCabe, superficiesDe, zonaEn, zonasDe, type ItemCatalogo, type MotivoNoCabe, type Superficie,
+  alturaCentroDe, conTamano, esAlfombra, medioGirado, motivoNoCabe, superficiesDe, zonaEn, zonasDe, type ItemCatalogo, type MotivoNoCabe, type Superficie,
 } from '../catalogo/catalogo';
 import { crearModelo } from '../catalogo/modelos';
 import { GestorCapas, type Capa } from './capas';
@@ -201,6 +203,7 @@ export class GestorObjetos {
 
   /** Avisa de un cambio. `guardar = false` sirve para cambios intermedios (arrastre). */
   notificar(guardar = true) {
+    this.apilarAlfombras();
     this.actualizarSolapes();
     if (this.seleccionado) this.actualizarResaltado();
     for (const fn of this.oyentesSeleccion) fn();
@@ -419,6 +422,40 @@ export class GestorObjetos {
       ? Math.floor(actual / p) * p + p
       : Math.ceil(actual / p) * p - p;
     this.rotar(obj, grados);
+  }
+
+  // --- Medida ----------------------------------------------------------------------------
+
+  /**
+   * Cambia la medida (ancho × fondo) de un objeto de suelo que tiene varias
+   * (las alfombras): pone el modelo de esa medida en el mismo sitio y con el
+   * mismo giro. Si con la nueva medida no cabe ahí (una pared u otro mueble),
+   * se aparta lo justo (hasta 0,5 m); si tampoco, no cambia y devuelve false.
+   */
+  async cambiarTamano(obj: ObjetoColocado, ancho: number, fondo: number): Promise<boolean> {
+    const nuevo = conTamano(obj.item, ancho, fondo);
+    if (!nuevo || obj.colocacion !== 'suelo' || !this.objetos.includes(obj)) return false;
+    if (nuevo === obj.item) return true;
+    const raiz = await crearModelo(nuevo);
+    if (!this.objetos.includes(obj)) return false; // se ha borrado mientras se cargaba
+    const anterior = obj.item;
+    obj.item = nuevo;
+    const sitio = this.espacio.buscarSitio(this.huella(obj), 0.5, this.obstaculos(obj));
+    if (!sitio) {
+      obj.item = anterior;
+      this.notificar(false);
+      return false;
+    }
+    raiz.position.set(sitio.x, 0, sitio.z);
+    raiz.rotation.y = obj.raiz.rotation.y;
+    raiz.visible = obj.raiz.visible;
+    raiz.userData.objeto = obj;
+    this.escena.remove(obj.raiz);
+    this.escena.add(raiz);
+    obj.raiz = raiz;
+    this.moverApoyados(obj);
+    this.notificar();
+    return true;
   }
 
   // --- Pared ---------------------------------------------------------------------------
@@ -966,6 +1003,20 @@ export class GestorObjetos {
   }
 
   // --- Varios -----------------------------------------------------------------------------
+
+  /**
+   * Alfombras pisándose: todas están a ras de suelo con el mismo grosor, así
+   * que se dibujarían mezcladas. Cada una se hace 1 mm más gruesa que la
+   * anterior (por orden en la lista: la añadida después, encima). Solo cambia
+   * el dibujo (escala vertical del modelo); la ficha y lo guardado, no.
+   */
+  private apilarAlfombras() {
+    let k = 0;
+    for (const o of this.objetos) {
+      if (!esAlfombra(o.item)) continue;
+      o.raiz.scale.y = 1 + (0.001 * k++) / o.item.dimensiones.alto;
+    }
+  }
 
   /** Busca el objeto al que pertenece una malla (la que devuelve el raycaster). */
   objetoDe(nodo: THREE.Object3D | null): ObjetoColocado | null {

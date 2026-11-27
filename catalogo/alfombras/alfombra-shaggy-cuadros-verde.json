@@ -1,0 +1,39 @@
+{
+  "nombre": "Alfombra shaggy de cuadros verde y blanco crudo",
+  "categoria": "Alfombras",
+  "alfombra": true,
+  "dimensiones": {
+    "ancho": 1.4,
+    "fondo": 2,
+    "alto": 0.01
+  },
+  "tamanos": [
+    {
+      "ancho": 0.8,
+      "fondo": 1.5,
+      "glb": "alfombra-shaggy-cuadros-verde-80x150.glb"
+    },
+    {
+      "ancho": 1.2,
+      "fondo": 1.7,
+      "glb": "alfombra-shaggy-cuadros-verde-120x170.glb"
+    },
+    {
+      "ancho": 1.4,
+      "fondo": 2,
+      "glb": "alfombra-shaggy-cuadros-verde.glb"
+    },
+    {
+      "ancho": 1.6,
+      "fondo": 2.3,
+      "glb": "alfombra-shaggy-cuadros-verde-160x230.glb"
+    },
+    {
+      "ancho": 2,
+      "fondo": 2.5,
+      "glb": "alfombra-shaggy-cuadros-verde-200x250.glb"
+    }
+  ],
+  "medidas": "estimadas",
+  "glb": "alfombra-shaggy-cuadros-verde.glb"
+}

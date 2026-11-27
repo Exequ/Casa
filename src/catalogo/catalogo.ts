@@ -78,12 +78,33 @@ export interface FichaObjeto {
    * que queda encima sigue en el suelo (no se mueve con ella). Por defecto, false.
    */
   alfombra?: boolean;
+  /**
+   * Medidas a elegir (p. ej. las de una alfombra): ancho × fondo en m, cada una
+   * con su .glb (relativo a la carpeta del .json); el alto es el de
+   * `dimensiones`. Tiene que estar la de `dimensiones` (con su `glb`), que es
+   * la que se pone al añadirlo. Se elige con el desplegable «Medida» del objeto seleccionado.
+   */
+  tamanos?: TamanoFicha[];
   /** "estimadas" (sacadas de fotos) o "confirmadas" (medidas de verdad). Solo informativo. */
   medidas?: 'estimadas' | 'confirmadas';
 }
 
 /** ¿Es una alfombra? (va debajo de los muebles, sin chocar con nada) */
 export const esAlfombra = (item: FichaObjeto) => item.alfombra === true;
+
+/** Una de las medidas a elegir de un objeto: ancho × fondo (m) y su modelo. */
+export interface TamanoFicha {
+  ancho: number;
+  fondo: number;
+  glb: string;
+}
+
+/** Una medida a elegir ya resuelta: ancho × fondo (m) y la URL de su modelo. */
+export interface TamanoItem {
+  ancho: number;
+  fondo: number;
+  urlGlb: string;
+}
 
 /** Un objeto del catálogo ya listo para usar en la app (con los valores por defecto puestos). */
 export interface ItemCatalogo extends FichaObjeto {
@@ -94,6 +115,26 @@ export interface ItemCatalogo extends FichaObjeto {
   /** URL de la miniatura (<id>.png junto al .json), si existe. */
   urlMiniatura?: string;
   colocacion: Colocacion;
+  /** Medidas a elegir (de `tamanos`), con la URL de cada modelo. Sin `tamanos`, no hay. */
+  medidasDisponibles?: TamanoItem[];
+}
+
+const mismaMedida = (a: { ancho: number; fondo: number }, b: { ancho: number; fondo: number }) =>
+  Math.abs(a.ancho - b.ancho) < 1e-6 && Math.abs(a.fondo - b.fondo) < 1e-6;
+
+/** "140 × 200 cm" */
+export const textoTamano = (t: { ancho: number; fondo: number }) =>
+  `${Math.round(t.ancho * 1000) / 10} × ${Math.round(t.fondo * 1000) / 10} cm`.replace(/\./g, ',');
+
+/**
+ * El mismo objeto con otra de sus medidas (mismo id, otras dimensiones y otro
+ * modelo). null si no tiene esa medida.
+ */
+export function conTamano(item: ItemCatalogo, ancho: number, fondo: number): ItemCatalogo | null {
+  const t = item.medidasDisponibles?.find((m) => mismaMedida(m, { ancho, fondo }));
+  if (!t) return null;
+  if (mismaMedida(item.dimensiones, t) && item.urlGlb === t.urlGlb) return item;
+  return { ...item, dimensiones: { ...item.dimensiones, ancho: t.ancho, fondo: t.fondo }, urlGlb: t.urlGlb };
 }
 
 /** Altura del centro de un objeto de pared (la de su ficha o 1,50 m). */
@@ -188,6 +229,19 @@ export function validarFicha(f: Partial<FichaObjeto>): string | null {
     if (error) return error;
     if ((f.colocacion ?? 'suelo') !== 'suelo') return '"superficies" solo vale en objetos de suelo';
   }
+  if (f.tamanos !== undefined) {
+    const formato = '"tamanos" debe ser una lista de objetos { ancho, fondo, glb } (m), sin repetir, que incluya la medida de "dimensiones"';
+    if (!Array.isArray(f.tamanos) || !f.tamanos.length) return formato;
+    for (const [i, t] of f.tamanos.entries()) {
+      if (!t || typeof t !== 'object' || !(t.ancho > 0) || !(t.fondo > 0) || typeof t.glb !== 'string') return formato;
+      const extra = Object.keys(t).find((k) => !['ancho', 'fondo', 'glb'].includes(k));
+      if (extra) return `"tamanos": campo desconocido "${extra}"`;
+      if (f.tamanos.slice(0, i).some((o) => mismaMedida(o, t))) return formato;
+    }
+    const base = f.tamanos.find((t) => mismaMedida(t, d));
+    if (!base) return formato;
+    if (base.glb !== f.glb) return '"tamanos": la medida de "dimensiones" tiene que usar el mismo "glb" que la ficha';
+  }
   if (f.alfombra !== undefined) {
     if (typeof f.alfombra !== 'boolean') return '"alfombra" debe ser true o false';
     if (f.alfombra && (f.colocacion ?? 'suelo') !== 'suelo') return '"alfombra" solo vale en objetos de suelo';
@@ -251,8 +305,19 @@ export function leerCatalogo(): ItemCatalogo[] {
       console.warn(`Catálogo: se ignora ${rutaJson}: no existe el archivo ${rutaGlb}`);
       continue;
     }
+    // Medidas a elegir: cada una con su modelo
+    let medidasDisponibles: TamanoItem[] | undefined;
+    if (ficha.tamanos) {
+      medidasDisponibles = ficha.tamanos.map((t) => ({ ancho: t.ancho, fondo: t.fondo, urlGlb: urlsGlb[unirRuta(carpeta, t.glb)] }));
+      const falta = ficha.tamanos.find((_, i) => !medidasDisponibles![i].urlGlb);
+      if (falta) {
+        console.warn(`Catálogo: se ignora ${rutaJson}: no existe el archivo ${unirRuta(carpeta, falta.glb)}`);
+        continue;
+      }
+    }
     items.push({
       ...ficha,
+      ...(medidasDisponibles ? { medidasDisponibles } : {}),
       colocacion: ficha.colocacion ?? 'suelo',
       id: rutaJson.replace(/^\/catalogo\//, '').replace(/\.json$/, ''),
       urlGlb,

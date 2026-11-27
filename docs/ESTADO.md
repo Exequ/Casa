@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-Última actualización: 27 de noviembre de 2026, alfombras debajo de los
-muebles (y lote 6, alfombra de cuadros), tras la fase 6 (Modo cámara, capas,
+Última actualización: 27 de noviembre de 2026, lote 7 (tres alfombras shaggy
+y medida a elegir en todas las alfombras), tras la fase 6 (Modo cámara, capas,
 catálogo plegable y superficies con tamaño y altura libre). El detalle de la fase 2 (medidas del plano, suposiciones,
 comprobaciones) sigue en [RESUMEN_FASE2.md](RESUMEN_FASE2.md).
 
@@ -95,6 +95,47 @@ superficie ocupaba toda la planta del mueble.
 - **Mueble de TV:** el estante de listones tiene 19 cm libres (hasta el faldón de la tapa, por donde hay que meter las cosas), no hasta la tapa.
 - **Migración:** se hace al cargar cualquier escena (también el autoguardado), sin cambiar la versión del formato (sigue la 6): el formato del archivo no ha cambiado. Mueve también objetos de capas bloqueadas (como ya pasaba con los choques al cargar).
 - **Operaciones de capas:** con estas reglas ninguna puede crear por sí sola un apoyo inválido (la regla solo depende del objeto, su giro y la balda, no de las capas); el marcado en rojo cubre los que lleguen de fuera (p. ej. una ficha corregida a mano con la app abierta) y se ha probado forzando ese caso.
+
+---
+
+## Lote 7: tres alfombras shaggy y medida a elegir
+
+Tres alfombras nuevas a partir de las fotos de producto del encargo, con el
+método de los lotes anteriores (script `scripts/catalogo-lote7.mjs`,
+`npm run catalogo:lote7`; lo común de las alfombras en
+`scripts/lib/alfombras.mjs`), y **cinco medidas a elegir en todas las
+alfombras**, también en la del lote 6. Solo están en el catálogo: la escena
+inicial y los muebles, acabados y fijos existentes no cambian. No se aportó
+modelo 3D: modeladas por código (sin licencias de terceros).
+
+| Objeto | Medidas | Detalle |
+|---|---|---|
+| Alfombra shaggy de cuadros verde y blanco crudo (`alfombras/alfombra-shaggy-cuadros-verde`) | 1,40 × 2,00 × 0,01 m (+ 4 medidas) | Casillas de unos 18 cm como en la foto (11 × 11 en 200 × 200; en 140 × 200, 8 × 11), verde grisáceo en la esquina, pelo largo (textura de borreguito). 1.056 triángulos (hasta 1.848), 77 KB (hasta 131). |
+| Alfombra shaggy de cuadros rojo óxido y blanco crudo (`alfombras/alfombra-shaggy-cuadros-rojo`) | 1,40 × 2,00 × 0,01 m (+ 4 medidas) | Igual, en rojo óxido (teja). |
+| Alfombra shaggy lisa verde (`alfombras/alfombra-shaggy-lisa-verde`) | 1,40 × 2,00 × 0,01 m (+ 4 medidas) | Verde oliva oscuro liso, pelo largo. 12 triángulos, 5 KB. |
+
+**Medida a elegir** (todas las alfombras): 80 × 150, 120 × 170, 140 × 200 (la
+de siempre, la que se pone al añadirla), 160 × 230 y 200 × 250 cm.
+
+- Ficha: campo nuevo `"tamanos"` (lista de `{ ancho, fondo, glb }`, validada; documentado en el README). Cada medida tiene su `.glb`: en las de cuadros la casilla **mantiene su tamaño** y cambia el número de casillas (no se estiran).
+- App: desplegable **Medida** en el panel (escritorio) y en la barra del objeto (móvil), solo en objetos con varias medidas; el catálogo dice «5 medidas». Cambia el modelo en el mismo sitio y con el mismo giro; si no cabe por una pared o un fijo, se aparta hasta 50 cm; si ni así, no cambia y avisa. Se guarda en la escena (`"tamano"` de cada objeto, sin cambiar de versión), así que vale para deshacer, guardar, cargar y duplicar.
+- Alfombras pisándose: la añadida después queda encima (1 mm más gruesa por cada una), para que no se mezclen al dibujarse.
+- La alfombra del lote 6 en 140 × 200 queda **igual** (mismo `.glb`, mismo hash); solo gana las otras cuatro medidas.
+
+### Comprobaciones (lote 7)
+
+- Caja envolvente comprobada al generar, en los 20 modelos (4 alfombras × 5 medidas).
+- `npm test`: 340 tests en verde. Nuevos: las tres son alfombras como la del lote 6; las cuatro tienen las cinco medidas con su modelo, y cada `.glb` mide lo que dice, con el origen en la base, menos de 20.000 triángulos, menos de 300 KB y como mucho 2 texturas; casillas y colores; validación de `tamanos`; cambiar de medida bajo los muebles sin mover nada, junto a una pared (se aparta) y en el baño (no cabe, no cambia); la medida se guarda, se carga y se duplica, y una medida que ya no existe vuelve a la de la ficha; alfombras pisándose, la última encima.
+- Colores calibrados midiendo la vista desde arriba frente a la foto: verde #6c746a (foto #6b736a), rojo óxido #915441 (foto #915341), lisa #484d42 (foto #464a40); los blancos crudos salen algo más neutros (#e7e6de frente a #e5e3d4) por la luz de la app.
+- Navegador (escritorio y móvil emulado Pixel 7): el buscador encuentra las cuatro con «5 medidas»; cada nueva se añade al salón; el desplegable muestra las cinco medidas con la actual marcada; al cambiarla, la medida se guarda y la alfombra no se mueve (la de 200 × 250 se aparta 10 cm de la pared del salón); deshacer vuelve a la medida anterior; con tres alfombras pisándose, la última se ve limpia encima. Única advertencia en consola, la de siempre.
+
+### Decisiones (lote 7)
+
+- «El resto igual que la existente»: alfombras de suelo debajo de los muebles, **1 cm de grosor** (aunque sean shaggy), categoría Alfombras, 140 × 200 al añadirlas.
+- Las cinco medidas también en la alfombra del lote 6 («en cada alfombra»; 140 × 200 es «la actual»).
+- Nombres sin marca ni modelo comercial; sin el pelo suelto de los bordes ni las aguas de luz de la lisa.
+- Las de cuadros tienen el color oscuro en la esquina de atrás a la izquierda; según el número de casillas de cada medida, las otras esquinas pueden ser de un color u otro.
+- La medida se elige con el objeto ya puesto (no antes de añadirlo).
 
 ---
 

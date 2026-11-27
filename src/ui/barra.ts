@@ -10,7 +10,7 @@
 import type { GestorObjetos } from '../escena/objetos';
 import type { Vivienda } from '../vivienda/modelo';
 import { rellenarSelectorCapas } from './panelCapas';
-import { el, m } from './util';
+import { el, m, rellenarSelectorTamano } from './util';
 
 /** Botones de la barra que se quedan marcados. */
 export type Interruptor = 'planta' | 'interior' | 'plano' | 'luces' | 'puertas' | 'cortinas';
@@ -32,6 +32,8 @@ export interface AccionesBarra {
   abrirCapas(): void;
   /** Pasar el objeto seleccionado a otra capa. */
   moverACapa(capa: string): void;
+  /** Cambia la medida (ancho × fondo, m) del objeto seleccionado (alfombras). */
+  cambiarTamano(ancho: number, fondo: number): void;
 }
 
 export interface Barra {
@@ -121,11 +123,21 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
   selectorCapa.setAttribute('aria-label', 'Capa del objeto');
   selectorCapa.dataset.edicion = '';
   selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
+  // Medida (alfombras): solo se ve en los objetos que tienen varias
+  const selectorTamano = el('select', 'selector-tamano');
+  selectorTamano.title = 'Medida del objeto (ancho × fondo)';
+  selectorTamano.setAttribute('aria-label', 'Medida del objeto');
+  selectorTamano.dataset.edicion = '';
+  selectorTamano.hidden = true;
+  selectorTamano.addEventListener('change', () => {
+    const [ancho, fondo] = selectorTamano.value.split('x').map(Number);
+    acciones.cambiarTamano(ancho, fondo);
+  });
   // Por qué no se ha podido apoyar (o por qué su apoyo no vale): encima de la barra, mientras dure
   const avisoApoyo = el('p', 'aviso-apoyo-barra');
   avisoApoyo.setAttribute('role', 'status');
   avisoApoyo.hidden = true;
-  barraObj.append(avisoApoyo, nombre, selectorCapa, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
+  barraObj.append(avisoApoyo, nombre, selectorCapa, selectorTamano, btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar, btnSoltar);
   // Botones que editan objetos: con el Modo cámara se ven apagados y avisan (ver main.ts)
   for (const b of [btnIzq, btnDer, btnSubir, btnBajar, btnDuplicar, btnBorrar]) b.dataset.edicion = '';
   contenedor.append(barraObj);
@@ -199,6 +211,7 @@ export function crearBarra(contenedor: HTMLElement, vivienda: Vivienda, gestor: 
       rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
       selectorCapa.value = sel.capa;
     }
+    selectorTamano.hidden = !sel || !rellenarSelectorTamano(selectorTamano, sel.item);
     const aviso = !sel ? '' : gestor.avisoApoyo?.objeto === sel ? gestor.avisoApoyo.texto
       : !gestor.apoyoValido(sel) ? 'No cabe en esta balda (demasiado grande o demasiado alto): arrástralo a otra superficie o al suelo.' : '';
     avisoApoyo.textContent = aviso;

@@ -1,4 +1,4 @@
-// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs, catalogo-lote5.mjs, catalogo-lote6.mjs):
+// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs, catalogo-lote5.mjs, catalogo-lote6.mjs, catalogo-lote7.mjs):
 // materiales habituales, piezas repetidas (marcos) y el proceso de guardar
 // cada objeto y su fila de docs/OBJETOS.md.
 
@@ -44,7 +44,9 @@ export function pataCuadrada(m, material, x, z, alto, arriba, abajo = arriba, y0
 
 /**
  * Genera los objetos de un lote y su sección de docs/OBJETOS.md.
- * Cada objeto: { ruta, construir(), ficha: { nombre, categoria, colocacion?, alturaCentro?, superficies? }, como, fotos? }.
+ * Cada objeto: { ruta, construir(), ficha: { nombre, categoria, colocacion?, alfombra?, alturaCentro?, superficies? }, como, fotos?, tamanos? }.
+ * `tamanos` (opcional): medidas a elegir [{ ancho, fondo, construir() }]; cada una se guarda
+ * en <id>-<ancho>x<fondo>.glb (en cm), salvo la de construir(), que es el .glb de la ficha.
  * Si el .json ya existe, se respetan sus "dimensiones", "superficies",
  * "alturaCentro" y "medidas" (lo corregido a mano), salvo con `reiniciar`.
  */
@@ -60,6 +62,7 @@ export async function procesarLote(objetos, { reiniciar = false, seccion, titulo
       ...(o.ficha.alfombra ? { alfombra: true } : {}),
       ...(o.ficha.alturaCentro !== undefined ? { alturaCentro: o.ficha.alturaCentro } : {}),
       dimensiones: modelo.dimensiones,
+      ...(o.tamanos ? { tamanos: [] } : {}),
       ...(o.ficha.superficies ? { superficies: o.ficha.superficies } : {}),
       medidas: 'estimadas',
       glb: `${id}.glb`,
@@ -71,7 +74,20 @@ export async function procesarLote(objetos, { reiniciar = false, seccion, titulo
         if (antigua[campo] !== undefined && (campo !== 'superficies' || ficha.superficies)) ficha[campo] = antigua[campo];
       }
     }
+    // Las demás medidas, cada una con su .glb (comprobado igual que el principal)
+    const triangulosTamanos = [];
+    for (const t of o.tamanos ?? []) {
+      const base = Math.abs(t.ancho - modelo.dimensiones.ancho) < 1e-9 && Math.abs(t.fondo - modelo.dimensiones.fondo) < 1e-9;
+      const glb = base ? `${id}.glb` : `${id}-${Math.round(t.ancho * 100)}x${Math.round(t.fondo * 100)}.glb`;
+      if (!base) {
+        const inf = await t.construir().guardar(join(CATALOGO, dirname(o.ruta), glb));
+        triangulosTamanos.push(inf.triangulos);
+        console.log(`  · ${glb}  ${inf.triangulos} triángulos, ${(inf.bytes / 1024).toFixed(1)} KB`);
+      }
+      ficha.tamanos.push({ ancho: t.ancho, fondo: t.fondo, glb });
+    }
     const info = await guardarObjeto(CATALOGO, o.ruta, ficha, modelo);
+    if (triangulosTamanos.length) info.triangulos = `${info.triangulos} (hasta ${Math.max(info.triangulos, ...triangulosTamanos)} según la medida)`;
     resumen.push({ ...o, ficha, info });
   }
   escribirSeccion(seccion, `## ${titulo}\n\n${introduccion}\n\n${tabla(resumen)}`);
@@ -89,6 +105,7 @@ function tabla(resumen) {
       `colocación: ${ficha.colocacion ?? 'suelo'}`,
       ficha.alturaCentro !== undefined ? `centro a ${m(ficha.alturaCentro)} m` : '',
       ficha.alfombra ? 'alfombra: debajo de los muebles, sin chocar con nada' : '',
+      ficha.tamanos ? `medidas a elegir: ${ficha.tamanos.map((t) => `${Math.round(t.ancho * 100)} × ${Math.round(t.fondo * 100)}`).join(' / ')} cm` : '',
       ficha.superficies ? (ficha.superficies.length ? `superficies: ${ficha.superficies.map((s) => m(typeof s === 'number' ? s : s.altura)).join(' / ')} m (ver «Superficies»)` : 'no admite nada encima') : '',
     ].filter(Boolean).join('; ');
     return `| ${ficha.nombre} (\`${ruta}\`) | ${m(d.ancho)} × ${m(d.fondo)} × ${m(d.alto)} | ${extra} | ${como} | ${fotos ?? ''} | ${ficha.medidas === 'confirmadas' ? '**confirmada**' : 'estimada'} | ${info.triangulos} |`;
@@ -106,8 +123,9 @@ Muebles reales del piso, generados por scripts a partir de las fotos:
 \`scripts/catalogo-lote1.mjs\` (salón y pasillo), \`scripts/catalogo-lote2.mjs\`
 (dormitorio, balcón y tendedero), \`scripts/catalogo-lote4.mjs\` (zapatero y
 coffee corner, de fotos de producto), \`scripts/catalogo-lote5.mjs\`
-(tocadiscos, altavoces y packs de vinilos) y \`scripts/catalogo-lote6.mjs\`
-(alfombra de cuadros). Los objetos de ejemplo de las fases 1 y 4
+(tocadiscos, altavoces y packs de vinilos), \`scripts/catalogo-lote6.mjs\`
+(alfombra de cuadros) y \`scripts/catalogo-lote7.mjs\` (tres alfombras shaggy;
+las alfombras, en cinco medidas a elegir). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 \`catalogo/\`.
 
@@ -121,7 +139,7 @@ coffee corner, de fotos de producto), \`scripts/catalogo-lote5.mjs\`
 3. Pon \`"medidas": "confirmadas"\` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`, \`lote5\`, \`lote6\`), las
+ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`, \`lote5\`, \`lote6\`, \`lote7\`), las
 medidas de los \`.json\` existentes se respetan (salvo con \`-- --reiniciar\`)
 y estas tablas se regeneran con ellas.
 `;

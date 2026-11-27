@@ -20,7 +20,7 @@ vi.mock('../src/catalogo/modelos', () => ({
 
 import datos from '../data/vivienda.json';
 import datosEscenaInicial from '../data/escena-inicial.json';
-import { esAlfombra, leerCatalogo, superficiesDe, validarFicha, zonasDe, type FichaObjeto } from '../src/catalogo/catalogo';
+import { conTamano, esAlfombra, leerCatalogo, superficiesDe, textoTamano, validarFicha, zonasDe, type FichaObjeto } from '../src/catalogo/catalogo';
 import { ID_BASE } from '../src/escena/capas';
 import { GestorObjetos, type ObjetoColocado } from '../src/escena/objetos';
 import { AJUSTES_POR_DEFECTO, aplicar, serializar, type EscenaGuardada, type EstadoEscena } from '../src/escena/persistencia';
@@ -69,7 +69,9 @@ describe('ficha de alfombra', () => {
     expect(esAlfombra(item(ALFOMBRA))).toBe(true);
     expect(item(ALFOMBRA).colocacion).toBe('suelo');
     expect(superficiesDe(item(ALFOMBRA))).toEqual([]);
-    expect(catalogo.filter(esAlfombra).map((i) => i.id)).toEqual([ALFOMBRA]);
+    expect(catalogo.filter(esAlfombra).map((i) => i.id).sort()).toEqual([
+      ALFOMBRA, 'alfombras/alfombra-shaggy-cuadros-rojo', 'alfombras/alfombra-shaggy-cuadros-verde', 'alfombras/alfombra-shaggy-lisa-verde',
+    ]);
   });
 });
 
@@ -146,6 +148,21 @@ describe('alfombra debajo de los muebles', () => {
     expect(a.raiz.position.x).toBeGreaterThan(-1);
   });
 
+  it('dos alfombras pisándose no se mezclan al dibujarse: la añadida después queda 1 mm por encima', async () => {
+    const a = (await gestor.agregar(item(ALFOMBRA), 3, 1.5))!;
+    const b = (await gestor.agregar(item('alfombras/alfombra-shaggy-lisa-verde'), 3, 1.5))!;
+    const c = (await gestor.agregar(item('alfombras/alfombra-shaggy-cuadros-rojo'), 3.2, 1.6))!;
+    gestor.notificar();
+    const arriba = (o: ObjetoColocado) => new THREE.Box3().setFromObject(o.raiz).max.y;
+    expect(arriba(a)).toBeCloseTo(0.01, 6);
+    expect(arriba(b)).toBeCloseTo(0.011, 6);
+    expect(arriba(c)).toBeCloseTo(0.012, 6);
+    expect([a, b, c].map((o) => o.raiz.position.y)).toEqual([0, 0, 0]); // siguen en el suelo
+    gestor.borrar(a);
+    expect(arriba(b)).toBeCloseTo(0.01, 6);
+    expect(serializar(estadoDe(gestor)).objetos.every((o) => o.posicion.y === 0)).toBe(true);
+  });
+
   it('sigue siendo de suelo para el resto: los muebles chocan entre sí como siempre', async () => {
     await gestor.agregar(item(ALFOMBRA), 3, 1.9);
     const mesa = (await gestor.agregar(item('mesas/mesa-centro'), 3, 1.9))!;
@@ -171,5 +188,92 @@ describe('alfombra en la casa amueblada y al guardar', () => {
     expect(otro.objetos.map((o) => [o.item.id, ...pos(o), o.rotacion])).toEqual(antes);
     otro.notificar();
     expect(otro.solapes()).toEqual([]);
+  });
+});
+
+describe('medidas a elegir ("tamanos")', () => {
+  const base: FichaObjeto = { nombre: 'Alfombra', categoria: 'x', glb: 'a.glb', dimensiones: { ancho: 1.4, fondo: 2, alto: 0.01 } };
+  const t = (ancho: number, fondo: number, glb = `a-${ancho}.glb`) => ({ ancho, fondo, glb });
+
+  it('formato: lista de { ancho, fondo, glb } sin repetir, con la medida de la ficha y su mismo glb', () => {
+    expect(validarFicha({ ...base, tamanos: [t(0.8, 1.5), t(1.4, 2, 'a.glb')] })).toBeNull();
+    expect(validarFicha({ ...base, tamanos: [] })).toMatch(/tamanos/);
+    expect(validarFicha({ ...base, tamanos: [t(0.8, 1.5)] })).toMatch(/incluya la medida/);
+    expect(validarFicha({ ...base, tamanos: [t(1.4, 2, 'otro.glb')] })).toMatch(/mismo "glb"/);
+    expect(validarFicha({ ...base, tamanos: [t(1.4, 2, 'a.glb'), t(1.4, 2, 'b.glb')] })).toMatch(/sin repetir/);
+    expect(validarFicha({ ...base, tamanos: [t(1.4, 2, 'a.glb'), { ...t(0.8, 1.5), alto: 1 } as never] })).toMatch(/campo desconocido "alto"/);
+    expect(validarFicha({ ...base, tamanos: [t(1.4, 2, 'a.glb'), t(0, 1.5)] })).toMatch(/tamanos/);
+  });
+
+  it('conTamano: mismo objeto (mismo id) con otras medidas y otro modelo; null si no tiene esa medida', () => {
+    const alf = item(ALFOMBRA);
+    const grande = conTamano(alf, 2, 2.5)!;
+    expect(grande.id).toBe(alf.id);
+    expect(grande.dimensiones).toEqual({ ancho: 2, fondo: 2.5, alto: 0.01 });
+    expect(grande.urlGlb).not.toBe(alf.urlGlb);
+    expect(conTamano(grande, 1.4, 2)!.urlGlb).toBe(alf.urlGlb);
+    expect(conTamano(alf, 1.4, 2)).toBe(alf);
+    expect(conTamano(alf, 1, 1)).toBeNull();
+    expect(conTamano(item('mesas/mesa-centro'), 1, 0.7)).toBeNull(); // sin medidas a elegir
+    expect(textoTamano({ ancho: 0.8, fondo: 1.5 })).toBe('80 × 150 cm');
+  });
+
+  it('cambiar la medida de una alfombra bajo los muebles: mismo sitio y giro, sin mover nada', async () => {
+    const mesa = (await gestor.agregar(item('mesas/mesa-centro'), 3, 1.5))!;
+    const alf = (await gestor.agregar(item(ALFOMBRA), 3, 1.5, 90))!;
+    const antes = pos(mesa);
+    for (const [ancho, fondo] of [[0.8, 1.5], [1.2, 1.7], [1.6, 2.3], [2, 2.5], [1.4, 2]]) {
+      expect(await gestor.cambiarTamano(alf, ancho, fondo), `${ancho} × ${fondo}`).toBe(true);
+      expect(alf.item.dimensiones).toEqual({ ancho, fondo, alto: 0.01 });
+      expect(pos(alf)).toEqual([3, 1.5]);
+      expect(alf.rotacion).toBe(90);
+      expect(gestor.objetos.filter((o) => o.item.id === ALFOMBRA)).toHaveLength(1);
+    }
+    expect(pos(mesa)).toEqual(antes);
+    expect(await gestor.cambiarTamano(alf, 1, 1)).toBe(false); // no es una de sus medidas
+    gestor.notificar();
+    expect(gestor.solapes()).toEqual([]);
+  });
+
+  it('si con la nueva medida no cabe junto a una pared, se aparta lo justo; si no cabe en la estancia, no cambia', async () => {
+    // Salón: de z = 0,23 a 2,84 en la zona de la derecha. Pegada a la pared de atrás, 80 × 150 de fondo:
+    const alf = (await gestor.agregar(item(ALFOMBRA), 4.6, 1, 0))!;
+    expect(await gestor.cambiarTamano(alf, 0.8, 1.5)).toBe(true);
+    gestor.mover(alf, 4.6, 0.98);
+    gestor.asentar(alf);
+    const z0 = alf.raiz.position.z;
+    expect(await gestor.cambiarTamano(alf, 1.4, 2)).toBe(true); // 25 cm más de fondo por cada lado: se aparta de la pared
+    expect(alf.raiz.position.z).toBeGreaterThan(z0);
+    expect(alf.raiz.position.z - z0).toBeLessThanOrEqual(0.5);
+    // En el baño no cabe una de 200 × 250: no cambia
+    const banio = (await gestor.agregar(item(ALFOMBRA), 0, 0, 0))!;
+    await gestor.cambiarTamano(banio, 0.8, 1.5);
+    const p = vivienda.estancias.find((e) => e.id === 'bano')!.poligono;
+    const [bx, bz] = [p.reduce((s, q) => s + q[0], 0) / p.length, p.reduce((s, q) => s + q[1], 0) / p.length];
+    gestor.mover(banio, bx, bz);
+    gestor.asentar(banio);
+    const antes = pos(banio);
+    expect(await gestor.cambiarTamano(banio, 2, 2.5)).toBe(false);
+    expect(banio.item.dimensiones.ancho).toBe(0.8);
+    expect(pos(banio)).toEqual(antes);
+  });
+
+  it('la medida se guarda en la escena (deshacer y archivos) y vuelve al cargar; duplicar copia la medida', async () => {
+    const alf = (await gestor.agregar(item('alfombras/alfombra-shaggy-cuadros-verde'), 3, 1.5))!;
+    await gestor.cambiarTamano(alf, 2, 2.5);
+    const copia = (await gestor.duplicar(alf))!;
+    expect(copia.item.dimensiones).toEqual({ ancho: 2, fondo: 2.5, alto: 0.01 });
+    const lisa = (await gestor.agregar(item('alfombras/alfombra-shaggy-lisa-verde'), 2, 1.5))!;
+    const guardada = serializar(estadoDe(gestor));
+    expect(guardada.objetos.map((o) => o.tamano)).toEqual([{ ancho: 2, fondo: 2.5 }, { ancho: 2, fondo: 2.5 }, { ancho: 1.4, fondo: 2 }]);
+    const otro = new GestorObjetos(new THREE.Scene(), espacio, caras);
+    await aplicar(estadoDe(otro), guardada, catalogo, { x: 0, z: 0 });
+    expect(otro.objetos.map((o) => [o.item.id, o.item.dimensiones.ancho, o.item.dimensiones.fondo, ...pos(o)])).toEqual(
+      [alf, copia, lisa].map((o) => [o.item.id, o.item.dimensiones.ancho, o.item.dimensiones.fondo, ...pos(o)]));
+    // Una medida que ya no existe: la de la ficha
+    const rara = { ...guardada, objetos: [{ ...guardada.objetos[0], tamano: { ancho: 3, fondo: 3 } }] };
+    const tercero = new GestorObjetos(new THREE.Scene(), espacio, caras);
+    await aplicar(estadoDe(tercero), rara, catalogo, { x: 0, z: 0 });
+    expect(tercero.objetos[0].item.dimensiones).toEqual({ ancho: 1.4, fondo: 2, alto: 0.01 });
   });
 });

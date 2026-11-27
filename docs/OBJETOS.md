@@ -4,8 +4,9 @@ Muebles reales del piso, generados por scripts a partir de las fotos:
 `scripts/catalogo-lote1.mjs` (salón y pasillo), `scripts/catalogo-lote2.mjs`
 (dormitorio, balcón y tendedero), `scripts/catalogo-lote4.mjs` (zapatero y
 coffee corner, de fotos de producto), `scripts/catalogo-lote5.mjs`
-(tocadiscos, altavoces y packs de vinilos) y `scripts/catalogo-lote6.mjs`
-(alfombra de cuadros). Los objetos de ejemplo de las fases 1 y 4
+(tocadiscos, altavoces y packs de vinilos), `scripts/catalogo-lote6.mjs`
+(alfombra de cuadros) y `scripts/catalogo-lote7.mjs` (tres alfombras shaggy;
+las alfombras, en cinco medidas a elegir). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 `catalogo/`.
 
@@ -19,7 +20,7 @@ coffee corner, de fotos de producto), `scripts/catalogo-lote5.mjs`
 3. Pon `"medidas": "confirmadas"` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`, `lote5`, `lote6`), las
+ficha. Si se vuelve a ejecutar `npm run catalogo:lote1` (o `lote2`, `lote4`, `lote5`, `lote6`, `lote7`), las
 medidas de los `.json` existentes se respetan (salvo con `-- --reiniciar`)
 y estas tablas se regeneran con ellas.
 
@@ -123,13 +124,33 @@ Hecha a partir de la foto de producto del encargo, con sus medidas
 (140 × 200 cm); el grosor (1 cm) es **estimado**. Es una **alfombra**
 (`"alfombra": true`): va en el suelo, debajo de los muebles, sin chocar con
 nada; los muebles y objetos se ponen y se mueven libremente encima (siguen en
-el suelo y no se mueven con ella). Solo está en el catálogo: no se coloca en
-la casa.
+el suelo y no se mueven con ella). Se puede elegir su medida (80 × 150,
+120 × 170, 140 × 200, 160 × 230 o 200 × 250 cm; ver «Lote 7»). Solo está en
+el catálogo: no se coloca en la casa.
 
 | Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
 |---|---|---|---|---|---|---:|
-| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada | Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo). Mío: 1 cm de grosor (pelo corto). | Tablero de 5 × 7 casillas casi cuadradas (28 × 28,6 cm), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos. | estimada | 420 |
+| Alfombra de cuadros rosa claro y rojo (`alfombras/alfombra-cuadros-rosa-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada; medidas a elegir: 80 × 150 / 120 × 170 / 140 × 200 / 160 × 230 / 200 × 250 cm | Las del encargo: 140 × 200 cm (140 de ancho y 200 de fondo), la que se pone al añadirla. Mío: 1 cm de grosor (pelo corto). Casillas de unos 28 cm en cada medida (80 × 150: 3 × 5; 120 × 170: 4 × 6; 140 × 200: 5 × 7; 160 × 230: 6 × 8; 200 × 250: 7 × 9). | Tablero de casillas casi cuadradas (5 × 7 de 28 × 28,6 cm en 140 × 200), rosa claro y rojo burdeos alternos, con rosa claro en las cuatro esquinas; colores tomados de la foto, tejido con trama. Sin flecos. | estimada | 420 (hasta 756 según la medida) |
 <!-- fin:lote6 -->
+
+<!-- inicio:lote7 -->
+## Lote 7: tres alfombras shaggy y medidas a elegir
+
+Hechas a partir de las fotos de producto del encargo. Como la del lote 6:
+**alfombras** (`"alfombra": true`, debajo de los muebles), 1 cm de grosor
+(**estimado**) y categoría *Alfombras*. Todas las alfombras (también la del
+lote 6) tienen **cinco medidas a elegir** (`"tamanos"` en la ficha): 80 × 150,
+120 × 170, 140 × 200 (la que se pone al añadirla), 160 × 230 y 200 × 250 cm, con
+el desplegable «Medida» del objeto seleccionado. Cada medida tiene su .glb: en
+las de cuadros la casilla mantiene su tamaño y cambia el número de casillas.
+Solo están en el catálogo: no se colocan en la casa.
+
+| Objeto | Medidas (ancho × fondo × alto, m) | Colocación | De dónde salen las medidas | Comparado con las fotos | Estado | Triángulos |
+|---|---|---|---|---|---|---:|
+| Alfombra shaggy de cuadros verde y blanco crudo (`alfombras/alfombra-shaggy-cuadros-verde`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada; medidas a elegir: 80 × 150 / 120 × 170 / 140 × 200 / 160 × 230 / 200 × 250 cm | Las cinco medidas pedidas (80 × 150, 120 × 170, 140 × 200, 160 × 230 y 200 × 250 cm); al añadirla, 140 × 200. Grosor de 1 cm, como la del lote 6. Casillas de unos 18 cm, como en la foto (11 × 11 en 200 × 200): 80 × 150: 4 × 8; 120 × 170: 7 × 9; 140 × 200: 8 × 11; 160 × 230: 9 × 13; 200 × 250: 11 × 14. | Cuadros verde grisáceo y blanco crudo de pelo largo (textura de borreguito), verde en las esquinas; colores medidos en la foto. Sin el pelo suelto de los bordes. | estimada | 1056 (hasta 1848 según la medida) |
+| Alfombra shaggy de cuadros rojo óxido y blanco crudo (`alfombras/alfombra-shaggy-cuadros-rojo`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada; medidas a elegir: 80 × 150 / 120 × 170 / 140 × 200 / 160 × 230 / 200 × 250 cm | Las cinco medidas pedidas (80 × 150, 120 × 170, 140 × 200, 160 × 230 y 200 × 250 cm); al añadirla, 140 × 200. Grosor de 1 cm, como la del lote 6. Casillas de unos 18 cm, como en la foto (11 × 11 en 200 × 200): 80 × 150: 4 × 8; 120 × 170: 7 × 9; 140 × 200: 8 × 11; 160 × 230: 9 × 13; 200 × 250: 11 × 14. | Cuadros rojo óxido (teja) y blanco crudo de pelo largo, rojo en las esquinas; colores medidos en la foto. Sin el pelo suelto de los bordes. | estimada | 1056 (hasta 1848 según la medida) |
+| Alfombra shaggy lisa verde (`alfombras/alfombra-shaggy-lisa-verde`) | 1,4 × 2 × 0,01 | colocación: suelo; alfombra: debajo de los muebles, sin chocar con nada; medidas a elegir: 80 × 150 / 120 × 170 / 140 × 200 / 160 × 230 / 200 × 250 cm | Las cinco medidas pedidas (80 × 150, 120 × 170, 140 × 200, 160 × 230 y 200 × 250 cm); al añadirla, 140 × 200. Grosor de 1 cm, como la del lote 6. | Verde oliva oscuro liso de pelo largo (textura de borreguito); color medido en la foto. Sin las aguas de luz del pelo. | estimada | 12 (hasta 12 según la medida) |
+<!-- fin:lote7 -->
 
 <!-- inicio:superficies -->
 ## Superficies de los muebles soporte

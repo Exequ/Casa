@@ -13,7 +13,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { ItemCatalogo } from './catalogo';
 
 const cargador = new GLTFLoader();
-/** Plantillas ya cargadas (o cargándose), por id del catálogo. */
+/** Plantillas ya cargadas (o cargándose), por URL del modelo (un objeto con varias medidas tiene una por medida). */
 const plantillas = new Map<string, Promise<THREE.Object3D>>();
 
 /** Ajusta el tamaño y el origen del modelo según las dimensiones de la ficha. */
@@ -78,7 +78,7 @@ async function leerGlb(url: string) {
 
 /** Devuelve una copia nueva del modelo de un objeto del catálogo. */
 export async function crearModelo(item: ItemCatalogo): Promise<THREE.Object3D> {
-  let plantilla = plantillas.get(item.id);
+  let plantilla = plantillas.get(item.urlGlb);
   if (!plantilla) {
     plantilla = leerGlb(item.urlGlb)
       .then((gltf) => normalizar(gltf.scene, item))
@@ -86,7 +86,7 @@ export async function crearModelo(item: ItemCatalogo): Promise<THREE.Object3D> {
         console.error(`No se pudo cargar ${item.urlGlb}`, error);
         return cajaDeRepuesto(item);
       });
-    plantillas.set(item.id, plantilla);
+    plantillas.set(item.urlGlb, plantilla);
   }
   return (await plantilla).clone(true);
 }

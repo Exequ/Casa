@@ -54,7 +54,8 @@ const VINILOS = ['decoracion/vinilos-5-de-pie', 'decoracion/vinilos-5-tumbados',
 const ALTAVOCES = ['electronica/altavoz-izquierdo', 'electronica/altavoz-derecho'];
 const LOTE5 = ['electronica/tocadiscos', ...ALTAVOCES, ...VINILOS];
 const LOTE6 = ['alfombras/alfombra-cuadros-rosa-rojo'];
-const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5, ...LOTE6];
+const LOTE7 = ['alfombras/alfombra-shaggy-cuadros-verde', 'alfombras/alfombra-shaggy-cuadros-rojo', 'alfombras/alfombra-shaggy-lisa-verde'];
+const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5, ...LOTE6, ...LOTE7];
 
 const io = new NodeIO();
 /** Caja envolvente, triángulos y tamaño de un .glb. */
@@ -332,5 +333,61 @@ describe('lote 6: alfombra de cuadros', () => {
     expect([mesa.raiz.position.x, mesa.raiz.position.z]).toEqual([3, 1.7]);
     const planta = (await gestor.agregar(item('decoracion/planta-pequena'), 3.62, 1.7))!; // junto a la mesa, sobre la alfombra
     expect([planta.raiz.position.x, planta.raiz.position.y, planta.raiz.position.z]).toEqual([3.62, 0, 1.7]);
+  });
+});
+
+describe('lote 7: tres alfombras shaggy y medidas a elegir en todas las alfombras', () => {
+  const items = leerCatalogo();
+  const item = (id: string) => items.find((i) => i.id === id)!;
+  const ALFOMBRAS = [...LOTE6, ...LOTE7];
+  const MEDIDAS = [[0.8, 1.5], [1.2, 1.7], [1.4, 2], [1.6, 2.3], [2, 2.5]];
+
+  it('las tres nuevas son alfombras como la del lote 6: de suelo, 1 cm, categoría Alfombras, sin superficies', () => {
+    for (const id of LOTE7) {
+      const i = item(id);
+      expect(i.alfombra, id).toBe(true);
+      expect(i.colocacion, id).toBe('suelo');
+      expect(i.categoria, id).toBe('Alfombras');
+      expect(i.dimensiones, id).toEqual({ ancho: 1.4, fondo: 2, alto: 0.01 });
+      expect(superficiesDe(i), id).toEqual([]);
+    }
+  });
+
+  it('todas las alfombras tienen las cinco medidas, cada una con su modelo', () => {
+    for (const id of ALFOMBRAS) {
+      const ficha = JSON.parse(readFileSync(join(CATALOGO, `${id}.json`), 'utf8')) as FichaObjeto;
+      expect(ficha.tamanos!.map((t) => [t.ancho, t.fondo]), id).toEqual(MEDIDAS);
+      expect(ficha.tamanos!.find((t) => t.ancho === 1.4)!.glb, id).toBe(ficha.glb); // la de 140 × 200 es la de la ficha
+      expect(item(id).medidasDisponibles!.map((t) => [t.ancho, t.fondo]), id).toEqual(MEDIDAS);
+      expect(new Set(item(id).medidasDisponibles!.map((t) => t.urlGlb)).size, id).toBe(5);
+    }
+  });
+
+  for (const id of ALFOMBRAS) {
+    it(`${id}: el .glb de cada medida mide lo que dice y es ligero`, async () => {
+      const ficha = JSON.parse(readFileSync(join(CATALOGO, `${id}.json`), 'utf8')) as FichaObjeto;
+      for (const t of ficha.tamanos!) {
+        const g = await medirGlb(join(CATALOGO, dirname(id), t.glb));
+        expect(g.ancho, t.glb).toBeCloseTo(t.ancho, 3);
+        expect(g.fondo, t.glb).toBeCloseTo(t.fondo, 3);
+        expect(g.alto, t.glb).toBeCloseTo(0.01, 3);
+        expect(Math.abs(g.centro[0]) + Math.abs(g.centro[1]) + Math.abs(g.suelo), t.glb).toBeLessThan(0.003);
+        expect(g.triangulos, t.glb).toBeLessThan(20000);
+        expect(g.bytes, t.glb).toBeLessThan(300 * 1024);
+        expect(g.texturas, t.glb).toBeLessThanOrEqual(2);
+      }
+    });
+  }
+
+  it('de cuadros: casillas de unos 18 cm (11 × 11 en 200 × 200 de la foto), con dos colores', async () => {
+    for (const id of LOTE7.slice(0, 2)) {
+      const doc = await io.readBinary(new Uint8Array(readFileSync(join(CATALOGO, `${id}.glb`))));
+      expect(doc.getRoot().listMaterials().length, id).toBe(2);
+      let triangulos = 0;
+      for (const malla of doc.getRoot().listMeshes()) for (const p of malla.listPrimitives()) triangulos += p.getIndices()!.getCount() / 3;
+      expect(triangulos, id).toBe(8 * 11 * 12); // 140 × 200: 8 × 11 casillas de 17,5 × 18,2 cm
+    }
+    const lisa = await io.readBinary(new Uint8Array(readFileSync(join(CATALOGO, `${LOTE7[2]}.glb`))));
+    expect(lisa.getRoot().listMaterials().length).toBe(1);
   });
 });

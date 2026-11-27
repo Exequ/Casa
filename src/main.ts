@@ -3,7 +3,7 @@
 import './ui/estilos.css';
 import datosVivienda from '../data/vivienda.json';
 import datosEscenaInicial from '../data/escena-inicial.json';
-import { leerCatalogo, type ItemCatalogo } from './catalogo/catalogo';
+import { leerCatalogo, textoTamano, type ItemCatalogo } from './catalogo/catalogo';
 import { CortadorParedes, type ModoCorte } from './escena/corte';
 import { crearEscena, type Caja2D } from './escena/escena';
 import { crearEtiquetas } from './escena/etiquetas';
@@ -384,6 +384,7 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
       : `Capa Base restaurada como en las fotos${oculta}. Las demás capas no cambian. Puedes deshacerlo con ↶.`, omitidos.length > 0);
   },
   moverACapa,
+  cambiarTamano,
   duplicar,
   verPlano,
   opacidadPlano(valor) {
@@ -392,6 +393,15 @@ const panel = crearPanel(document.getElementById('panel')!, catalogo, vivienda, 
 });
 
 const panelCapas = crearPanelCapas(panel.seccionCapas, gestor, (texto, error) => panel.avisar(texto, error));
+
+/** Cambia la medida del objeto seleccionado (alfombras). Si con esa medida no cabe donde está, se avisa y no cambia. */
+async function cambiarTamano(ancho: number, fondo: number) {
+  const sel = gestor.seleccionado;
+  if (!sel || modoCamara.activo) { gestor.notificar(false); return; }
+  const texto = textoTamano({ ancho, fondo });
+  if (await gestor.cambiarTamano(sel, ancho, fondo)) barra.aviso(`«${sel.item.nombre}»: ${texto}.`);
+  else barra.aviso(`Con ${texto} no cabe aquí: apártala de las paredes o de los muebles fijos y vuelve a probar.`);
+}
 
 /** Pasa el objeto seleccionado a otra capa (visible y desbloqueada). */
 function moverACapa(capa: string) {
@@ -423,6 +433,7 @@ const barra = crearBarra(visor, vivienda, gestor, {
     panelCapas.mostrar();
   },
   moverACapa,
+  cambiarTamano,
 });
 historial.alCambiar(() => barra.historial(historial.puedeDeshacer(), historial.puedeRehacer()));
 barra.marcar('luces', true);
