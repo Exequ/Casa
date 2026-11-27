@@ -57,6 +57,10 @@ Todas las medidas están en **metros**, a escala real.
   (de foto de producto), en la nueva categoría *Alfombras*. Va **debajo de
   los muebles**: se pone y se mueve aunque haya muebles encima, y los muebles
   se mueven libremente por encima. Solo está en el catálogo.
+- **Lote 7:** tres **alfombras shaggy** más (de cuadros verde y blanco crudo,
+  de cuadros rojo óxido y blanco crudo, y lisa verde) y **medida a elegir** en
+  todas las alfombras: 80 × 150, 120 × 170, 140 × 200, 160 × 230 o
+  200 × 250 cm, con el desplegable *Medida* del objeto seleccionado.
 - **Fase 6 (actual):** **Modo cámara** (candado que bloquea la edición para
   mover solo la cámara) y **capas** (Base con la casa amueblada, y capas propias
   para probar variantes: mostrar, ocultar, bloquear, duplicar…) y **catálogo
@@ -93,6 +97,7 @@ Abre <http://localhost:5173> en el navegador.
 | `npm run catalogo:lote4` | Igual, para el lote 4 (zapatero y coffee corner) |
 | `npm run catalogo:lote5` | Igual, para el lote 5 (tocadiscos, altavoces y packs de vinilos) |
 | `npm run catalogo:lote6` | Igual, para el lote 6 (alfombra de cuadros) |
+| `npm run catalogo:lote7` | Igual, para el lote 7 (tres alfombras shaggy, con sus cinco medidas) |
 | `npm run escena:inicial` | Regenera `data/escena-inicial.json` (la casa amueblada como en las fotos) desde `scripts/escena-inicial.mjs` |
 | `npm run catalogo:miniaturas` | Dibuja las miniaturas PNG del catálogo (necesita Playwright con Chromium); con `-- sofas/sillon` solo esa, con `-- --vistas carpeta` además 3 vistas grandes de cada objeto para revisarlo |
 
@@ -262,7 +267,13 @@ con todas las categorías plegadas.
   alfombra** (no es un soporte).
 - Solo las limitan las paredes, las puertas y los fijos (cocina, baño,
   armario), como a cualquier mueble. Nunca se marcan en rojo por solaparse,
-  y dos alfombras pueden pisarse.
+  y dos alfombras pueden pisarse (la añadida después queda encima).
+- **Medida:** con una alfombra seleccionada, el desplegable *Medida* (en el
+  panel o, en el móvil, en la barra del objeto) la cambia a 80 × 150,
+  120 × 170, 140 × 200, 160 × 230 o 200 × 250 cm, en el mismo sitio y con el
+  mismo giro. Si con la nueva medida no cabe por una pared o un fijo, se
+  aparta lo justo (hasta 50 cm); si ni así, no cambia y se avisa. Se puede
+  deshacer y se guarda con la escena. Al añadirla, 140 × 200.
 
 **Cómo se comportan los muebles:**
 
@@ -342,6 +353,7 @@ scripts/
   catalogo-lote4.mjs      Crea los del lote 4 (zapatero y coffee corner)
   catalogo-lote5.mjs      Crea los del lote 5 (tocadiscos, altavoces y packs de vinilos)
   catalogo-lote6.mjs      Crea los del lote 6 (alfombra de cuadros)
+  catalogo-lote7.mjs      Crea los del lote 7 (tres alfombras shaggy); medidas y diseños comunes en lib/alfombras.mjs
   escena-inicial.mjs      Disposición de los muebles según las fotos → data/escena-inicial.json
   miniaturas.mjs          Dibuja las miniaturas PNG del catálogo (y vistas de comprobación)
   lib/modelo3d.mjs        Librería para modelar objetos con piezas de three.js y guardarlos en .glb
@@ -696,6 +708,11 @@ Si algo no coincide, corrige la medida en píxeles en
    - `alfombra` (opcional, solo objetos de suelo): `true` si es una alfombra
      (va debajo de los muebles sin chocar con nada; ver «Alfombras» arriba).
      No lleva `superficies`: lo que va encima está en el suelo.
+   - `tamanos` (opcional): medidas a elegir, una lista de
+     `{ "ancho", "fondo", "glb" }` (m; el alto es el de `dimensiones`), cada
+     una con su modelo. Tiene que incluir la de `dimensiones`, con el mismo
+     `glb` de la ficha: es la que se pone al añadirlo. Se elige con el
+     desplegable *Medida* y se guarda en la escena (`"tamano"` de cada objeto).
    - `medidas` (opcional, informativo): `"estimadas"` o `"confirmadas"`.
 
    La **miniatura** del panel es un `.png` con el mismo nombre que el `.json`

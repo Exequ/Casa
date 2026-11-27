@@ -18,6 +18,7 @@
     "catalogo:lote4": "node scripts/catalogo-lote4.mjs",
     "catalogo:lote5": "node scripts/catalogo-lote5.mjs",
     "catalogo:lote6": "node scripts/catalogo-lote6.mjs",
+    "catalogo:lote7": "node scripts/catalogo-lote7.mjs",
     "escena:inicial": "node scripts/escena-inicial.mjs"
   },
   "dependencies": {
