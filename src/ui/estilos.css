@@ -489,8 +489,8 @@ details.plegable[open] > summary { margin-bottom: 8px; }
 .indicador-capa .punto-capa { width: 12px; height: 12px; min-width: 12px; border-radius: 50%; }
 .indicador-capa .texto-capa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .indicador-capa.no-editable { color: var(--suave); }
-.barra-objeto .selector-capa { font: inherit; padding: 7px 4px; max-width: 34vw; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
-.seleccion .selector-capa { flex: 1; font: inherit; padding: 4px; }
+.barra-objeto .selector-capa, .barra-objeto .selector-tamano { font: inherit; padding: 7px 4px; max-width: 34vw; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
+.seleccion .selector-capa, .seleccion .selector-tamano { flex: 1; font: inherit; padding: 4px; }
 
 @media (max-width: 760px) {
   .capa-ojo, .capa-candado, .capa-color { min-width: 40px; min-height: 40px; }

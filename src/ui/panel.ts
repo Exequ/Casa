@@ -8,7 +8,7 @@ import type { Vivienda } from '../vivienda/modelo';
 import { area } from '../vivienda/geometria';
 import { rellenarSelectorCapas } from './panelCapas';
 import { PlegadoCatalogo } from './plegado';
-import { el, m } from './util';
+import { el, m, rellenarSelectorTamano } from './util';
 
 /**
  * El botón pide un segundo toque para confirmar (antes de 4 s): el primero
@@ -50,6 +50,8 @@ export interface AccionesPanel {
   duplicar(): void;
   /** Pasa el objeto seleccionado a otra capa. */
   moverACapa(capa: string): void;
+  /** Cambia la medida (ancho × fondo, m) del objeto seleccionado (alfombras). */
+  cambiarTamano(ancho: number, fondo: number): void;
   /** Muestra u oculta el plano superpuesto. */
   verPlano(visible: boolean): void;
   opacidadPlano(valor: number): void;
@@ -159,7 +161,7 @@ export function crearPanel(
     const textos = el('span', 'item-textos');
     textos.append(
       el('span', 'item-nombre', item.nombre),
-      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${esAlfombra(item) ? ' · bajo los muebles' : DONDE[item.colocacion] ?? ''}`),
+      el('span', 'item-medidas', `${m(item.dimensiones.ancho)} × ${m(item.dimensiones.fondo)} × ${m(item.dimensiones.alto)} m${esAlfombra(item) ? ' · bajo los muebles' : DONDE[item.colocacion] ?? ''}${(item.medidasDisponibles?.length ?? 0) > 1 ? ` · ${item.medidasDisponibles!.length} medidas` : ''}`),
     );
     if (item.urlMiniatura) {
       const img = el('img', 'item-miniatura');
@@ -300,7 +302,18 @@ export function crearPanel(
   filaCapa.append(el('span', '', 'Capa'), selectorCapa);
   selectorCapa.addEventListener('change', () => acciones.moverACapa(selectorCapa.value));
 
-  conSeleccion.append(nombreSel, posicionSel, avisoApoyo, filaCapa, bloqueGiro, bloqueAltura, filaAcciones);
+  // Medida (objetos con varias, como las alfombras)
+  const filaTamano = el('label', 'fila');
+  const selectorTamano = el('select', 'selector-tamano');
+  selectorTamano.title = 'Medida del objeto (ancho × fondo)';
+  selectorTamano.dataset.edicion = '';
+  filaTamano.append(el('span', '', 'Medida'), selectorTamano);
+  selectorTamano.addEventListener('change', () => {
+    const [ancho, fondo] = selectorTamano.value.split('x').map(Number);
+    acciones.cambiarTamano(ancho, fondo);
+  });
+
+  conSeleccion.append(nombreSel, posicionSel, avisoApoyo, filaCapa, filaTamano, bloqueGiro, bloqueAltura, filaAcciones);
   secSeleccion.append(sinSeleccion, conSeleccion);
   panel.append(secSeleccion);
 
@@ -339,6 +352,7 @@ export function crearPanel(
     avisoApoyo.textContent = aviso;
     rellenarSelectorCapas(selectorCapa, gestor, sel.capa);
     selectorCapa.value = sel.capa;
+    filaTamano.hidden = !rellenarSelectorTamano(selectorTamano, sel.item);
     const enPared = sel.colocacion === 'pared' && !!sel.pared;
     bloqueGiro.hidden = enPared;
     bloqueAltura.hidden = !enPared;
@@ -465,3 +479,4 @@ export function crearPanel(
     },
   };
 }
+

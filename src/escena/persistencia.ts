@@ -49,7 +49,7 @@
 // superficie del mismo mueble donde quepa, a otro mueble cercano o al suelo,
 // y se anota en `movidos` (el panel lo cuenta).
 
-import { zonaEn, motivoNoCabe, type ItemCatalogo } from '../catalogo/catalogo';
+import { conTamano, zonaEn, motivoNoCabe, type ItemCatalogo } from '../catalogo/catalogo';
 import { distanciaACara } from '../vivienda/colgar';
 import { crearModelo } from '../catalogo/modelos';
 import type { Suelo } from '../vivienda/suelos';
@@ -73,6 +73,8 @@ export interface ObjetoGuardado {
   nivel?: number;
   /** Capa del objeto (v6). */
   capa?: string;
+  /** Medida elegida (objetos con varias, como las alfombras): ancho × fondo en m. Sin ella, la de la ficha. */
+  tamano?: { ancho: number; fondo: number };
 }
 
 /** Versión actual del formato de escena. */
@@ -141,6 +143,7 @@ function guardarObjeto(o: ObjetoColocado, indices: Map<ObjetoColocado, number>):
     g.soporte = indices.get(o.apoyo.soporte);
     g.nivel = redondear(o.apoyo.nivel);
   }
+  if (o.item.medidasDisponibles) g.tamano = { ancho: o.item.dimensiones.ancho, fondo: o.item.dimensiones.fondo };
   return g;
 }
 
@@ -259,6 +262,13 @@ export async function colocarObjetos(gestor: GestorObjetos, objetos: ObjetoGuard
     if (!item) {
       console.warn(`Escena: el objeto "${o.catalogo}" no está en el catálogo; se omite.`);
       omitidos.push(o.catalogo);
+      return item;
+    }
+    // Medida elegida (alfombras): si ya no existe esa medida, la de la ficha
+    if (o.tamano && item.medidasDisponibles) {
+      const conMedida = conTamano(item, o.tamano.ancho, o.tamano.fondo);
+      if (!conMedida) console.warn(`Escena: «${item.nombre}» ya no tiene la medida ${o.tamano.ancho} × ${o.tamano.fondo} m; se pone la de la ficha.`);
+      return conMedida ?? item;
     }
     return item;
   });
