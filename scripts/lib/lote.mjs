@@ -1,4 +1,4 @@
-// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs, catalogo-lote5.mjs):
+// Lo común a los scripts de lotes del catálogo (catalogo-lote1.mjs, catalogo-lote2.mjs, catalogo-lote4.mjs, catalogo-lote5.mjs, catalogo-lote6.mjs):
 // materiales habituales, piezas repetidas (marcos) y el proceso de guardar
 // cada objeto y su fila de docs/OBJETOS.md.
 
@@ -103,8 +103,9 @@ const CABECERA = `# Objetos del catálogo
 Muebles reales del piso, generados por scripts a partir de las fotos:
 \`scripts/catalogo-lote1.mjs\` (salón y pasillo), \`scripts/catalogo-lote2.mjs\`
 (dormitorio, balcón y tendedero), \`scripts/catalogo-lote4.mjs\` (zapatero y
-coffee corner, de fotos de producto) y \`scripts/catalogo-lote5.mjs\`
-(tocadiscos, altavoces y packs de vinilos). Los objetos de ejemplo de las fases 1 y 4
+coffee corner, de fotos de producto), \`scripts/catalogo-lote5.mjs\`
+(tocadiscos, altavoces y packs de vinilos) y \`scripts/catalogo-lote6.mjs\`
+(alfombra de cuadros). Los objetos de ejemplo de las fases 1 y 4
 (mesa, armario, cuadro, espejo, jarrón y planta provisionales) siguen en
 \`catalogo/\`.
 
@@ -118,13 +119,14 @@ coffee corner, de fotos de producto) y \`scripts/catalogo-lote5.mjs\`
 3. Pon \`"medidas": "confirmadas"\` para marcarla como medida de verdad.
 
 No hace falta tocar nada más: la app estira el modelo a las medidas de la
-ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`, \`lote5\`), las
+ficha. Si se vuelve a ejecutar \`npm run catalogo:lote1\` (o \`lote2\`, \`lote4\`, \`lote5\`, \`lote6\`), las
 medidas de los \`.json\` existentes se respetan (salvo con \`-- --reiniciar\`)
 y estas tablas se regeneran con ellas.
 `;
 
 /** Por qué se ha estimado así cada superficie (lo que se ve en las fotos y en el modelo). */
 const NOTAS_SUPERFICIES = {
+  'alfombras/alfombra-cuadros-rosa-rojo': 'Toda la alfombra, a 1 cm del suelo, sin límite por encima.',
   'almacenaje/libreria': 'Baldas: hueco entre los laterales (0,77) por el fondo útil delante del trasero (0,34), algo hacia atrás; altura libre hasta la cara de abajo de la balda de encima (2,5 cm de balda) y, la de arriba, hasta el techo interior (1,84 m). Tapa: toda la cornisa.',
   'almacenaje/mueble-tv': 'Estante de listones entre las patas (0,79 × 0,32); altura libre hasta el faldón de la tapa (0,47 m), por donde tiene que entrar lo que se mete. Tapa entera.',
   'almacenaje/zapatero': 'Tapa entera (las trampillas no admiten nada).',

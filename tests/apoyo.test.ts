@@ -103,7 +103,7 @@ describe('formato de "superficies"', () => {
   it('todas las fichas del catálogo son válidas y todos los muebles soporte tienen sus superficies en formato objeto (estimadas)', () => {
     const soportes = catalogo.filter((i) => superficiesDe(i).length > 0);
     expect(soportes.map((i) => i.id).sort()).toEqual([
-      'almacenaje/libreria', 'almacenaje/mueble-tv', 'almacenaje/zapatero', 'armario', 'cocina/coffee-corner',
+      'alfombras/alfombra-cuadros-rosa-rojo', 'almacenaje/libreria', 'almacenaje/mueble-tv', 'almacenaje/zapatero', 'armario', 'cocina/coffee-corner',
       'dormitorio/comoda-alta', 'dormitorio/mesita-noche', 'dormitorio/puf', 'exterior/mesa-balcon', 'mesa',
       'mesas/mesa-centro', 'mesas/mesa-comedor-cristal', 'mesas/mesita-alambre', 'mesas/mesita-bandeja', 'tendedero/lavadora',
     ]);

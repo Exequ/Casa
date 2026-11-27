@@ -53,7 +53,8 @@ const LOTE4 = ['almacenaje/zapatero', 'cocina/coffee-corner'];
 const VINILOS = ['decoracion/vinilos-5-de-pie', 'decoracion/vinilos-5-tumbados', 'decoracion/vinilos-10-de-pie', 'decoracion/vinilos-10-tumbados'];
 const ALTAVOCES = ['electronica/altavoz-izquierdo', 'electronica/altavoz-derecho'];
 const LOTE5 = ['electronica/tocadiscos', ...ALTAVOCES, ...VINILOS];
-const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5];
+const LOTE6 = ['alfombras/alfombra-cuadros-rosa-rojo'];
+const REALES = [...LOTE1, ...LOTE2, ...LOTE4, ...LOTE5, ...LOTE6];
 
 const io = new NodeIO();
 /** Caja envolvente, triángulos y tamaño de un .glb. */
@@ -296,5 +297,38 @@ describe('lote 5: tocadiscos, altavoces y vinilos', () => {
     const pack = (await gestor.agregarSobre(item('decoracion/vinilos-5-tumbados'), mesa, 0.45, 3.3, 0.6))!;
     expect(pack).not.toBeNull();
     expect(gestor.esSoporte(pack)).toBe(false);
+  });
+});
+
+describe('lote 6: alfombra de cuadros', () => {
+  const items = leerCatalogo();
+  const item = (id: string) => items.find((i) => i.id === id)!;
+  const ALFOMBRA = 'alfombras/alfombra-cuadros-rosa-rojo';
+
+  it('140 × 200 cm, en el suelo y admite cosas encima en toda su superficie', () => {
+    expect(item(ALFOMBRA).dimensiones).toEqual({ ancho: 1.4, fondo: 2, alto: 0.01 });
+    expect(item(ALFOMBRA).categoria).toBe('Alfombras');
+    expect(item(ALFOMBRA).colocacion).toBe('suelo');
+    expect(superficiesDe(item(ALFOMBRA))).toEqual([0.01]);
+  });
+
+  it('5 × 7 casillas de dos colores (rosa claro y rojo), en un modelo ligero', async () => {
+    const doc = await io.readBinary(new Uint8Array(readFileSync(join(CATALOGO, `${ALFOMBRA}.glb`))));
+    const materiales = doc.getRoot().listMaterials();
+    expect(materiales.map((m) => m.getName()).sort()).toEqual(['lana-rojo', 'lana-rosa-claro']);
+    let triangulos = 0;
+    for (const malla of doc.getRoot().listMeshes()) for (const p of malla.listPrimitives()) triangulos += p.getIndices()!.getCount() / 3;
+    expect(triangulos).toBe(35 * 12); // una caja por casilla
+  });
+
+  it('en la app: en el salón, con una planta y un pack de vinilos encima', async () => {
+    const vivienda = datos as Vivienda;
+    const gestor = new GestorObjetos(new THREE.Scene(), new EspacioLibre(vivienda), carasColgables(vivienda));
+    const alf = (await gestor.agregar(item(ALFOMBRA), 3, 1.7))!;
+    expect(alf).not.toBeNull();
+    expect(gestor.esSoporte(alf)).toBe(true);
+    const x = alf.raiz.position.x, z = alf.raiz.position.z;
+    expect((await gestor.agregarSobre(item('decoracion/planta-pequena'), alf, 0.01, x - 0.4, z))?.raiz.position.y).toBe(0.01);
+    expect((await gestor.agregarSobre(item('decoracion/vinilos-10-tumbados'), alf, 0.01, x + 0.4, z))?.raiz.position.y).toBe(0.01);
   });
 });
